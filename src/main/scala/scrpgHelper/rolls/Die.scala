@@ -1,4 +1,4 @@
-package scrpgHelper
+package scrpgHelper.rolls
 
 enum EffectDieType:
     case Min, Mid, Max

@@ -1,4 +1,4 @@
-package scrpgHelper
+package scrpgHelper.rolls
 
 class DieTest extends munit.FunSuite:
     import Die.*

@@ -162,6 +162,23 @@ button.effect-die.unselected {
   background-color: #222222;
 }
 
+div.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+button.nav-button {
+  border-width: 2px 2px 0 2px;
+  border-style: inset;
+  border-color: #444444;
+  border-radius: 15% 15% 0% 0%;
+}
+
+div.page {
+
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
