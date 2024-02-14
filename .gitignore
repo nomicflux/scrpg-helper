@@ -1,0 +1,6 @@
+.bloop/
+.bsp/
+.metals/
+target/
+*~
+node_modules/
