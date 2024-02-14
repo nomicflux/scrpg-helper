@@ -1,5 +1,7 @@
 package scrpgHelper.rolls
 
+import scala.util.Random
+
 enum EffectDieType:
     case Min, Mid, Max
 
@@ -12,6 +14,8 @@ end EffectDieType
 
 case class Die(n: Int):
     def values: Range = 1 to n
+
+    def roll(): Int = Random.nextInt(n) + 1
 end Die
 
 object Die:
@@ -27,6 +31,13 @@ object Die:
           l <- d3.values
       yield (n, m, l)
     end cartesian
+
+    def makeRoll(d1: Die, d2: Die, d3: Die, effects: Seq[EffectDieType]): Int =
+      val n = d1.roll()
+      val m = d2.roll()
+      val l = d3.roll()
+      effects.map(_.getEffect(n, m, l)).sum
+    end makeRoll
 
     def results(d1: Die, d2: Die, d3: Die, effects: Seq[EffectDieType]): Seq[Int] =
       for n <- d1.values
