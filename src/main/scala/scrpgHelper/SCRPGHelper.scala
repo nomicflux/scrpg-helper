@@ -18,8 +18,7 @@ object Main:
     import Die.*
     import EffectDieType.*
 
-    val dataVar: Var[(Die, Die, Die, Seq[EffectDieType])] = Var((d(4), d(8), d(12), Seq(Min, Max)))
-    val dataSignal  = dataVar.signal
+    val model: Model = new Model
 
     val chartConfig =
       import typings.chartJs.mod.*
@@ -49,7 +48,9 @@ object Main:
     def appElement(): Element =
       div(
         h1("Rolls"),
-        renderRollChart())
+        renderDice(),
+        renderRollChart(),
+      )
     end appElement
 
     def renderRollChart(): Element =
@@ -71,8 +72,7 @@ object Main:
               optChart = None
             },
           ),
-          dataSignal --> { (d1, d2, d3, e) =>
-            val data = freqs(d1, d2, d3, e)
+          model.currFreqs() --> { data =>
             val vals = 1 to data.keys.max
             val labels = vals.map(_.toString)
             val counts = vals.map(data.getOrElse(_, 0).toDouble)
@@ -84,4 +84,64 @@ object Main:
           }
         )
     end renderRollChart
+
+    def renderDice(): Element =
+      div(
+        dieButtons(model.d1Signal, model.d1Updater()),
+        dieButtons(model.d2Signal, model.d2Updater()),
+        dieButtons(model.d3Signal, model.d3Updater()),
+      )
+    end renderDice
+
+    def dieButtons(dieSignal: Signal[Die], dieObserver: Observer[Int]): Element =
+      div(
+        className := "dicegroup",
+        dieButton(dieSignal, dieObserver, 4),
+        dieButton(dieSignal, dieObserver, 6),
+        dieButton(dieSignal, dieObserver, 8),
+        dieButton(dieSignal, dieObserver, 10),
+        dieButton(dieSignal, dieObserver, 12),
+      )
+    end dieButtons
+
+    def dieButton(dieSignal: Signal[Die], dieObserver: Observer[Int], n: Int): Element =
+      button(
+        tpe := "button",
+        className := s"die d$n",
+        disabled <-- dieSignal.map(_.n == n),
+        s"d$n",
+        onClick --> { _event => dieObserver.onNext(n) }
+      )
+    end dieButton
 end Main
+
+final class Model:
+    import Die.*
+    import EffectDieType.*
+
+    val d1Var: Var[Die] = Var(d(6))
+    val d1Signal = d1Var.signal
+    val d2Var: Var[Die] = Var(d(6))
+    val d2Signal = d2Var.signal
+    val d3Var: Var[Die] = Var(d(6))
+    val d3Signal = d3Var.signal
+    val eVar: Var[Seq[EffectDieType]] = Var(Seq(Mid))
+    val eSignal = eVar.signal
+
+    def currFreqs(): Signal[Map[Int, Int]] =
+      eSignal.combineWith(d1Signal, d2Signal, d3Signal).map { (e, d1, d2, d3) =>
+        freqs(d1, d2, d3, e)
+      }
+    end currFreqs
+
+    def dieUpdater(dieVar: Var[Die]): Observer[Int] =
+      dieVar.updater { (_die, n) => d(n) }
+    end dieUpdater
+
+    def d1Updater(): Observer[Int] = dieUpdater(d1Var)
+    def d2Updater(): Observer[Int] = dieUpdater(d2Var)
+    def d3Updater(): Observer[Int] = dieUpdater(d3Var)
+
+    def updateEffectDieTypes(es: Seq[EffectDieType]) =
+      eVar.update(_ => es)
+end Model
