@@ -83,6 +83,85 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+div.dicegroup {
+  border: 2px ridge grey;
+  border-radius: 5%;
+  margin: 10px;
+  padding: 5px;
+  display: inline-block;
+}
+
+button.die {
+  border-radius: 50%;
+}
+
+button.die:disabled {
+  opacity: 0.3;
+}
+
+button.die:hover {
+  transition-duration: 0.5s;
+}
+
+button.d4 {
+  color: #0066cc;
+  border: 2px solid #003366;
+}
+button.d4:hover:enabled {
+  background-color: #002244;
+}
+
+button.d6 {
+  color: #66cc00;
+  border: 2px solid #336600;
+}
+button.d6:hover:enabled {
+  background-color: #224400;
+}
+
+button.d8 {
+  color: #ccaa00;
+  border: 2px solid #665500;
+}
+button.d8:hover:enabled {
+  background-color: #443a00;
+}
+
+button.d10 {
+  color: #cc4400;
+  border: 2px solid #662200;
+}
+button.d10:hover:enabled {
+  background-color: #441100;
+}
+
+button.d12 {
+  color: #8800cc;
+  border: 2px solid #440066;
+}
+button.d12:hover:enabled {
+  background-color: #220044;
+}
+
+button.effect-die {
+  margin: 10px;
+}
+button.effect-die.min {
+  font-size: 14px;
+}
+button.effect-die.mid {
+  font-size: 16px;
+}
+button.effect-die.max {
+  font-size: 18px;
+}
+button.effect-die.selected {
+  background-color: #666666;
+}
+button.effect-die.unselected {
+  background-color: #222222;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

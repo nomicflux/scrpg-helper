@@ -27,9 +27,9 @@ object Main:
         data = new ChartData {
           datasets = js.Array(
             new ChartDataSets {
-              label = "Roll"
+              label = "Count"
               borderWidth = 1
-              backgroundColor = "purple"
+              backgroundColor = "#cccccc"
             },
           )
         }
@@ -47,8 +47,9 @@ object Main:
 
     def appElement(): Element =
       div(
-        h1("Rolls"),
+        h1("Roll Frequencies"),
         renderDice(),
+        renderEffectPanel(),
         renderRollChart(),
       )
     end appElement
@@ -87,15 +88,18 @@ object Main:
 
     def renderDice(): Element =
       div(
-        dieButtons(model.d1Signal, model.d1Updater()),
-        dieButtons(model.d2Signal, model.d2Updater()),
-        dieButtons(model.d3Signal, model.d3Updater()),
+        dieButtons(model.d1Signal, model.d1Updater(), "Power"),
+        dieButtons(model.d2Signal, model.d2Updater(), "Quality"),
+        dieButtons(model.d3Signal, model.d3Updater(), "Status"),
       )
     end renderDice
 
-    def dieButtons(dieSignal: Signal[Die], dieObserver: Observer[Int]): Element =
+    def dieButtons(dieSignal: Signal[Die],
+                   dieObserver: Observer[Int],
+                   label: String): Element =
       div(
         className := "dicegroup",
+        h3(label),
         dieButton(dieSignal, dieObserver, 4),
         dieButton(dieSignal, dieObserver, 6),
         dieButton(dieSignal, dieObserver, 8),
@@ -104,7 +108,9 @@ object Main:
       )
     end dieButtons
 
-    def dieButton(dieSignal: Signal[Die], dieObserver: Observer[Int], n: Int): Element =
+    def dieButton(dieSignal: Signal[Die],
+                  dieObserver: Observer[Int],
+                  n: Int): Element =
       button(
         tpe := "button",
         className := s"die d$n",
@@ -113,6 +119,35 @@ object Main:
         onClick --> { _event => dieObserver.onNext(n) }
       )
     end dieButton
+
+    def renderEffectPanel(): Element =
+      effectPanel(model.eSignal, model.effectDieTypeUpdater())
+    end renderEffectPanel
+
+    def effectPanel(effectSignal: Signal[Set[EffectDieType]],
+                    effectObserver: Observer[EffectDieType]): Element =
+      div(
+        effectButton(effectSignal, effectObserver, Min),
+        effectButton(effectSignal, effectObserver, Mid),
+        effectButton(effectSignal, effectObserver, Max),
+      )
+    end effectPanel
+
+    def effectButton(effectSignal: Signal[Set[EffectDieType]],
+                     effectObserver: Observer[EffectDieType],
+                     effect: EffectDieType): Element =
+      button(
+        tpe := "button",
+        className <-- effectSignal.map { effects =>
+          val baseClass = s"effect-die selected ${effect.toString.toLowerCase}"
+          if effects.contains(effect)
+          then s"$baseClass selected"
+          else s"$baseClass unselected"
+        },
+        s"${effect.toString}",
+        onClick --> { _event => effectObserver.onNext(effect) }
+      )
+    end effectButton
 end Main
 
 final class Model:
@@ -125,12 +160,12 @@ final class Model:
     val d2Signal = d2Var.signal
     val d3Var: Var[Die] = Var(d(6))
     val d3Signal = d3Var.signal
-    val eVar: Var[Seq[EffectDieType]] = Var(Seq(Mid))
+    val eVar: Var[Set[EffectDieType]] = Var(Set(Mid))
     val eSignal = eVar.signal
 
     def currFreqs(): Signal[Map[Int, Int]] =
       eSignal.combineWith(d1Signal, d2Signal, d3Signal).map { (e, d1, d2, d3) =>
-        freqs(d1, d2, d3, e)
+        freqs(d1, d2, d3, e.toSeq)
       }
     end currFreqs
 
@@ -142,6 +177,11 @@ final class Model:
     def d2Updater(): Observer[Int] = dieUpdater(d2Var)
     def d3Updater(): Observer[Int] = dieUpdater(d3Var)
 
-    def updateEffectDieTypes(es: Seq[EffectDieType]) =
-      eVar.update(_ => es)
+    def effectDieTypeUpdater(): Observer[EffectDieType] =
+      eVar.updater { (effects, effect) =>
+        if effects.contains(effect)
+        then effects.filterNot(_ == effect)
+        else effects + effect
+      }
+    end effectDieTypeUpdater
 end Model
