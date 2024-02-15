@@ -22,8 +22,8 @@ object Main:
 
     val model = new Model
 
-    val rollRoute = Route.static(Page.RollChart, root / "rollChart" / endOfSegments)
-    val sceneRoute = Route.static(Page.SceneTracker, root / "sceneTracker" / endOfSegments)
+    val rollRoute = Route.static(Page.RollChart, root / "scrpg-helper" / "rollChart" / endOfSegments)
+    val sceneRoute = Route.static(Page.SceneTracker, root / "scrpg-helper" / "sceneTracker" / endOfSegments)
 
     implicit val rw: ReadWriter[Page] = macroRW
 
