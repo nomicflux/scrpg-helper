@@ -64,7 +64,7 @@ enum Page:
 end Page
 
 final class Model:
-    val pageVar: Var[Page] = Var(Page.SceneTracker)
+    val pageVar: Var[Page] = Var(Page.RollChart)
     val pageSignal = pageVar.signal
 
     def updatePage(page: Page): Unit =

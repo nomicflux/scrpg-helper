@@ -7,6 +7,10 @@ case class Scene[A](green: Int, yellow: Int, red: Int, position: Int, actorQueue
 
     def reset: Scene[A] = this.copy(position = position + 1, actorQueue = actorQueue.reset)
 
+    def advancePosition: Option[Scene[A]] =
+      if(position < totalSpaces) Some(copy(position = position + 1)) else None
+    end advancePosition
+
     def addActor(actor: A): Scene[A] =
       copy(actorQueue = actorQueue.addActor(actor))
     end addActor

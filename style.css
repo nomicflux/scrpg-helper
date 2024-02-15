@@ -179,8 +179,9 @@ div.page {
 
 }
 
-div.scene-tracker {
+.scene-tracker {
   display: block;
+  text-align: center;
 }
 
 td.scene-box {
@@ -233,17 +234,26 @@ td.scene-box.scene-red {
   background-color: red;
 }
 
-div.actors div {
+table.actors {
+  width: 100%;
+  text-align: center;
+}
+
+table.actors td {
+  width: 33%;
+}
+
+.actors div {
   display: inline-block;
   margin: 20px 10px 15px 20px;
 }
 
-div.actors ul {
+.actors ul {
   margin: 0;
   padding-left: 0;
 }
 
-div.actors li {
+.actors li {
   list-style: none;
 }
 
@@ -296,6 +306,46 @@ button.redo {
 }
 button.redo:disabled {
   opacity: 0.2;
+}
+
+div.scene-tracker-page {
+  border-radius: 5%;
+  border: 1px solid black;
+  padding: 10px;
+}
+div.scene-tracker-page.scene-status-green {
+  border-color: #004400;
+  background-color: #002200;
+}
+div.scene-tracker-page.scene-status-yellow {
+  border-color: #444400;
+  background-color: #222200;
+}
+div.scene-tracker-page.scene-status-red {
+  border-color: #440000;
+  background-color: #220000;
+}
+
+.status-updater-span {
+  border: 1px solid grey;
+  border-radius: 5%;
+  padding: 5px;
+  margin: 10px;
+}
+.status-updater-span span{
+  padding: 5px;
+}
+.status-updater input {
+
+}
+.status-updater.status-green {
+  color: #00ff00;
+}
+.status-updater.status-yellow {
+  color: #ffff00;
+}
+.status-updater.status-red {
+  color: #ff0000;
 }
 
 @media (prefers-color-scheme: light) {

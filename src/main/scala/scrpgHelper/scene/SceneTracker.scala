@@ -14,12 +14,16 @@ object SceneTracker:
 
     def sceneTracker(): Element =
       div(
+        className <-- model.sceneSignal.map { scene =>
+          s"scene-tracker-page scene-status-${scene.currentStatus.toString.toLowerCase}"
+        },
         h1("Scene Tracker"),
         advanceTrackerButton(),
         div(undoButton(), redoButton()),
         renderActors(),
         renderSceneTracker(),
         addActorInput(),
+        renderBoxUpdater(),
       )
     end sceneTracker
 
@@ -65,27 +69,27 @@ object SceneTracker:
     end advanceTrackerButton
 
     def renderActors(): Element =
-      div(
+      table(
         className := "actors",
-        div(
-          className := "actors-acted",
-          h3("Acted"),
-          ul(
-            children <-- model.actorsSignal.map(_.acted.map(renderActor(_)).toSeq)
-          )
-        ),
-        div(
-          className := "actors-current",
-          h3("Acting"),
-          ul(
-            children <-- model.actorsSignal.map(_.acting.map(renderActor(_)).toSeq)
-          )
-        ),
-        div(
-          className := "actors-remaining",
-          h3("Waiting"),
-          ul(
-            children <-- model.actorsSignal.map(_.remaining.map(renderActor(_)).toSeq)
+        tr(th("Acted"), th("Acting"), th("Waiting")),
+        tr(
+          td(
+            className := "actors-acted",
+            ul(
+              children <-- model.actorsSignal.map(_.acted.map(renderActor(_)).toSeq)
+            )
+          ),
+          td(
+            className := "actors-current",
+            ul(
+              children <-- model.actorsSignal.map(_.acting.map(renderActor(_)).toSeq)
+            )
+          ),
+          td(
+            className := "actors-remaining",
+            ul(
+              children <-- model.actorsSignal.map(_.remaining.map(renderActor(_)).toSeq)
+            )
           )
         ),
       )
@@ -150,11 +154,41 @@ object SceneTracker:
         )
       )
     end addActorInput
+
+    def renderBoxUpdater(): Element =
+      div(
+        numInput(model.greenSignal, model.greenUpdater, "Green"),
+        numInput(model.yellowSignal, model.yellowUpdater, "Yellow"),
+        numInput(model.redSignal, model.redUpdater, "Red"),
+      )
+    end renderBoxUpdater
+
+    def numInput(nSignal: Signal[Int], nObserver: Observer[Int], label: String): Element =
+        span(
+          className := s"status-updater-span",
+          span(label),
+          input(
+            `typ` := "number",
+            size := 2,
+            className := s"status-updater status-${label.toLowerCase}",
+            controlled(
+              value <-- nSignal.map(_.toString),
+              onInput.mapToValue.map(_.toIntOption).map(_.filter(_ >= 0)).collect {
+                case Some(n)  => n
+              } --> nObserver
+            )
+          )
+        )
+    end numInput
 end SceneTracker
 
 final class Model:
     val sceneTracker: Var[Scene[String]] = Var(Scene(2,4,2))
     val sceneSignal = sceneTracker.signal
+
+    val greenSignal = sceneSignal.map(_.green)
+    val yellowSignal = sceneSignal.map(_.yellow)
+    val redSignal = sceneSignal.map(_.red)
 
     val prevScenesVar: Var[List[Scene[String]]] = Var(List())
     val numOfPrevScenes: Signal[Int] = prevScenesVar.signal.map(_.size)
@@ -195,7 +229,7 @@ final class Model:
 
     def advanceTracker(): Unit =
       sceneTracker.update { scene =>
-        scene.advanceTracker.fold(scene){ s =>
+        scene.advancePosition.fold(scene){ s =>
           savePrevScene(scene)
           s
         }
@@ -212,6 +246,24 @@ final class Model:
       sceneTracker.updater { (scene, actor) =>
         savePrevScene(scene)
         scene.removeActor(actor)
+      }
+
+    val greenUpdater: Observer[Int] =
+      sceneTracker.updater { (scene, green) =>
+        savePrevScene(scene)
+        scene.copy(green = green)
+      }
+
+    val yellowUpdater: Observer[Int] =
+      sceneTracker.updater { (scene, yellow) =>
+        savePrevScene(scene)
+        scene.copy(yellow = yellow)
+      }
+
+    val redUpdater: Observer[Int] =
+      sceneTracker.updater { (scene, red) =>
+        savePrevScene(scene)
+        scene.copy(red = red)
       }
 
     val actorAdvancer: Observer[String] =
