@@ -239,8 +239,14 @@ table.actors {
   text-align: center;
 }
 
+table.actors th {
+  color: grey;
+  font-size: 110%;
+  border-bottom: 1px ridge grey;
+}
+
 table.actors td {
-  width: 33%;
+  width: 25%;
 }
 
 .actors div {
@@ -259,6 +265,15 @@ table.actors td {
 
 div.actor {
 
+}
+
+.actors-current .actor {
+  font-size: 150%;
+}
+
+span.actor-empty {
+  padding: 10px;
+  display: block;
 }
 
 span.actor-name {
@@ -348,16 +363,34 @@ div.scene-tracker-page.scene-status-red {
   color: #ff0000;
 }
 
+div.setup-section {
+  display: inline-block;
+}
+
+div.render-box-updater {
+  display: block;
+}
+
 div.add-actor {
   margin: 20px;
 }
 
-div.reset {
+div.add-actor span {
+  display: block;
+  margin: 10px;
+}
+
+div.undo-section {
   margin: 20px;
 }
 
+div.reset {
+  display: inline-block;
+  margin-right: 20px;
+}
+
 button.reset-button {
-  background-color: #aa0033;
+  background-color: #aa0066;
 }
 
 div.page {

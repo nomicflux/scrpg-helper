@@ -18,13 +18,11 @@ object SceneTracker:
           s"scene-tracker-page scene-status-${scene.currentStatus.toString.toLowerCase}"
         },
         h1("Scene Tracker"),
-        advanceTrackerButton(),
-        div(undoButton(), redoButton()),
+        div(className := "undo-section", resetButton(), undoButton(), redoButton()),
+        div(className := "setup-section", renderBoxUpdater()),
+        div(advanceTrackerButton()),
         renderSceneTracker(),
         renderActors(),
-        addActorInput(),
-        renderBoxUpdater(),
-        resetButton(),
       )
     end sceneTracker
 
@@ -84,12 +82,18 @@ object SceneTracker:
     def renderActors(): Element =
       table(
         className := "actors",
-        tr(th("Acted"), th("Acting"), th("Waiting")),
+        tr(th(), th("Acted"), th("Acting"), th("Waiting")),
         tr(
+          td(
+            addActorInput(),
+          ),
           td(
             className := "actors-acted",
             ul(
-              children <-- model.actorsSignal.map(_.acted.map(renderActor(_)).toSeq)
+              children <-- model.actorsSignal.map { q =>
+                val acted = q.acted.toSeq
+                acted.map(renderActor) ++ renderEmpty(q.totalActors.size, acted.size)
+              }
             )
           ),
           td(
@@ -101,7 +105,10 @@ object SceneTracker:
           td(
             className := "actors-remaining",
             ul(
-              children <-- model.actorsSignal.map(_.remaining.map(renderActor(_)).toSeq)
+              children <-- model.actorsSignal.map { q =>
+                val remaining = q.remaining.toSeq
+                remaining.map(renderActor) ++ renderEmpty(q.totalActors.size, remaining.size)
+              }
             )
           )
         ),
@@ -125,6 +132,20 @@ object SceneTracker:
         )
       )
     end renderActor
+
+    def renderEmpty(total: Int, used: Int): Seq[Element] =
+      (0 until (total - used - 1)).map { _ =>
+        li(
+          div(
+            className := "actor",
+            span(
+              className := "actor-empty",
+              "",
+            ),
+          )
+        )
+      }
+    end renderEmpty
 
     def renderSceneBox(status: Status, position: Int, currentPosition: Int): Element =
       val statusClass = s"scene-${status.toString.toLowerCase}"
@@ -150,26 +171,31 @@ object SceneTracker:
 
       div(
         className := "add-actor",
-        input(
-          `typ` := "text",
-          value <-- actorName,
-          onInput.mapToValue --> actorName
+        span(
+          input(
+            `typ` := "text",
+            value <-- actorName,
+            onInput.mapToValue --> actorName
+          )
         ),
-        button(
-          tpe := "button",
-          "Add Actor",
-          onClick --> { _event =>
-            actorName.update { name =>
-              model.actorUpdater.onNext(name)
-              ""
+        span(
+          button(
+            tpe := "button",
+            "Add Actor",
+            onClick --> { _event =>
+              actorName.update { name =>
+                model.actorUpdater.onNext(name)
+                ""
+              }
             }
-          }
+          )
         )
       )
     end addActorInput
 
     def renderBoxUpdater(): Element =
       div(
+        className := "render-box-updater",
         numInput(model.greenSignal, model.greenUpdater, "Green"),
         numInput(model.yellowSignal, model.yellowUpdater, "Yellow"),
         numInput(model.redSignal, model.redUpdater, "Red"),
