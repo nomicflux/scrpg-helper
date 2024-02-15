@@ -5,7 +5,26 @@ import scrpgHelper.status.Status
 case class Scene[A](green: Int, yellow: Int, red: Int, position: Int, actorQueue: ActorQueue[A]):
     def totalSpaces: Int = green + yellow + red
 
-    def reset: Scene[A] = this.copy(position = position + 1, actorQueue = actorQueue.reset)
+    def resetActors: Scene[A] = this.copy(actorQueue = actorQueue.reset)
+    def resetPosition: Scene[A] = this.copy(position = 1)
+
+    def reset: Scene[A] = resetActors.resetPosition
+
+    def legalPosition: Boolean =
+      position <= totalSpaces && position >= 1
+    end legalPosition
+
+    def updateGreen(newGreen: Int): Option[Scene[A]] =
+      Some(copy(green = newGreen)).filter(_.legalPosition)
+    end updateGreen
+
+    def updateYellow(newYellow: Int): Option[Scene[A]] =
+      Some(copy(yellow = newYellow)).filter(_.legalPosition)
+    end updateYellow
+
+    def updateRed(newRed: Int): Option[Scene[A]] =
+      Some(copy(red = newRed)).filter(_.legalPosition)
+    end updateRed
 
     def advancePosition: Option[Scene[A]] =
       if(position < totalSpaces) Some(copy(position = position + 1)) else None
@@ -36,7 +55,7 @@ case class Scene[A](green: Int, yellow: Int, red: Int, position: Int, actorQueue
     end currentStatus
 
     def advanceTracker: Option[Scene[A]] =
-      if (position == totalSpaces) None else Some(reset)
+      resetActors.advancePosition
     end advanceTracker
 
     def advanceScene(actor: A): Option[Scene[A]] =

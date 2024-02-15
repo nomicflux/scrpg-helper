@@ -1,7 +1,7 @@
 package scrpgHelper.scene
 
 class ActorQueueTest extends munit.FunSuite:
-    import scrpgHelper.scene.ActorQueue.*
+    import ActorQueue.*
 
     test("adds to queue") {
       val q = ActorQueue[String]()

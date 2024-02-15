@@ -78,4 +78,31 @@ class SceneTest extends munit.FunSuite:
       assert(scene.addActor("a").addActor("b").actorQueue.totalActors == Set("a", "b"))
       assert(scene.addActor("a").addActor("b").removeActor("a").actorQueue.totalActors == Set("b"))
     }
+
+    test("updates status") {
+      val scene = Scene[String](1,1,1).copy(position = 3)
+      val moreGreen = scene.updateGreen(2)
+      assert(moreGreen.map(_.green) == Some(2))
+      assert(moreGreen.map(_.yellow) == Some(1))
+      assert(moreGreen.map(_.red) == Some(1))
+
+      val moreYellow = scene.updateYellow(2)
+      assert(moreYellow.map(_.green) == Some(1))
+      assert(moreYellow.map(_.yellow) == Some(2))
+      assert(moreYellow.map(_.red) == Some(1))
+
+      val moreRed = scene.updateRed(2)
+      assert(moreRed.map(_.green) == Some(1))
+      assert(moreRed.map(_.yellow) == Some(1))
+      assert(moreRed.map(_.red) == Some(2))
+
+      val lessGreen = scene.updateGreen(0)
+      assert(lessGreen.isEmpty)
+
+      val lessYellow = scene.updateYellow(0)
+      assert(lessYellow.isEmpty)
+
+      val lessRed = scene.updateRed(0)
+      assert(lessRed.isEmpty)
+    }
 end SceneTest

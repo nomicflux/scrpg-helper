@@ -24,8 +24,21 @@ object SceneTracker:
         renderSceneTracker(),
         addActorInput(),
         renderBoxUpdater(),
+        resetButton(),
       )
     end sceneTracker
+
+    def resetButton(): Element =
+      div(
+        className := "reset",
+        button(
+          tpe := "button",
+          className := "reset-button",
+          "Reset",
+          onClick --> { _ => model.resetScene() }
+        )
+      )
+    end resetButton
 
     def undoButton(): Element =
       button(
@@ -230,40 +243,56 @@ final class Model:
     def advanceTracker(): Unit =
       sceneTracker.update { scene =>
         scene.advancePosition.fold(scene){ s =>
-          savePrevScene(scene)
+          if s != scene then savePrevScene(scene) else ()
           s
         }
       }
     end advanceTracker
 
+    def resetScene(): Unit =
+      sceneTracker.update { scene =>
+        val s = scene.reset
+        if s != scene then savePrevScene(scene) else ()
+        s
+      }
+    end resetScene
+
     val actorUpdater: Observer[String] =
       sceneTracker.updater { (scene, actor) =>
-        savePrevScene(scene)
-        scene.addActor(actor)
+        val s = scene.addActor(actor)
+        if s != scene then savePrevScene(scene) else ()
+        s
       }
 
     val actorRemover: Observer[String] =
       sceneTracker.updater { (scene, actor) =>
-        savePrevScene(scene)
-        scene.removeActor(actor)
+        val s = scene.removeActor(actor)
+        if s != scene then savePrevScene(scene) else ()
+        s
       }
 
     val greenUpdater: Observer[Int] =
       sceneTracker.updater { (scene, green) =>
-        savePrevScene(scene)
-        scene.copy(green = green)
+        scene.updateGreen(green).fold(scene){ s =>
+          if s != scene then savePrevScene(scene) else ()
+          s
+        }
       }
 
     val yellowUpdater: Observer[Int] =
       sceneTracker.updater { (scene, yellow) =>
-        savePrevScene(scene)
-        scene.copy(yellow = yellow)
+        scene.updateYellow(yellow).fold(scene){ s =>
+          if s != scene then savePrevScene(scene) else ()
+          s
+        }
       }
 
     val redUpdater: Observer[Int] =
       sceneTracker.updater { (scene, red) =>
-        savePrevScene(scene)
-        scene.copy(red = red)
+        scene.updateRed(red).fold(scene){ s =>
+          if s != scene then savePrevScene(scene) else ()
+          s
+        }
       }
 
     val actorAdvancer: Observer[String] =

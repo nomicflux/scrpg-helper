@@ -348,6 +348,18 @@ div.scene-tracker-page.scene-status-red {
   color: #ff0000;
 }
 
+div.add-actor {
+  margin: 20px;
+}
+
+div.reset {
+  margin: 20px;
+}
+
+button.reset-button {
+  background-color: #aa0033;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
