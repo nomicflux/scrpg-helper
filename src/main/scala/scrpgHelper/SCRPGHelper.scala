@@ -5,7 +5,9 @@ import scala.scalajs.js.annotation.*
 
 import org.scalajs.dom
 
+import upickle.default._
 import com.raquo.laminar.api.L.{*, given}
+import com.raquo.waypoint._
 
 @main
 def SCRPGHelper(): Unit =
@@ -19,6 +21,21 @@ object Main:
     import scrpgHelper.scene.SceneTracker
 
     val model = new Model
+
+    val rollRoute = Route.static(Page.RollChart, root / "rollChart" / endOfSegments)
+    val sceneRoute = Route.static(Page.SceneTracker, root / "sceneTracker" / endOfSegments)
+
+    implicit val rw: ReadWriter[Page] = macroRW
+
+    val router = new Router[Page](
+        routes = List(rollRoute, sceneRoute),
+        getPageTitle = _.toString,
+        serializePage = page => write(page)(rw),
+        deserializePage = pageStr => read(pageStr)(rw),
+    )(
+        popStateEvents = windowEvents(_.onPopState),
+        owner = unsafeWindowOwner,
+    )
 
     def appElement(): Element =
       div(
@@ -38,36 +55,30 @@ object Main:
       button(
         tpe := "button",
         className := "nav-button",
-        page.render[String](() => "Roll Frequencies", () => "Scene Tracker"),
-        disabled <-- model.pageSignal.map(_ == page),
-        onClick --> { _event => model.updatePage(page) }
+        (page match
+            case Page.RollChart => "Roll Frequencies"
+            case Page.SceneTracker => "Scene Tracker"),
+        disabled <-- router.currentPageSignal.map(_ == page),
+        onClick --> { _event => router.pushState(page) }
       )
     end navButton
 
     def renderPage(): Element =
         div(
           className := "page",
-          child <-- model.pageSignal.map(_.render[Element](RollChart.rollChart, SceneTracker.sceneTracker),
-          )
+          child <-- router.currentPageSignal.map(pageElement),
         )
     end renderPage
+
+    def pageElement(page: Page): Element = page match
+        case Page.RollChart => RollChart.rollChart()
+        case Page.SceneTracker => SceneTracker.sceneTracker()
+    end pageElement
 end Main
 
 enum Page:
     case RollChart, SceneTracker
-
-    def render[A](onRollChart: () => A,
-                  onSceneTracker: () => A): A = this match
-        case RollChart => onRollChart()
-        case SceneTracker => onSceneTracker()
-    end render
 end Page
 
 final class Model:
-    val pageVar: Var[Page] = Var(Page.RollChart)
-    val pageSignal = pageVar.signal
-
-    def updatePage(page: Page): Unit =
-      pageVar.update { _ => page }
-    end updatePage
 end Model
