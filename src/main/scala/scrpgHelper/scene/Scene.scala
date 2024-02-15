@@ -7,6 +7,18 @@ case class Scene[A](green: Int, yellow: Int, red: Int, position: Int, actorQueue
 
     def reset: Scene[A] = this.copy(position = position + 1, actorQueue = actorQueue.reset)
 
+    def addActor(actor: A): Scene[A] =
+      copy(actorQueue = actorQueue.addActor(actor))
+    end addActor
+
+    def removeActor(actor: A): Scene[A] =
+      copy(actorQueue = actorQueue.removeActor(actor))
+    end removeActor
+
+    def statusBoxes: List[Status] =
+      List.fill(green)(Status.Green) ++ List.fill(yellow)(Status.Yellow) ++ List.fill(red)(Status.Red)
+    end statusBoxes
+
     def currentStatus: Status =
       if (position <= green) {
         Status.Green

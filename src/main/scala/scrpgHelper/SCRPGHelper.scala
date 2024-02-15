@@ -16,6 +16,7 @@ def SCRPGHelper(): Unit =
 
 object Main:
     import scrpgHelper.rolls.RollChart
+    import scrpgHelper.scene.SceneTracker
 
     val model = new Model
 
@@ -29,7 +30,7 @@ object Main:
     def renderNavBar(): Element =
       div(
         className := "nav",
-        navButton(Page.RollChart)
+        Page.values.map(navButton(_))
       )
     end renderNavBar
 
@@ -37,7 +38,7 @@ object Main:
       button(
         tpe := "button",
         className := "nav-button",
-        page.render[String](() => "Roll Frequencies"),
+        page.render[String](() => "Roll Frequencies", () => "Scene Tracker"),
         disabled <-- model.pageSignal.map(_ == page),
         onClick --> { _event => model.updatePage(page) }
       )
@@ -46,20 +47,24 @@ object Main:
     def renderPage(): Element =
         div(
           className := "page",
-          child <-- model.pageSignal.map(_.render[Element](RollChart.rollChart))
+          child <-- model.pageSignal.map(_.render[Element](RollChart.rollChart, SceneTracker.sceneTracker),
+          )
         )
     end renderPage
 end Main
 
 enum Page:
-    case RollChart
+    case RollChart, SceneTracker
 
-    def render[A](onRollChart: () => A): A = this match
+    def render[A](onRollChart: () => A,
+                  onSceneTracker: () => A): A = this match
         case RollChart => onRollChart()
+        case SceneTracker => onSceneTracker()
+    end render
 end Page
 
 final class Model:
-    val pageVar: Var[Page] = Var(Page.RollChart)
+    val pageVar: Var[Page] = Var(Page.SceneTracker)
     val pageSignal = pageVar.signal
 
     def updatePage(page: Page): Unit =

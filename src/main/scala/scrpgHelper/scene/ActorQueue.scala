@@ -22,7 +22,9 @@ case class ActorQueue[A](acting: Option[A], acted: Set[A], remaining: Set[A]):
     end shiftActor
 
     def advanceQueue(actor: A): Option[ActorQueue[A]] =
-      if(remaining.isEmpty) {
+      if(acting.contains(actor)) {
+        Some(this)
+      } else if(remaining.isEmpty) {
         None
       } else if(remaining.contains(actor)) {
         Some(shiftActor(actor))

@@ -57,10 +57,25 @@ class SceneTest extends munit.FunSuite:
       assert(scene4.map(_.actorQueue.acting) == Some(Some("c")))
       assert(scene4.map(_.actorQueue.remaining) == Some(Set()))
 
+      val sceneActing = scene4.flatMap(_.advanceScene("c"))
+      assert(sceneActing == scene4)
+
       val scene5 = scene4.flatMap(_.advanceScene("b"))
       assert(scene5.map(_.position) == Some(2))
       assert(scene5.map(_.actorQueue.acted) == Some(Set()))
       assert(scene5.map(_.actorQueue.acting) == Some(Some("b")))
       assert(scene5.map(_.actorQueue.remaining) == Some(Set("a", "c")))
+    }
+
+    test("status boxes") {
+      val scene = Scene(1,2,2)
+      assert(scene.statusBoxes == List(Status.Green, Status.Yellow, Status.Yellow, Status.Red, Status.Red))
+    }
+
+    test("add and remove actors") {
+      val scene = Scene[String](1,2,1)
+      assert(scene.addActor("a").actorQueue.totalActors == Set("a"))
+      assert(scene.addActor("a").addActor("b").actorQueue.totalActors == Set("a", "b"))
+      assert(scene.addActor("a").addActor("b").removeActor("a").actorQueue.totalActors == Set("b"))
     }
 end SceneTest

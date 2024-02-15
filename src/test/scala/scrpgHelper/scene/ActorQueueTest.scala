@@ -38,6 +38,9 @@ class ActorQueueTest extends munit.FunSuite:
       assert(q4.map(_.acted) == Some(Set("a", "b")))
       assert(q4.map(_.remaining) == Some(Set()))
 
+      val qActing = q4.flatMap(_.advanceQueue("c"))
+      assert(qActing == q4)
+
       val q5 = q4.flatMap(_.advanceQueue("a"))
       assert(q5.isEmpty)
     }

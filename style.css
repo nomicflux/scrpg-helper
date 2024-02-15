@@ -179,6 +179,125 @@ div.page {
 
 }
 
+div.scene-tracker {
+  display: block;
+}
+
+td.scene-box {
+  margin: 10px;
+  padding: 0;
+}
+
+td.scene-box div {
+  margin: 0;
+  padding: 0;
+  width: 100px;
+  height: 100px;
+  line-height: 90px;
+  display: inline-block;
+  text-align: center;
+  font-size: 48px;
+  font-weight: bold;
+  color: black;
+}
+
+td.scene-box span {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: normal;
+}
+
+td.scene-box.scene-position {
+  border: 3px inset white;
+}
+
+td.scene-box.scene-done {
+  opacity: 0.4;
+  border: 1px outset grey;
+}
+
+td.scene-box.scene-future {
+  opacity: 0.9;
+  border: 1px inset grey;
+}
+
+td.scene-box.scene-green {
+  background-color: green;
+}
+
+td.scene-box.scene-yellow {
+  background-color: yellow;
+}
+
+td.scene-box.scene-red {
+  background-color: red;
+}
+
+div.actors div {
+  display: inline-block;
+  margin: 20px 10px 15px 20px;
+}
+
+div.actors ul {
+  margin: 0;
+  padding-left: 0;
+}
+
+div.actors li {
+  list-style: none;
+}
+
+div.actor {
+
+}
+
+span.actor-name {
+  font-weight: bold;
+  padding: 10px;
+}
+span.actor-name:hover{
+  background-color: #222222;
+  border: 1px solid #444444;
+  padding: 8px;
+  cursor: pointer;
+}
+
+span.actor-remove {
+  margin-left: 10px;
+  color: red;
+  font-weight: bold;
+}
+span.actor-remove:hover {
+  background-color: #880000;
+  margin-left: 8px;
+  border: 1px solid red;
+  cursor: pointer;
+}
+
+button.advance-tracker {
+  margin: 10px 10px 25px 10px;
+  border: 2px groove grey;
+}
+button.advance-tracker:hover {
+  transition-delay: 0.3s;
+  background-color: #444444;
+}
+
+button.undo {
+  background-color: #ee3300;
+  color: white;
+}
+button.undo:disabled {
+  opacity: 0.2;
+}
+
+button.redo {
+  background-color: #6600ee;
+}
+button.redo:disabled {
+  opacity: 0.2;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
