@@ -360,6 +360,10 @@ button.reset-button {
   background-color: #aa0033;
 }
 
+div.page {
+  margin-top: 25px;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
