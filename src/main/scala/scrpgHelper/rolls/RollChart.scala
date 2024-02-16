@@ -195,7 +195,7 @@ object RollChart:
                 ((counts.take(n - 1) :+ 0.0) ++ counts.drop(n)).toJSArray
               }
               chart.data.datasets.get(1).data = roll.fold(List().toJSArray){ n =>
-                ((List.fill(n - 1)(0.0) :+ counts.drop(n-1).head) ++ List.fill(data.keys.max - n)(0.0)).toJSArray
+                ((List.fill(n - 1)(0.0) :+ counts.drop(n-1).head)).toJSArray
               }
               chart.update()
             }
