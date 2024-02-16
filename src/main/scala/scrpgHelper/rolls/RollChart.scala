@@ -69,9 +69,6 @@ object RollChart:
           className := "die-box die-roll",
           child.text <-- model.rollForEffectsSignal.map { roll => roll.fold("0")(_.toString) }
         ),
-        dieBox(_._1),
-        dieBox(_._2),
-        dieBox(_._3),
       )
     end diceHolder
 
@@ -205,23 +202,27 @@ object RollChart:
 
     def renderDice(): Element =
       div(
-        dieButtons(model.d1Signal, model.d1Updater(), "Power"),
-        dieButtons(model.d2Signal, model.d2Updater(), "Quality"),
-        dieButtons(model.d3Signal, model.d3Updater(), "Status"),
+        dieButtons(model.d1Signal, model.d1Updater(), "Power", _._1),
+        dieButtons(model.d2Signal, model.d2Updater(), "Quality", _._2),
+        dieButtons(model.d3Signal, model.d3Updater(), "Status", _._3),
       )
     end renderDice
 
     def dieButtons(dieSignal: Signal[Die],
                    dieObserver: Observer[Int],
-                   label: String): Element =
+                   label: String,
+                   rollChooser: ((Int, Int, Int)) => Int): Element =
       div(
         className := "dicegroup",
         h3(label),
-        dieButton(dieSignal, dieObserver, 4),
-        dieButton(dieSignal, dieObserver, 6),
-        dieButton(dieSignal, dieObserver, 8),
-        dieButton(dieSignal, dieObserver, 10),
-        dieButton(dieSignal, dieObserver, 12),
+        div(dieBox(rollChooser)),
+        div(
+          dieButton(dieSignal, dieObserver, 4),
+          dieButton(dieSignal, dieObserver, 6),
+          dieButton(dieSignal, dieObserver, 8),
+          dieButton(dieSignal, dieObserver, 10),
+          dieButton(dieSignal, dieObserver, 12),
+        )
       )
     end dieButtons
 
