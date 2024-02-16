@@ -190,7 +190,15 @@ object SceneTracker:
           input(
             `typ` := "text",
             value <-- actorName,
-            onInput.mapToValue --> actorName
+            onInput.mapToValue --> actorName,
+            onKeyPress --> { event =>
+              if(event.key == "Enter") {
+                actorName.update { name =>
+                  model.actorUpdater.onNext(name)
+                  ""
+                }
+              }
+            },
           )
         ),
         span(
