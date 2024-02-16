@@ -22,13 +22,14 @@ object Main:
 
     val model = new Model
 
+    val baseRoute = Route.static(Page.RollChart, root / "scrpg-helper" / endOfSegments)
     val rollRoute = Route.static(Page.RollChart, root / "scrpg-helper" / "rollChart" / endOfSegments)
     val sceneRoute = Route.static(Page.SceneTracker, root / "scrpg-helper" / "sceneTracker" / endOfSegments)
 
     implicit val rw: ReadWriter[Page] = macroRW
 
     val router = new Router[Page](
-        routes = List(rollRoute, sceneRoute),
+        routes = List(rollRoute, baseRoute, sceneRoute),
         getPageTitle = _.toString,
         serializePage = page => write(page)(rw),
         deserializePage = pageStr => read(pageStr)(rw),
