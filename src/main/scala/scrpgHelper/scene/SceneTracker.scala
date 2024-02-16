@@ -59,13 +59,15 @@ object SceneTracker:
     end redoButton
 
     def renderSceneTracker(): Element =
-      table(
-        tr(
-          className := "scene-tracker",
-          children <-- model.sceneSignal.map { scene =>
-            val statusBoxes = scene.statusBoxes
-            statusBoxes.zip(statusBoxes.indices).map( (status, position) => renderSceneBox(status, position + 1, scene.position))
-          }
+      div(
+        className := "scene-tracker",
+        table(
+          tr(
+            children <-- model.sceneSignal.map { scene =>
+              val statusBoxes = scene.statusBoxes
+              statusBoxes.zip(statusBoxes.indices).map( (status, position) => renderSceneBox(status, position + 1, scene.position))
+            }
+          )
         )
       )
     end renderSceneTracker
@@ -82,7 +84,8 @@ object SceneTracker:
     def renderActors(): Element =
       table(
         className := "actors",
-        tr(th(), th("Acted"), th("Acting"), th("Waiting")),
+        thead(tr(th(), th("Acted"), th("Acting"), th("Waiting"))),
+        tbody(
         tr(
           td(
             addActorInput(),
@@ -110,8 +113,20 @@ object SceneTracker:
                 remaining.map(renderActor) ++ renderEmpty(q.totalActors.size, remaining.size)
               }
             )
+          ),
+        )),
+        tfoot(
+          tr(
+            td(
+              colSpan := 4,
+              span(
+                className := "help",
+                "Click on Waiting actors to hand off the scene to them. Once all actors have gone, click on any actor ",
+                "other than the current one to advance the tracker and start the next round.",
+              )
+            )
           )
-        ),
+        )
       )
     end renderActors
 

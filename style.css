@@ -189,9 +189,12 @@ div.page {
 
 }
 
-.scene-tracker {
-  display: block;
-  text-align: center;
+div.scene-tracker {
+  width: 100%;
+}
+
+div.scene-tracker table {
+  margin: 0 auto;
 }
 
 td.scene-box {
@@ -428,6 +431,15 @@ span.die-roll {
 
 div.dice-holder {
   display: inline-block;
+}
+
+span.help {
+  display: block;
+  width: 75%;
+  font-size: 90%;
+  color: #aaaaaa;
+  text-align: center;
+  margin: 0 auto;
 }
 
 @media (prefers-color-scheme: light) {
