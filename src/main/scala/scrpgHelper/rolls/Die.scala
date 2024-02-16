@@ -32,12 +32,9 @@ object Die:
       yield (n, m, l)
     end cartesian
 
-    def makeRoll(d1: Die, d2: Die, d3: Die, effects: Seq[EffectDieType]): Int =
-      val n = d1.roll()
-      val m = d2.roll()
-      val l = d3.roll()
+    def fromEffects(n: Int, m: Int, l: Int, effects: Seq[EffectDieType]): Int =
       effects.map(_.getEffect(n, m, l)).sum
-    end makeRoll
+    end fromEffects
 
     def results(d1: Die, d2: Die, d3: Die, effects: Seq[EffectDieType]): Seq[Int] =
       for n <- d1.values

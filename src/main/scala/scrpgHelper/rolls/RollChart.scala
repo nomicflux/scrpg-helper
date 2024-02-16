@@ -23,6 +23,13 @@ object RollChart:
               label = "Count"
               borderWidth = 1
               backgroundColor = "#cccccc"
+              stack = "a"
+            },
+            new ChartDataSets {
+              label = "Roll"
+              borderWidth = 1
+              backgroundColor = "#00cc00"
+              stack = "a"
             },
           )
         }
@@ -40,12 +47,50 @@ object RollChart:
 
     def rollChart(): Element =
       div(
-        h1("Roll Frequencies"),
+        h1("Roll Dice"),
         renderDice(),
         renderEffectPanel(),
+        diceHolder(),
         renderRollChart(),
       )
     end rollChart
+
+    def diceHolder(): Element =
+      div(
+        className := "dice-holder",
+        button(
+          tpe := "button",
+          "Roll 'em",
+          onClick.compose(_.withCurrentValueOf(model.dicePoolSignal)) --> { evPool => evPool match
+            case (_, _, d1, d2, d3) => model.rollUpdater.onNext((d1, d2, d3)) }
+        ),
+        span(
+          className := "die-box die-roll",
+          child.text <-- model.rollForEffectsSignal.map { roll => roll.fold("0")(_.toString) }
+        ),
+        span(
+          className := "die-box",
+          child.text <-- model.rollSignal.map { roll => roll match
+            case (Some((n, _, _)), _) => n.toString
+            case (None, _) => ""
+          }
+        ),
+        span(
+          className := "die-box",
+          child.text <-- model.rollSignal.map { roll => roll match
+            case (Some((_, n, _)), _) => n.toString
+            case (None, _) => ""
+          }
+        ),
+        span(
+          className := "die-box",
+          child.text <-- model.rollSignal.map { roll => roll match
+            case (Some((_, _, n)), _) => n.toString
+            case (None, _) => ""
+          }
+        ),
+      )
+    end diceHolder
 
     def renderRollChart(): Element =
         import scala.scalajs.js.JSConverters.*
@@ -66,13 +111,18 @@ object RollChart:
               optChart = None
             },
           ),
-          model.currFreqs() --> { data =>
+          model.currFreqs().combineWith(model.rollForEffectsSignal) --> { (data, roll) =>
             val vals = 1 to data.keys.max
             val labels = vals.map(_.toString)
             val counts = vals.map(data.getOrElse(_, 0).toDouble)
             optChart.foreach { chart =>
               chart.data.labels = labels.toJSArray
-              chart.data.datasets.get(0).data = counts.toJSArray
+              chart.data.datasets.get(0).data = roll.fold(counts.toJSArray){ n =>
+                ((counts.take(n - 1) :+ 0.0) ++ counts.drop(n)).toJSArray
+              }
+              chart.data.datasets.get(1).data = roll.fold(List().toJSArray){ n =>
+                ((List.fill(n - 1)(0.0) :+ counts.drop(n-1).head) ++ List.fill(data.keys.max - n)(0.0)).toJSArray
+              }
               chart.update()
             }
           }
@@ -156,14 +206,31 @@ final class Model:
     val eVar: Var[Set[EffectDieType]] = Var(Set(Mid))
     val eSignal = eVar.signal
 
+    val dicePoolSignal = eSignal.combineWith(d1Signal, d2Signal, d3Signal)
+
+    val rollVar: Var[Option[(Int, Int, Int)]] = Var(None)
+    val rollSignal = rollVar.signal.combineWith(eSignal.map(_.toSeq))
+
+    val rollForEffectsSignal = rollSignal.map { roll => roll match
+      case (Some((n, m, l)), e) => Some(Die.fromEffects(n, m, l, e))
+      case (None, _) => None
+    }
+
+    val rollUpdater: Observer[(Die, Die, Die)] = rollVar.updater { (_, pool) => pool match
+      case (d1, d2, d3) => Some(d1.roll(), d2.roll(), d3.roll())
+    }
+
     def currFreqs(): Signal[Map[Int, Int]] =
-      eSignal.combineWith(d1Signal, d2Signal, d3Signal).map { (e, d1, d2, d3) =>
+      dicePoolSignal.map { (e, d1, d2, d3) =>
         freqs(d1, d2, d3, e.toSeq)
       }
     end currFreqs
 
     def dieUpdater(dieVar: Var[Die]): Observer[Int] =
-      dieVar.updater { (_die, n) => d(n) }
+      dieVar.updater { (_die, n) =>
+        rollVar.update(_ => None)
+        d(n)
+      }
     end dieUpdater
 
     def d1Updater(): Observer[Int] = dieUpdater(d1Var)

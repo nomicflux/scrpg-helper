@@ -56,7 +56,7 @@ object Main:
         tpe := "button",
         className := "nav-button",
         (page match
-            case Page.RollChart => "Roll Frequencies"
+            case Page.RollChart => "Roll Dice"
             case Page.SceneTracker => "Scene Tracker"),
         disabled <-- router.currentPageSignal.map(_ == page),
         onClick --> { _event => router.pushState(page) }
