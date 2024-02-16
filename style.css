@@ -83,6 +83,13 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+table.die-result {
+  width: 100%;
+}
+table.die-result td {
+  width: 25%;
+}
+
 div.dicegroup {
   border: 2px ridge grey;
   border-radius: 5%;

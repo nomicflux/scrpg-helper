@@ -51,6 +51,7 @@ object RollChart:
         renderDice(),
         renderEffectPanel(),
         diceHolder(),
+        resultBox(),
         renderRollChart(),
       )
     end rollChart
@@ -68,29 +69,102 @@ object RollChart:
           className := "die-box die-roll",
           child.text <-- model.rollForEffectsSignal.map { roll => roll.fold("0")(_.toString) }
         ),
-        span(
-          className := "die-box",
-          child.text <-- model.rollSignal.map { roll => roll match
-            case (Some((n, _, _)), _) => n.toString
-            case (None, _) => ""
-          }
-        ),
-        span(
-          className := "die-box",
-          child.text <-- model.rollSignal.map { roll => roll match
-            case (Some((_, n, _)), _) => n.toString
-            case (None, _) => ""
-          }
-        ),
-        span(
-          className := "die-box",
-          child.text <-- model.rollSignal.map { roll => roll match
-            case (Some((_, _, n)), _) => n.toString
-            case (None, _) => ""
-          }
-        ),
+        dieBox(_._1),
+        dieBox(_._2),
+        dieBox(_._3),
       )
     end diceHolder
+
+    def dieBox(f: ((Int, Int, Int)) => Int): Element =
+        span(
+          className := "die-box",
+          child.text <-- model.rollSignal.map { roll => roll._1.fold("")(f(_).toString) }
+        )
+    end dieBox
+
+    enum Overcome:
+      case BeyondExpectations, Success, MinorTwist, MajorTwist, SpectacularFailure
+
+      def toDescription: String = this match
+        case BeyondExpectations => "Beyond Expectations"
+        case Success => "Success"
+        case MinorTwist => "Minor Twist"
+        case MajorTwist => "Major Twist / Failure"
+        case SpectacularFailure => "Spectacular Failure"
+      end toDescription
+
+      def toClassName: String = this match
+        case BeyondExpectations => "beyond-expectations"
+        case Success => "success"
+        case MinorTwist => "minor-twist"
+        case MajorTwist => "major-twist"
+        case SpectacularFailure => "spectacular-failure"
+      end toClassName
+    end Overcome
+
+    def overcomeRoll(n: Int): Overcome =
+      if(n >= 12) {
+        Overcome.BeyondExpectations
+      } else if(n >= 8) {
+        Overcome.Success
+      } else if(n >= 4) {
+        Overcome.MinorTwist
+      } else if(n >= 1) {
+        Overcome.MajorTwist
+      } else {
+        Overcome.SpectacularFailure
+      }
+    end overcomeRoll
+
+    def boostRoll(n: Int): Int =
+      if(n >= 12) {
+        4
+      } else if(n >= 8) {
+        3
+      } else if(n >= 4) {
+        2
+      } else if(n >= 1) {
+        1
+      } else {
+        0
+      }
+    end boostRoll
+
+    def resultBox(): Element =
+      val modifierVar: Var[Int] = Var(0)
+      val modifierSignal = modifierVar.signal
+      val withModifierSignal = model.rollForEffectsSignal.combineWith(modifierSignal).map { rollMod => rollMod match
+        case (Some(n), m) => Some(n + m)
+        case (None, _) => None
+      }
+
+      table(
+        className := "die-result",
+        tr(th("Modifier"), th("Overcome"), th("Attack / Defend"), th("Boost / Hinder")),
+        tr(
+          td(
+            input(
+              `typ` := "number",
+              size := 3,
+              controlled(
+                value <-- modifierSignal.map(_.toString),
+                onInput.mapToValue.map(_.toIntOption).collect { case Some(n) => n } --> { n => modifierVar.update(_ => n) }
+              )
+            ),
+          ),
+          td(
+            className <-- withModifierSignal.map(_.fold("")(overcomeRoll(_).toClassName)),
+            child.text <-- withModifierSignal.map(_.fold("")(overcomeRoll(_).toDescription))
+          ),
+          td(
+            child.text <-- withModifierSignal.map(_.fold("")(Some(_).filter(_ >= 0).getOrElse(0).toString))
+          ),
+          td(
+            child.text <-- withModifierSignal.map(_.fold("")(roll => s"+/-${boostRoll(roll)}"))
+          )
+        )
+      )
+    end resultBox
 
     def renderRollChart(): Element =
         import scala.scalajs.js.JSConverters.*
