@@ -292,7 +292,7 @@ object SceneTracker:
             tpe := "button",
             className := "spinner",
             "+",
-            onClick --> { _ =>  model.greenIncrementer.onNext(1) }
+            onClick --> { _ =>  nIncrementer.onNext(1) }
           ),
 
         )
