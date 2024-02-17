@@ -38,33 +38,33 @@ class SceneTest extends munit.FunSuite:
 
       val scene2 = scene1.advanceScene("a")
       assert(scene2.map(_.position) == Some(1))
-      assert(scene2.map(_.actorQueue.acted) == Some(Set()))
+      assert(scene2.map(_.actorQueue.acted) == Some(List()))
       assert(scene2.map(_.actorQueue.acting) == Some(Some("a")))
-      assert(scene2.map(_.actorQueue.remaining) == Some(Set("b", "c")))
+      assert(scene2.map(_.actorQueue.remaining) == Some(List("b", "c")))
 
       val sceneNot = scene2.flatMap(_.advanceScene("a"))
       assert(sceneNot == scene2)
 
       val scene3 = scene2.flatMap(_.advanceScene("b"))
       assert(scene3.map(_.position) == Some(1))
-      assert(scene3.map(_.actorQueue.acted) == Some(Set("a")))
+      assert(scene3.map(_.actorQueue.acted) == Some(List("a")))
       assert(scene3.map(_.actorQueue.acting) == Some(Some("b")))
-      assert(scene3.map(_.actorQueue.remaining) == Some(Set("c")))
+      assert(scene3.map(_.actorQueue.remaining) == Some(List("c")))
 
       val scene4 = scene3.flatMap(_.advanceScene("c"))
       assert(scene4.map(_.position) == Some(1))
-      assert(scene4.map(_.actorQueue.acted) == Some(Set("a", "b")))
+      assert(scene4.map(_.actorQueue.acted) == Some(List("a", "b")))
       assert(scene4.map(_.actorQueue.acting) == Some(Some("c")))
-      assert(scene4.map(_.actorQueue.remaining) == Some(Set()))
+      assert(scene4.map(_.actorQueue.remaining) == Some(List()))
 
       val sceneActing = scene4.flatMap(_.advanceScene("c"))
       assert(sceneActing == scene4)
 
       val scene5 = scene4.flatMap(_.advanceScene("b"))
       assert(scene5.map(_.position) == Some(2))
-      assert(scene5.map(_.actorQueue.acted) == Some(Set()))
+      assert(scene5.map(_.actorQueue.acted) == Some(List()))
       assert(scene5.map(_.actorQueue.acting) == Some(Some("b")))
-      assert(scene5.map(_.actorQueue.remaining) == Some(Set("a", "c")))
+      assert(scene5.map(_.actorQueue.remaining) == Some(List("a", "c")))
     }
 
     test("status boxes") {

@@ -19,6 +19,45 @@ enum ActorType:
         case _ => this
     end withDieSize
 
+    def increaseDie(n: Int): Option[Int] =
+      if(n == 4) {
+        Some(6)
+      } else if(n == 6) {
+        Some(8)
+      } else if(n == 8) {
+        Some(10)
+      } else if(n == 10) {
+        Some(12)
+      } else {
+        None
+      }
+    end increaseDie
+
+    def decreaseDie(n: Int): Option[Int] =
+      if(n == 6) {
+        Some(4)
+      } else if(n == 8) {
+        Some(6)
+      } else if(n == 10) {
+        Some(8)
+      } else if(n == 12) {
+        Some(10)
+      } else {
+        None
+      }
+    end decreaseDie
+
+    def increaseDieSize(): Option[ActorType] = this match
+        case Minion(n) => increaseDie(n).map(m => new Minion(m))
+        case Lieutenant(n) => increaseDie(n).map(m => new Lieutenant(m))
+        case _ => Some(this)
+    end increaseDieSize
+
+    def decreaseDieSize(): Option[ActorType] = this match
+        case Minion(n) => decreaseDie(n).map(m => new Minion(m))
+        case Lieutenant(n) => decreaseDie(n).map(m => new Lieutenant(m))
+        case _ => Some(this)
+    end decreaseDieSize
 end ActorType
 
 object ActorType:
@@ -41,40 +80,34 @@ object ActorType:
     end fromString
 end ActorType
 
-enum Actor:
-    case Hero(id: ActorId, name: String)
-    case Villain(id: ActorId, name: String)
-    case Environment(id: ActorId, name: String)
-    case Other(id: ActorId, name: String)
-    case Minion(id: ActorId, name: String, dieSize: Int)
-    case Lieutenant(id: ActorId, name: String, dieSize: Int)
-
-    val toClassName: String = this match
-        case Hero(_, _) => "actor-name actor-hero"
-        case Villain(_, _) => "actor-name actor-villain"
-        case Environment(_, _) => "actor-name actor-environment"
-        case Other(_, _) => "actor-name actor-other"
-        case Minion(_, _, dieSize) => s"actor-name actor-minion actor-die-size-${dieSize}"
-        case Lieutenant(_, _, dieSize) => s"actor-name actor-lieutenant actor-die-size-${dieSize}"
+case class Actor(id: ActorId, name: String, actorType: ActorType):
+    val toClassName: String = actorType match
+        case ActorType.Hero => "actor-name actor-hero"
+        case ActorType.Villain => "actor-name actor-villain"
+        case ActorType.Environment => "actor-name actor-environment"
+        case ActorType.Other => "actor-name actor-other"
+        case ActorType.Minion(dieSize) => s"actor-name actor-minion actor-die-size-${dieSize}"
+        case ActorType.Lieutenant(dieSize) => s"actor-name actor-lieutenant actor-die-size-${dieSize}"
     end toClassName
 
-    override val toString: String = this match
-        case Hero(_, name) => s"(H) $name"
-        case Villain(_, name) => s"(V) $name"
-        case Environment(_, name) => s"(E) $name"
-        case Other(_, name) => name
-        case Minion(_, name, dieSize) => s"(M) $name (d$dieSize)"
-        case Lieutenant(_, name, dieSize) => s"(L) $name (d$dieSize)"
+    override val toString: String = actorType match
+        case ActorType.Hero => s"(H) $name"
+        case ActorType.Villain => s"(V) $name"
+        case ActorType.Environment => s"(E) $name"
+        case ActorType.Other => name
+        case ActorType.Minion(dieSize) => s"(M) $name (d$dieSize)"
+        case ActorType.Lieutenant(dieSize) => s"(L) $name (d$dieSize)"
     end toString
+
+    def increaseDieSize(): Option[Actor] =
+      actorType.increaseDieSize().map(at => copy(actorType = at))
+    end increaseDieSize
+
+    def decreaseDieSize(): Option[Actor] =
+      actorType.decreaseDieSize().map(at => copy(actorType = at))
+    end decreaseDieSize
 end Actor
 
 object Actor:
-    def createActor(actorType: ActorType, name: String): Actor = actorType match
-        case ActorType.Hero => new Hero(new ActorId, name)
-        case ActorType.Villain => new Villain(new ActorId, name)
-        case ActorType.Environment => new Environment(new ActorId, name)
-        case ActorType.Other => new Other(new ActorId, name)
-        case ActorType.Minion(dieSize) => new Minion(new ActorId, name, dieSize)
-        case ActorType.Lieutenant(dieSize) => new Lieutenant(new ActorId, name, dieSize)
-    end createActor
+    def createActor(actorType: ActorType, name: String): Actor = new Actor(new ActorId, name, actorType)
 end Actor

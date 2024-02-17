@@ -1,24 +1,36 @@
 package scrpgHelper.scene
 
-case class ActorQueue[A](acting: Option[A], acted: Set[A], remaining: Set[A]):
+case class ActorQueue[A](acting: Option[A], acted: List[A], remaining: List[A]):
     def addActor(actor: A): ActorQueue[A] =
-      copy(remaining = remaining + actor)
+      copy(remaining = remaining :+ actor)
     end addActor
 
     def removeActor(actor: A): ActorQueue[A] =
-      copy(acting.filterNot(_ == actor), acted.diff(Set(actor)), remaining.diff(Set(actor)))
+      copy(acting.filterNot(_ == actor), acted.toSet.diff(Set(actor)).toList, remaining.toSet.diff(Set(actor)).toList)
     end removeActor
 
+    def replaceActor(actorA: A, actorB: A): ActorQueue[A] =
+      copy(
+        acting = acting.map(a => if a == actorA then actorB else a),
+        acted = acted.map(a => if a == actorA then actorB else a),
+        remaining = remaining.map(a => if a == actorA then actorB else a),
+      )
+    end replaceActor
+
+    def updateActor(actor: A, f: A => Option[A]): Option[ActorQueue[A]] =
+      f(actor).map(newActor => replaceActor(actor, newActor))
+    end updateActor
+
     def totalActors: Set[A] =
-      acted.union(remaining).union(acting.toSet)
+      acted.toSet.union(remaining.toSet).union(acting.toSet)
     end totalActors
 
     def reset: ActorQueue[A] =
-      new ActorQueue(None, Set(), totalActors)
+      new ActorQueue(None, List(), totalActors.toList)
     end reset
 
     def shiftActor(actor: A): ActorQueue[A] =
-      copy(Some(actor), acted.union(acting.toSet), remaining.diff(Set(actor)))
+      copy(Some(actor), acted.toSet.union(acting.toSet).toList, remaining.toSet.diff(Set(actor)).toList)
     end shiftActor
 
     def advanceQueue(actor: A): Option[ActorQueue[A]] =
@@ -36,10 +48,10 @@ end ActorQueue
 
 object ActorQueue:
     def apply[A](): ActorQueue[A] =
-      new ActorQueue(None, Set(), Set())
+      new ActorQueue(None, List(), List())
     end apply
 
     def apply[A](actors: Seq[A]): ActorQueue[A] =
-      new ActorQueue(None, Set(), actors.toSet)
+      new ActorQueue(None, List(), actors.toList)
     end apply
 end ActorQueue

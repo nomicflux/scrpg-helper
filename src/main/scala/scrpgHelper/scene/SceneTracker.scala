@@ -137,6 +137,19 @@ object SceneTracker:
             onClick --> { _event => model.actorAdvancer.onNext(actor) }
           ),
           span(
+            className := s"actor-change-die-size actor-has-die-${actor.actorType.hasDie}",
+            button(
+              tpe := "button",
+              "➚",
+              onClick --> { _ => model.actorDieIncreaser.onNext(actor) },
+            ),
+            button(
+              tpe := "button",
+              "➘",
+              onClick --> { _ => model.actorDieDecreaser.onNext(actor) },
+            )
+          ),
+          span(
             className := "actor-remove",
             "✗",
             onClick --> { _event => model.actorRemover.onNext(actor) }
@@ -197,7 +210,7 @@ object SceneTracker:
             onKeyPress.compose(_.withCurrentValueOf(actorType)) --> { case (event, at) =>
               if(event.key == "Enter") {
                 actorName.update { name =>
-                  model.actorUpdater.onNext(Actor.createActor(at, name))
+                  model.actorAdder.onNext(Actor.createActor(at, name))
                   ""
                 }
               }
@@ -235,7 +248,7 @@ object SceneTracker:
             "Add Actor",
             onClick.compose(_.withCurrentValueOf(actorType)) --> { case (_event, at) =>
               actorName.update { name =>
-                model.actorUpdater.onNext(Actor.createActor(at, name))
+                model.actorAdder.onNext(Actor.createActor(at, name))
                 ""
               }
             }
@@ -351,7 +364,7 @@ final class Model:
     val advanceTracker: Observer[Unit] = optSceneUpdater((scene, _) => scene.advancePosition)
     val resetScene: Observer[Unit] = sceneUpdater((scene, _) => scene.reset)
 
-    val actorUpdater: Observer[Actor] = sceneUpdater((scene, actor) => scene.addActor(actor))
+    val actorAdder: Observer[Actor] = sceneUpdater((scene, actor) => scene.addActor(actor))
     val actorRemover: Observer[Actor] = sceneUpdater((scene, actor) => scene.removeActor(actor))
 
     val greenUpdater: Observer[Int] = optSceneUpdater((scene, green) => scene.updateGreen(green))
@@ -363,4 +376,6 @@ final class Model:
     val redIncrementer: Observer[Int] = optSceneUpdater((scene, change) => scene.updateRed(scene.red + change))
 
     val actorAdvancer: Observer[Actor] = optSceneUpdater((scene, actor) => scene.advanceScene(actor))
+    val actorDieIncreaser: Observer[Actor] = optSceneUpdater((scene, actor) => scene.updateActor(actor, a => a.increaseDieSize()))
+    val actorDieDecreaser: Observer[Actor] = optSceneUpdater((scene, actor) => scene.updateActor(actor, a => a.decreaseDieSize()))
 end Model

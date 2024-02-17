@@ -277,7 +277,10 @@ table.actors td {
 }
 
 div.actor {
-
+  position: relative;
+  display: inline-block;
+  line-height: normal;
+  vertical-align: middle;
 }
 
 .actors-current .actor {
@@ -335,19 +338,19 @@ span.actor-remove:hover {
   opacity: 0.6;
 }
 .actor-die-size-6 {
-  font-size: 90%;
+  font-size: 85%;
   opacity: 0.7;
 }
 .actor-die-size-8 {
-  font-size: 100%;
+  font-size: 90%;
   opacity: 0.8;
 }
 .actor-die-size-10 {
-  font-size: 110%;
+  font-size: 95%;
   opacity: 0.9;
 }
 .actor-die-size-12 {
-  font-size: 125%;
+  font-size: 100%;
   opacity: 1;
 }
 
@@ -356,6 +359,23 @@ span.actor-remove:hover {
 
 .actor-has-die-false {
   display: none;
+}
+
+span.actor-change-die-size.actor-has-die-true {
+  display: inline-block;
+  line-height: normal;
+  width: fit-content;
+  position: relative;
+  top: 10px;
+}
+
+span.actor-change-die-size.actor-has-die-true button {
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+  padding: 1px;
+  font-size: 12px;
+  position: relative;
 }
 
 button.advance-tracker {

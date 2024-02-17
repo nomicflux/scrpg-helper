@@ -38,6 +38,10 @@ case class Scene[A](green: Int, yellow: Int, red: Int, position: Int, actorQueue
       copy(actorQueue = actorQueue.removeActor(actor))
     end removeActor
 
+    def updateActor(actor: A, f: A => Option[A]): Option[Scene[A]] =
+      actorQueue.updateActor(actor, f).map(aq => copy(actorQueue = aq))
+    end updateActor
+
     def statusBoxes: List[Status] =
       List.fill(green)(Status.Green) ++ List.fill(yellow)(Status.Yellow) ++ List.fill(red)(Status.Red)
     end statusBoxes
