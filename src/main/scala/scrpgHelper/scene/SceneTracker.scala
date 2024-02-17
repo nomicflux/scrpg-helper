@@ -92,27 +92,15 @@ object SceneTracker:
           ),
           td(
             className := "actors-acted",
-            ul(
-              children <-- model.actorsSignal.map { q =>
-                val acted = q.acted.toSeq
-                acted.map(renderActor) ++ renderEmpty(q.totalActors.size, acted.size)
-              }
-            )
+            renderActorList(q => q.acted.toSeq, true)
           ),
           td(
             className := "actors-current",
-            ul(
-              children <-- model.actorsSignal.map(_.acting.map(renderActor(_)).toSeq)
-            )
+            renderActorList(q => q.acting.toSeq, false)
           ),
           td(
             className := "actors-remaining",
-            ul(
-              children <-- model.actorsSignal.map { q =>
-                val remaining = q.remaining.toSeq
-                remaining.map(renderActor) ++ renderEmpty(q.totalActors.size, remaining.size)
-              }
-            )
+            renderActorList(q => q.remaining.toSeq, true)
           ),
         )),
         tfoot(
@@ -130,13 +118,22 @@ object SceneTracker:
       )
     end renderActors
 
-    def renderActor(actor: String): Element =
+    def renderActorList(getActors: ActorQueue[Actor] => Seq[Actor], withEmpty: Boolean): Element =
+      ul(
+        children <-- model.actorsSignal.map { q =>
+          val actors = getActors(q)
+          actors.map(renderActor) ++ (if withEmpty then renderEmpty(q.totalActors.size, actors.size) else List())
+        }
+      )
+    end renderActorList
+
+    def renderActor(actor: Actor): Element =
       li(
         div(
           className := "actor",
           span(
-            className := "actor-name",
-            actor,
+            className := actor.toClassName,
+            actor.toString,
             onClick --> { _event => model.actorAdvancer.onNext(actor) }
           ),
           span(
@@ -184,17 +181,23 @@ object SceneTracker:
       val actorName: Var[String] = Var("")
       val actorSignal = actorName.signal
 
+      val actorType: Var[ActorType] = Var(ActorType.Hero)
+      val actorTypeSignal = actorType.signal
+
+      val dieSize: Var[Int] = Var(4)
+      val dieSizeSignal = dieSize.signal
+
       div(
         className := "add-actor",
         span(
           input(
-            `typ` := "text",
+            tpe := "text",
             value <-- actorName,
             onInput.mapToValue --> actorName,
-            onKeyPress --> { event =>
+            onKeyPress.compose(_.withCurrentValueOf(actorType)) --> { case (event, at) =>
               if(event.key == "Enter") {
                 actorName.update { name =>
-                  model.actorUpdater.onNext(name)
+                  model.actorUpdater.onNext(Actor.createActor(at, name))
                   ""
                 }
               }
@@ -202,12 +205,37 @@ object SceneTracker:
           )
         ),
         span(
+          select(
+            option(value := "Hero", "Hero"),
+            option(value := "Villain", "Villain"),
+            option(value := "Minion", "Minion"),
+            option(value := "Lieutenant", "Lieutenant"),
+            option(value := "Environment", "Environment"),
+            option(value := "Other", "Other"),
+            onChange.mapToValue.compose(_.withCurrentValueOf(dieSizeSignal)) --> { case(s, d) =>
+              ActorType.fromString(s, d).foreach(at => actorType.update(_ => at))
+            }
+          ),
+          select(
+            className <-- actorTypeSignal.map(at => s"select-die-size actor-has-die-${at.hasDie}"),
+            option(value := "4", "d4"),
+            option(value := "6", "d6"),
+            option(value := "8", "d8"),
+            option(value := "10", "d10"),
+            option(value := "12", "d12"),
+            onChange.mapToValue.map(_.toIntOption).collect { case Some(n) => n } --> { n =>
+              dieSize.update(_ => n)
+              actorType.update(at => at.withDieSize(n))
+            },
+          )
+        ),
+        span(
           button(
             tpe := "button",
             "Add Actor",
-            onClick --> { _event =>
+            onClick.compose(_.withCurrentValueOf(actorType)) --> { case (_event, at) =>
               actorName.update { name =>
-                model.actorUpdater.onNext(name)
+                model.actorUpdater.onNext(Actor.createActor(at, name))
                 ""
               }
             }
@@ -238,6 +266,7 @@ object SceneTracker:
           input(
             tpe := "text",
             size := 1,
+            inputMode := "numeric",
             className := s"status-updater status-${label.toLowerCase}",
             controlled(
               value <-- nSignal.map(_.toString),
@@ -258,22 +287,22 @@ object SceneTracker:
 end SceneTracker
 
 final class Model:
-    val sceneTracker: Var[Scene[String]] = Var(Scene(2,4,2))
+    val sceneTracker: Var[Scene[Actor]] = Var(Scene(2,4,2))
     val sceneSignal = sceneTracker.signal
 
     val greenSignal = sceneSignal.map(_.green)
     val yellowSignal = sceneSignal.map(_.yellow)
     val redSignal = sceneSignal.map(_.red)
 
-    val prevScenesVar: Var[List[Scene[String]]] = Var(List())
+    val prevScenesVar: Var[List[Scene[Actor]]] = Var(List())
     val numOfPrevScenes: Signal[Int] = prevScenesVar.signal.map(_.size)
 
-    val redoScenesVar: Var[List[Scene[String]]] = Var(List())
+    val redoScenesVar: Var[List[Scene[Actor]]] = Var(List())
     val numOfRedoScenes: Signal[Int] = redoScenesVar.signal.map(_.size)
 
     val actorsSignal = sceneSignal.map(_.actorQueue)
 
-    def savePrevScene(scene: Scene[String]): Unit =
+    def savePrevScene(scene: Scene[Actor]): Unit =
       prevScenesVar.update { scenes => scene +: scenes }
       redoScenesVar.update { _ => List() }
     end savePrevScene
@@ -302,7 +331,7 @@ final class Model:
       }
     end redo
 
-    def optSceneUpdater[A](f: (Scene[String], A) => Option[Scene[String]]): Observer[A] =
+    def optSceneUpdater[A](f: (Scene[Actor], A) => Option[Scene[Actor]]): Observer[A] =
       sceneTracker.updater { (scene, a) =>
         f(scene, a).fold(scene){ s =>
           if s != scene then savePrevScene(scene) else ()
@@ -311,7 +340,7 @@ final class Model:
       }
     end optSceneUpdater
 
-    def sceneUpdater[A](f: (Scene[String], A) => Scene[String]): Observer[A] =
+    def sceneUpdater[A](f: (Scene[Actor], A) => Scene[Actor]): Observer[A] =
       sceneTracker.updater { (scene, a) =>
         val s = f(scene, a)
         if s != scene then savePrevScene(scene) else ()
@@ -322,8 +351,8 @@ final class Model:
     val advanceTracker: Observer[Unit] = optSceneUpdater((scene, _) => scene.advancePosition)
     val resetScene: Observer[Unit] = sceneUpdater((scene, _) => scene.reset)
 
-    val actorUpdater: Observer[String] = sceneUpdater((scene, actor) => scene.addActor(actor))
-    val actorRemover: Observer[String] = sceneUpdater((scene, actor) => scene.removeActor(actor))
+    val actorUpdater: Observer[Actor] = sceneUpdater((scene, actor) => scene.addActor(actor))
+    val actorRemover: Observer[Actor] = sceneUpdater((scene, actor) => scene.removeActor(actor))
 
     val greenUpdater: Observer[Int] = optSceneUpdater((scene, green) => scene.updateGreen(green))
     val yellowUpdater: Observer[Int] = optSceneUpdater((scene, yellow) => scene.updateYellow(yellow))
@@ -333,5 +362,5 @@ final class Model:
     val yellowIncrementer: Observer[Int] = optSceneUpdater((scene, change) => scene.updateYellow(scene.yellow + change))
     val redIncrementer: Observer[Int] = optSceneUpdater((scene, change) => scene.updateRed(scene.red + change))
 
-    val actorAdvancer: Observer[String] = optSceneUpdater((scene, actor) => scene.advanceScene(actor))
+    val actorAdvancer: Observer[Actor] = optSceneUpdater((scene, actor) => scene.advanceScene(actor))
 end Model

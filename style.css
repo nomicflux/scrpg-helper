@@ -312,6 +312,52 @@ span.actor-remove:hover {
   cursor: pointer;
 }
 
+.actor-hero {
+  color: #ccffcc;
+}
+.actor-environment {
+  color: #ccccff;
+}
+.actor-villain {
+  color: #ffcccc;
+}
+.actor-other {
+  color: #ffffff;
+}
+.actor-minion {
+  color: #ffffcc;
+}
+.actor-lieutenant {
+  color: #ffccaa;
+}
+.actor-die-size-4 {
+  font-size: 80%;
+  opacity: 0.6;
+}
+.actor-die-size-6 {
+  font-size: 90%;
+  opacity: 0.7;
+}
+.actor-die-size-8 {
+  font-size: 100%;
+  opacity: 0.8;
+}
+.actor-die-size-10 {
+  font-size: 110%;
+  opacity: 0.9;
+}
+.actor-die-size-12 {
+  font-size: 125%;
+  opacity: 1;
+}
+
+.actor-has-die-true {
+}
+
+.actor-has-die-false {
+  display: none;
+}
+
 button.advance-tracker {
   margin: 10px 10px 25px 10px;
   border: 2px groove grey;

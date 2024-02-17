@@ -149,6 +149,7 @@ object RollChart:
             input(
               tpe := "input",
               size := 2,
+              inputMode := "numeric",
               controlled(
                 value <-- modifierSignal.map(_.toString),
                 onInput.mapToValue.map(_.toIntOption).collect { case Some(n) => n } --> { n => modifierVar.update(_ => n) }
