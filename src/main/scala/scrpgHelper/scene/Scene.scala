@@ -11,7 +11,7 @@ case class Scene[A](green: Int, yellow: Int, red: Int, position: Int, actorQueue
     def reset: Scene[A] = resetActors.resetPosition
 
     def legalPosition: Boolean =
-      position <= totalSpaces && position >= 1
+      position <= totalSpaces && position >= 1 && green >= 0 && yellow >= 0 && red >= 0
     end legalPosition
 
     def updateGreen(newGreen: Int): Option[Scene[A]] =

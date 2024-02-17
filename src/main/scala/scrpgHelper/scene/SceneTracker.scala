@@ -33,7 +33,7 @@ object SceneTracker:
           tpe := "button",
           className := "reset-button",
           "Reset",
-          onClick --> { _ => model.resetScene() }
+          onClick --> { _ => model.resetScene.onNext(()) }
         )
       )
     end resetButton
@@ -77,7 +77,7 @@ object SceneTracker:
         tpe := "button",
         className := "advance-tracker",
         "Advance Tracker",
-        onClick --> { _event => model.advanceTracker() }
+        onClick --> { _event => model.advanceTracker.onNext(()) }
       )
     end advanceTrackerButton
 
@@ -219,19 +219,25 @@ object SceneTracker:
     def renderBoxUpdater(): Element =
       div(
         className := "render-box-updater",
-        numInput(model.greenSignal, model.greenUpdater, "Green"),
-        numInput(model.yellowSignal, model.yellowUpdater, "Yellow"),
-        numInput(model.redSignal, model.redUpdater, "Red"),
+        numInput(model.greenSignal, model.greenIncrementer, model.greenUpdater, "Green"),
+        numInput(model.yellowSignal,  model.yellowIncrementer, model.yellowUpdater, "Yellow"),
+        numInput(model.redSignal, model.redIncrementer, model.redUpdater, "Red"),
       )
     end renderBoxUpdater
 
-    def numInput(nSignal: Signal[Int], nObserver: Observer[Int], label: String): Element =
+    def numInput(nSignal: Signal[Int], nIncrementer: Observer[Int], nObserver: Observer[Int], label: String): Element =
         span(
           className := s"status-updater-span",
           span(label),
+          button(
+            tpe := "button",
+            className := "spinner",
+            "-",
+            onClick --> { _ =>  nIncrementer.onNext(-1) }
+          ),
           input(
-            `typ` := "number",
-            size := 2,
+            tpe := "text",
+            size := 1,
             className := s"status-updater status-${label.toLowerCase}",
             controlled(
               value <-- nSignal.map(_.toString),
@@ -239,7 +245,14 @@ object SceneTracker:
                 case Some(n)  => n
               } --> nObserver
             )
-          )
+          ),
+          button(
+            tpe := "button",
+            className := "spinner",
+            "+",
+            onClick --> { _ =>  model.greenIncrementer.onNext(1) }
+          ),
+
         )
     end numInput
 end SceneTracker
@@ -289,66 +302,36 @@ final class Model:
       }
     end redo
 
-    def advanceTracker(): Unit =
-      sceneTracker.update { scene =>
-        scene.advancePosition.fold(scene){ s =>
+    def optSceneUpdater[A](f: (Scene[String], A) => Option[Scene[String]]): Observer[A] =
+      sceneTracker.updater { (scene, a) =>
+        f(scene, a).fold(scene){ s =>
           if s != scene then savePrevScene(scene) else ()
           s
         }
       }
-    end advanceTracker
+    end optSceneUpdater
 
-    def resetScene(): Unit =
-      sceneTracker.update { scene =>
-        val s = scene.reset
+    def sceneUpdater[A](f: (Scene[String], A) => Scene[String]): Observer[A] =
+      sceneTracker.updater { (scene, a) =>
+        val s = f(scene, a)
         if s != scene then savePrevScene(scene) else ()
         s
       }
-    end resetScene
+    end sceneUpdater
 
-    val actorUpdater: Observer[String] =
-      sceneTracker.updater { (scene, actor) =>
-        val s = scene.addActor(actor)
-        if s != scene then savePrevScene(scene) else ()
-        s
-      }
+    val advanceTracker: Observer[Unit] = optSceneUpdater((scene, _) => scene.advancePosition)
+    val resetScene: Observer[Unit] = sceneUpdater((scene, _) => scene.reset)
 
-    val actorRemover: Observer[String] =
-      sceneTracker.updater { (scene, actor) =>
-        val s = scene.removeActor(actor)
-        if s != scene then savePrevScene(scene) else ()
-        s
-      }
+    val actorUpdater: Observer[String] = sceneUpdater((scene, actor) => scene.addActor(actor))
+    val actorRemover: Observer[String] = sceneUpdater((scene, actor) => scene.removeActor(actor))
 
-    val greenUpdater: Observer[Int] =
-      sceneTracker.updater { (scene, green) =>
-        scene.updateGreen(green).fold(scene){ s =>
-          if s != scene then savePrevScene(scene) else ()
-          s
-        }
-      }
+    val greenUpdater: Observer[Int] = optSceneUpdater((scene, green) => scene.updateGreen(green))
+    val yellowUpdater: Observer[Int] = optSceneUpdater((scene, yellow) => scene.updateYellow(yellow))
+    val redUpdater: Observer[Int] = optSceneUpdater((scene, red) => scene.updateRed(red))
 
-    val yellowUpdater: Observer[Int] =
-      sceneTracker.updater { (scene, yellow) =>
-        scene.updateYellow(yellow).fold(scene){ s =>
-          if s != scene then savePrevScene(scene) else ()
-          s
-        }
-      }
+    val greenIncrementer: Observer[Int] = optSceneUpdater((scene, change) => scene.updateGreen(scene.green + change))
+    val yellowIncrementer: Observer[Int] = optSceneUpdater((scene, change) => scene.updateYellow(scene.yellow + change))
+    val redIncrementer: Observer[Int] = optSceneUpdater((scene, change) => scene.updateRed(scene.red + change))
 
-    val redUpdater: Observer[Int] =
-      sceneTracker.updater { (scene, red) =>
-        scene.updateRed(red).fold(scene){ s =>
-          if s != scene then savePrevScene(scene) else ()
-          s
-        }
-      }
-
-    val actorAdvancer: Observer[String] =
-      sceneTracker.updater { (scene, actor) =>
-        scene.advanceScene(actor).fold(scene){ s =>
-          if s != scene then savePrevScene(scene) else ()
-          s
-        }
-      }
+    val actorAdvancer: Observer[String] = optSceneUpdater((scene, actor) => scene.advanceScene(actor))
 end Model

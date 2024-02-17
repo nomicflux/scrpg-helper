@@ -140,13 +140,25 @@ object RollChart:
         tr(th("Modifier"), th("Overcome"), th("Attack / Defend"), th("Boost / Hinder")),
         tr(
           td(
+            button(
+              tpe := "button",
+              className := "spinner",
+              "-",
+              onClick --> { _ =>  modifierVar.update(n => n - 1) }
+            ),
             input(
-              `typ` := "number",
-              size := 3,
+              tpe := "input",
+              size := 2,
               controlled(
                 value <-- modifierSignal.map(_.toString),
                 onInput.mapToValue.map(_.toIntOption).collect { case Some(n) => n } --> { n => modifierVar.update(_ => n) }
               )
+            ),
+            button(
+              tpe := "button",
+              className := "spinner",
+              "+",
+              onClick --> { _ =>  modifierVar.update(n => n + 1) }
             ),
           ),
           td(

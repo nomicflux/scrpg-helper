@@ -442,15 +442,13 @@ span.help {
   margin: 0 auto;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+button.spinner {
+  font-size: 12px;
+  width: fit-content;
+  padding: 2px;
+  margin: 0 1px;
+  color: grey;
+}
+button.spinner:hover {
+  color: white;
 }
