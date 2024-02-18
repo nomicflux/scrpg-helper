@@ -110,7 +110,7 @@ object SceneTracker:
               span(
                 className := "help",
                 "Click on Waiting actors to hand off the scene to them. Once all actors have gone, click on any actor ",
-                "other than the current one to advance the tracker and start the next round.",
+                "other than the current one to start the next round. Environment actors will automatically advance the tracker.",
               )
             )
           )
