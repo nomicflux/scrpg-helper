@@ -375,7 +375,10 @@ final class Model:
     val yellowIncrementer: Observer[Int] = optSceneUpdater((scene, change) => scene.updateYellow(scene.yellow + change))
     val redIncrementer: Observer[Int] = optSceneUpdater((scene, change) => scene.updateRed(scene.red + change))
 
-    val actorAdvancer: Observer[Actor] = optSceneUpdater((scene, actor) => scene.advanceScene(actor))
+    val actorAdvancer: Observer[Actor] = optSceneUpdater {  (scene, actor) =>
+      val advanced = scene.advanceScene(actor)
+      if actor.actorType.advancesScene() then advanced.flatMap(_.advancePosition) else advanced
+    }
     val actorDieIncreaser: Observer[Actor] = optSceneUpdater((scene, actor) => scene.updateActor(actor, a => a.increaseDieSize()))
     val actorDieDecreaser: Observer[Actor] = optSceneUpdater((scene, actor) => scene.updateActor(actor, a => a.decreaseDieSize()))
 end Model

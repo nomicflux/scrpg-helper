@@ -61,7 +61,7 @@ class SceneTest extends munit.FunSuite:
       assert(sceneActing == scene4)
 
       val scene5 = scene4.flatMap(_.advanceScene("b"))
-      assert(scene5.map(_.position) == Some(2))
+      assert(scene5.map(_.position) == Some(1))
       assert(scene5.map(_.actorQueue.acted) == Some(List()))
       assert(scene5.map(_.actorQueue.acting) == Some(Some("b")))
       assert(scene5.map(_.actorQueue.remaining) == Some(List("a", "c")))

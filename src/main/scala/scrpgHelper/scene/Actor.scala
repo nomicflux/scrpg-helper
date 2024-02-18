@@ -58,6 +58,15 @@ enum ActorType:
         case Lieutenant(n) => decreaseDie(n).map(m => new Lieutenant(m))
         case _ => Some(this)
     end decreaseDieSize
+
+    def advancesScene(): Boolean = this match
+      case Environment => true
+      case Hero => false
+      case Villain => false
+      case Other => false
+      case Minion(_) => false
+      case Lieutenant(_) => false
+    end advancesScene
 end ActorType
 
 object ActorType:

@@ -63,7 +63,7 @@ case class Scene[A](green: Int, yellow: Int, red: Int, position: Int, actorQueue
     end advanceTracker
 
     def advanceScene(actor: A): Option[Scene[A]] =
-      actorQueue.advanceQueue(actor).map(q => copy(actorQueue = q)).orElse(advanceTracker.flatMap(_.advanceScene(actor)))
+      actorQueue.advanceQueue(actor).map(q => copy(actorQueue = q)).orElse(resetActors.advanceScene(actor))
     end advanceScene
 end Scene
 
