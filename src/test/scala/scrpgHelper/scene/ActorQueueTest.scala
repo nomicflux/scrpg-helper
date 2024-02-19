@@ -8,10 +8,10 @@ class ActorQueueTest extends munit.FunSuite:
       assert(q.totalActors.isEmpty)
 
       val q2 = q.addActor("a")
-      assert(q2.totalActors == Set("a"))
+      assert(q2.totalActors.toSet == Set("a"))
 
       val q3 = q2.addActor("b")
-      assert(q3.totalActors == Set("a", "b"))
+      assert(q3.totalActors.toSet == Set("a", "b"))
     }
 
     test("advances queue") {
@@ -49,27 +49,27 @@ class ActorQueueTest extends munit.FunSuite:
       val q = ActorQueue(Seq("a", "b", "c"))
 
       val q1 = q.removeActor("b")
-      assert(q1.totalActors == Set("a", "c"))
+      assert(q1.totalActors.toSet == Set("a", "c"))
 
       val q2 = q.advanceQueue("a").map(_.removeActor("a"))
-      assert(q2.map(_.totalActors) == Some(Set("b", "c")))
+      assert(q2.map(_.totalActors.toSet) == Some(Set("b", "c")))
 
       val q3 = q.advanceQueue("c").flatMap(_.advanceQueue("b")).map(_.removeActor("c"))
-      assert(q3.map(_.totalActors) == Some(Set("a", "b")))
+      assert(q3.map(_.totalActors.toSet) == Some(Set("a", "b")))
     }
 
     test("replaces actor") {
       val q = ActorQueue(List("a","b","c"))
-      assert(q.replaceActor("a", "z").totalActors == Set("z", "b", "c"))
-      assert(q.advanceQueue("a").map(_.replaceActor("a", "z").totalActors) == Some(Set("z", "b", "c")))
-      assert(q.advanceQueue("a").flatMap(_.advanceQueue("b")).map(_.replaceActor("a", "z").totalActors) == Some(Set("z", "b", "c")))
+      assert(q.replaceActor("a", "z").totalActors.toSet == Set("z", "b", "c"))
+      assert(q.advanceQueue("a").map(_.replaceActor("a", "z").totalActors.toSet) == Some(Set("z", "b", "c")))
+      assert(q.advanceQueue("a").flatMap(_.advanceQueue("b")).map(_.replaceActor("a", "z").totalActors.toSet) == Some(Set("z", "b", "c")))
     }
 
     test("updates actor") {
       val q = ActorQueue(List("a","b","c"))
-      assert(q.updateActor("a", s => Some(s*2)).map(_.totalActors) == Some(Set("aa", "b", "c")))
-      assert(q.updateActor("a", s => None).map(_.totalActors) == None)
-      assert(q.advanceQueue("a").flatMap(_.updateActor("a", s => Some(s*2))).map(_.totalActors) == Some(Set("aa", "b", "c")))
-      assert(q.advanceQueue("a").flatMap(_.advanceQueue("b")).flatMap(_.updateActor("a", s => Some(s*2))).map(_.totalActors) == Some(Set("aa", "b", "c")))
+      assert(q.updateActor("a", s => Some(s*2)).map(_.totalActors.toSet) == Some(Set("aa", "b", "c")))
+      assert(q.updateActor("a", s => None).map(_.totalActors.toSet) == None)
+      assert(q.advanceQueue("a").flatMap(_.updateActor("a", s => Some(s*2))).map(_.totalActors.toSet) == Some(Set("aa", "b", "c")))
+      assert(q.advanceQueue("a").flatMap(_.advanceQueue("b")).flatMap(_.updateActor("a", s => Some(s*2))).map(_.totalActors.toSet) == Some(Set("aa", "b", "c")))
     }
 end ActorQueueTest

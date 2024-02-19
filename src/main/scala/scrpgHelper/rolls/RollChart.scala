@@ -1,6 +1,7 @@
 package scrpgHelper.rolls
 
 import scala.scalajs.js
+import scala.scalajs.js.Array
 import scala.scalajs.js.annotation.*
 
 import org.scalajs.dom
@@ -10,28 +11,17 @@ import com.raquo.laminar.api.L.{*, given}
 object RollChart:
     import Die.*
     import EffectDieType.*
+    import typings.chartJs.mod.{Chart, ChartDataSets}
 
     val model: Model = new Model
 
-    val chartConfig =
+    def chartConfig(chartDatasets: Array[ChartDataSets]) =
       import typings.chartJs.mod.*
+
       new ChartConfiguration {
         `type` = ChartType.bar
         data = new ChartData {
-          datasets = js.Array(
-            new ChartDataSets {
-              label = "Count"
-              borderWidth = 1
-              backgroundColor = "#cccccc"
-              stack = "a"
-            },
-            new ChartDataSets {
-              label = "Roll"
-              borderWidth = 1
-              backgroundColor = "#00cc00"
-              stack = "a"
-            },
-          )
+          datasets = chartDatasets
         }
         options = new ChartOptions {
           scales = new ChartScales {
@@ -79,52 +69,13 @@ object RollChart:
         )
     end dieBox
 
-    enum Overcome:
-      case BeyondExpectations, Success, MinorTwist, MajorTwist, SpectacularFailure
-
-      def toDescription: String = this match
-        case BeyondExpectations => "Beyond Expectations"
-        case Success => "Success"
-        case MinorTwist => "Minor Twist"
-        case MajorTwist => "Major Twist / Failure"
-        case SpectacularFailure => "Spectacular Failure"
-      end toDescription
-
-      def toClassName: String = this match
-        case BeyondExpectations => "beyond-expectations"
-        case Success => "success"
-        case MinorTwist => "minor-twist"
-        case MajorTwist => "major-twist"
-        case SpectacularFailure => "spectacular-failure"
-      end toClassName
-    end Overcome
-
-    def overcomeRoll(n: Int): Overcome =
-      if(n >= 12) {
-        Overcome.BeyondExpectations
-      } else if(n >= 8) {
-        Overcome.Success
-      } else if(n >= 4) {
-        Overcome.MinorTwist
-      } else if(n >= 1) {
-        Overcome.MajorTwist
-      } else {
-        Overcome.SpectacularFailure
-      }
-    end overcomeRoll
-
     def boostRoll(n: Int): Int =
-      if(n >= 12) {
-        4
-      } else if(n >= 8) {
-        3
-      } else if(n >= 4) {
-        2
-      } else if(n >= 1) {
-        1
-      } else {
-        0
-      }
+      Overcome.fromNumber(n) match
+        case Overcome.SpectacularFailure => 0
+        case Overcome.MajorTwist => 1
+        case Overcome.MinorTwist => 2
+        case Overcome.Success => 3
+        case Overcome.BeyondExpectations => 4
     end boostRoll
 
     def resultBox(): Element =
@@ -163,61 +114,168 @@ object RollChart:
             ),
           ),
           td(
-            className <-- withModifierSignal.map(_.fold("")(overcomeRoll(_).toClassName)),
-            child.text <-- withModifierSignal.map(_.fold("")(overcomeRoll(_).toDescription))
+            className <-- withModifierSignal.map(_.fold("")(Overcome.fromNumber(_).toClassName)),
+            child.text <-- withModifierSignal.map(_.fold("")(Overcome.fromNumber(_).toDescription))
           ),
           td(
             child.text <-- withModifierSignal.map(_.fold("")(Some(_).filter(_ >= 0).getOrElse(0).toString))
           ),
           td(
-            child.text <-- withModifierSignal.map(_.fold("")(roll => s"+/-${boostRoll(roll)}"))
+            child.text <-- withModifierSignal.map(_.fold("")(roll => s"±${boostRoll(roll)}"))
+          )
+        ),
+        tr(
+          td(
+            colSpan := 4,
+            renderEffectChart(modifierSignal)
           )
         )
       )
     end resultBox
 
-    def renderRollChart(): Element =
-        import scala.scalajs.js.JSConverters.*
-        import typings.chartJs.mod.*
+    def renderChart[A](datasets: Array[ChartDataSets], signal: Signal[A], f: (Option[Chart], Map[Int,Int], A) => Unit): Element =
+      val showChart: Var[Boolean] = Var(true)
+      val showChartSignal = showChart.signal
 
-        var optChart: Option[Chart] = None
-        canvasTag(
-          width := "100%",
-          height := "200px",
-          onMountUnmountCallback(
-            mount = { nodeCtx =>
-              val domCanvas: dom.HTMLCanvasElement = nodeCtx.thisNode.ref
-              val chart = Chart.apply.newInstance2(domCanvas, chartConfig)
-              optChart = Some(chart)
-            },
-            unmount = { thisNode =>
-              optChart.foreach(_.destroy())
-              optChart = None
-            },
-          ),
-          model.currFreqs().combineWith(model.rollForEffectsSignal) --> { (data, roll) =>
-            val vals = 1 to data.keys.max
-            val labels = vals.map(_.toString)
-            val counts = vals.map(data.getOrElse(_, 0).toDouble)
-            optChart.foreach { chart =>
-              chart.data.labels = labels.toJSArray
-              chart.data.datasets.get(0).data = roll.fold(counts.toJSArray){ n =>
-                ((counts.take(n - 1) :+ 0.0) ++ counts.drop(n)).toJSArray
-              }
-              chart.data.datasets.get(1).data = roll.fold(List().toJSArray){ n =>
-                ((List.fill(n - 1)(0.0) :+ counts.drop(n-1).head)).toJSArray
-              }
-              chart.update()
+      var optChart: Option[Chart] = None
+      div(
+        className := "chart",
+        button(
+          className := "show-chart-button",
+          child.text <-- showChartSignal.map(s => if s then "▵ Hide" else "▿ Show"),
+          onClick --> { _ => showChart.update(!_) },
+        ),
+        div(
+          className <-- showChartSignal.map(s => s"show-chart-$s"),
+          canvasTag(
+            width := "100%",
+            height := "200px",
+            onMountUnmountCallback(
+              mount = { nodeCtx =>
+                val domCanvas: dom.HTMLCanvasElement = nodeCtx.thisNode.ref
+                val chart = Chart.apply.newInstance2(domCanvas, chartConfig(datasets))
+                optChart = Some(chart)
+              },
+              unmount = { thisNode =>
+                optChart.foreach(_.destroy())
+                optChart = None
+              },
+            ),
+            model.currFreqs.combineWith(signal) --> { (data, signalVal) =>
+              f(optChart, data, signalVal)
             }
-          }
+          )
         )
+      )
+    end renderChart
+
+    def renderRollChart(): Element =
+      import scala.scalajs.js.JSConverters.*
+
+      val datasets = js.Array(
+            new ChartDataSets {
+              label = "Count"
+              borderWidth = 1
+              backgroundColor = "#cccccc"
+              stack = "a"
+            },
+            new ChartDataSets {
+              label = "Roll"
+              borderWidth = 1
+              backgroundColor = "#00cc00"
+              stack = "a"
+            },
+          )
+
+      renderChart(datasets,
+                  model.rollForEffectsSignal,
+                  { (optChart, data, roll) =>
+        val vals = 1 to data.keys.max
+        val labels = vals.map(_.toString)
+        val counts = vals.map(data.getOrElse(_, 0).toDouble)
+        optChart.foreach { chart =>
+          chart.data.labels = labels.toJSArray
+          chart.data.datasets.get(0).data = roll.fold(counts.toJSArray){ n =>
+            ((counts.take(n - 1) :+ 0.0) ++ counts.drop(n)).toJSArray
+          }
+          chart.data.datasets.get(1).data = roll.fold(List().toJSArray){ n =>
+            ((List.fill(n - 1)(0.0) :+ counts.drop(n-1).head)).toJSArray
+          }
+          chart.update()
+        }
+      })
     end renderRollChart
+
+    def getCountsForBin(n: Int, data: Map[Int, Int], modifier: Int): Int =
+      val range = if(n == 1) {
+        0 to -modifier
+      } else if(n == 2) {
+        (1 - modifier) to (3 - modifier)
+      } else if(n == 3) {
+        (4 - modifier) to (7 - modifier)
+      } else if(n == 4) {
+        (8 - modifier) to (11 - modifier)
+      } else {
+        (12 - modifier) to data.keys.max
+      }
+      range.map(n => data.getOrElse(n, 0)).sum
+    end getCountsForBin
+
+    def renderEffectChart(modifierSignal: Signal[Int]): Element =
+        import scala.scalajs.js.JSConverters.*
+
+        val datasets = js.Array(
+            new ChartDataSets {
+              label = "Outcome"
+              borderWidth = 1
+              backgroundColor = "#cccccc"
+              stack = "a"
+            },
+            new ChartDataSets {
+              label = "Roll"
+              borderWidth = 1
+              backgroundColor = "#0000aa"
+              stack = "a"
+            },
+          )
+
+        renderChart(datasets,
+                    model.rollForEffectsSignal.combineWith(modifierSignal),
+                    { case (optChart, data, (roll, modifier)) =>
+                      val vals = 1 to 5
+                      val labels = vals.map(n => if(n == 1) {
+                                              "Spectacular Failure / ±0"
+                                            } else if(n == 2) {
+                                              "Major Twist / Failure / ±1"
+                                            } else if(n == 3) {
+                                              "Minor Twist / ±2"
+                                            } else if(n == 4) {
+                                              "Success / ±3"
+                                            } else {
+                                              "Beyond Expectations / ±4"
+                                            })
+                      val counts = vals.map(n => getCountsForBin(n, data, modifier).toDouble)
+                      optChart.foreach { chart =>
+                        chart.data.labels = labels.toJSArray
+                        chart.data.datasets.get(0).data = roll.fold(counts.toJSArray){ n =>
+                          val m = Overcome.fromNumber(n + modifier).ordinal + 1
+                          ((counts.take(m - 1) :+ 0.0) ++ counts.drop(m)).toJSArray
+                        }
+                        chart.data.datasets.get(1).data = roll.fold(List().toJSArray){ n =>
+                          val m = Overcome.fromNumber(n + modifier).ordinal + 1
+                          ((List.fill(m - 1)(0.0) :+ counts.drop(m-1).head)).toJSArray
+                        }
+                        chart.update()
+                      }
+                    }
+        )
+    end renderEffectChart
 
     def renderDice(): Element =
       div(
-        dieButtons(model.d1Signal, model.d1Updater(), "Power", _._1),
-        dieButtons(model.d2Signal, model.d2Updater(), "Quality", _._2),
-        dieButtons(model.d3Signal, model.d3Updater(), "Status", _._3),
+        dieButtons(model.d1Signal, model.d1Updater, "Power", _._1),
+        dieButtons(model.d2Signal, model.d2Updater, "Quality", _._2),
+        dieButtons(model.d3Signal, model.d3Updater, "Status", _._3),
       )
     end renderDice
 
@@ -252,7 +310,7 @@ object RollChart:
     end dieButton
 
     def renderEffectPanel(): Element =
-      effectPanel(model.eSignal, model.effectDieTypeUpdater())
+      effectPanel(model.eSignal, model.effectDieTypeUpdater)
     end renderEffectPanel
 
     def effectPanel(effectSignal: Signal[Set[EffectDieType]],
@@ -308,9 +366,15 @@ final class Model:
       case (d1, d2, d3) => Some(d1.roll(), d2.roll(), d3.roll())
     }
 
-    def currFreqs(): Signal[Map[Int, Int]] =
+    val currFreqs: Signal[Map[Int, Int]] =
+      var memo: Map[(Set[EffectDieType], Set[Die]), Map[Int, Int]] = Map()
       dicePoolSignal.map { (e, d1, d2, d3) =>
-        freqs(d1, d2, d3, e.toSeq)
+        val k = (e.toSet, Set(d1, d2, d3))
+        memo.getOrElse(k, {
+          val res = freqs(d1, d2, d3, e.toSeq)
+          memo = memo + (k -> res)
+          res
+        })
       }
     end currFreqs
 
@@ -321,11 +385,11 @@ final class Model:
       }
     end dieUpdater
 
-    def d1Updater(): Observer[Int] = dieUpdater(d1Var)
-    def d2Updater(): Observer[Int] = dieUpdater(d2Var)
-    def d3Updater(): Observer[Int] = dieUpdater(d3Var)
+    val d1Updater: Observer[Int] = dieUpdater(d1Var)
+    val d2Updater: Observer[Int] = dieUpdater(d2Var)
+    val d3Updater: Observer[Int] = dieUpdater(d3Var)
 
-    def effectDieTypeUpdater(): Observer[EffectDieType] =
+    val effectDieTypeUpdater: Observer[EffectDieType] =
       eVar.updater { (effects, effect) =>
         if effects.contains(effect)
         then effects.filterNot(_ == effect)

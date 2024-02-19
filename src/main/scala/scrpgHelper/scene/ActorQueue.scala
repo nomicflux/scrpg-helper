@@ -6,7 +6,7 @@ case class ActorQueue[A](acting: Option[A], acted: List[A], remaining: List[A]):
     end addActor
 
     def removeActor(actor: A): ActorQueue[A] =
-      copy(acting.filterNot(_ == actor), acted.toSet.diff(Set(actor)).toList, remaining.toSet.diff(Set(actor)).toList)
+      copy(acting.filterNot(_ == actor), acted.filterNot(_ == actor), remaining.filterNot(_ == actor))
     end removeActor
 
     def replaceActor(actorA: A, actorB: A): ActorQueue[A] =
@@ -21,8 +21,8 @@ case class ActorQueue[A](acting: Option[A], acted: List[A], remaining: List[A]):
       f(actor).map(newActor => replaceActor(actor, newActor))
     end updateActor
 
-    def totalActors: Set[A] =
-      acted.toSet.union(remaining.toSet).union(acting.toSet)
+    def totalActors: List[A] =
+      acted ++ acting.toList ++ remaining
     end totalActors
 
     def reset: ActorQueue[A] =
@@ -30,7 +30,7 @@ case class ActorQueue[A](acting: Option[A], acted: List[A], remaining: List[A]):
     end reset
 
     def shiftActor(actor: A): ActorQueue[A] =
-      copy(Some(actor), acted.toSet.union(acting.toSet).toList, remaining.toSet.diff(Set(actor)).toList)
+      copy(Some(actor), acted ++ acting.toList, remaining.filterNot(_ == actor))
     end shiftActor
 
     def advanceQueue(actor: A): Option[ActorQueue[A]] =
