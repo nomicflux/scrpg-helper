@@ -396,6 +396,10 @@ span.actor-change-die-size.actor-has-die-true button {
   position: relative;
 }
 
+span.actor-change-die-size.actor-has-die-true button.actor-die-show-change-false {
+  #display: none;
+}
+
 button.advance-tracker {
   margin: 10px 10px 25px 10px;
   border: 2px groove grey;

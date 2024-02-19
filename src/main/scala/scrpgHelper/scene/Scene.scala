@@ -34,6 +34,10 @@ case class Scene[A](green: Int, yellow: Int, red: Int, position: Int, actorQueue
       copy(actorQueue = actorQueue.addActor(actor))
     end addActor
 
+    def addActedActor(actor: A): Scene[A] =
+      copy(actorQueue = actorQueue.addActedActor(actor))
+    end addActedActor
+
     def removeActor(actor: A): Scene[A] =
       copy(actorQueue = actorQueue.removeActor(actor))
     end removeActor

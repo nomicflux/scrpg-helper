@@ -140,11 +140,13 @@ object SceneTracker:
             className := s"actor-change-die-size actor-has-die-${actor.actorType.hasDie}",
             button(
               tpe := "button",
+              disabled := actor.actorType.getDieSize.filter(_ == 12).isDefined,
               "➚",
               onClick --> { _ => model.actorDieIncreaser.onNext(actor) },
             ),
             button(
               tpe := "button",
+              disabled := actor.actorType.getDieSize.filter(_ == 4).isDefined,
               "➘",
               onClick --> { _ => model.actorDieDecreaser.onNext(actor) },
             )
@@ -197,6 +199,9 @@ object SceneTracker:
       val actorType: Var[ActorType] = Var(ActorType.Hero)
       val actorTypeSignal = actorType.signal
 
+      val actorAlreadyActed: Var[Boolean] = Var(false)
+      val actorAlreadyActedSignal = actorAlreadyActed.signal
+
       val dieSize: Var[Int] = Var(4)
       val dieSizeSignal = dieSize.signal
 
@@ -243,12 +248,20 @@ object SceneTracker:
           )
         ),
         span(
+          "Start as acted",
+          input(
+            tpe := "checkbox",
+            checked <-- actorAlreadyActedSignal,
+            onChange.mapToValue --> { _ => actorAlreadyActed.update(b => !b) }
+          )
+        ),
+        span(
           button(
             tpe := "button",
             "Add Actor",
-            onClick.compose(_.withCurrentValueOf(actorType)) --> { case (_event, at) =>
+            onClick.compose(_.withCurrentValueOf(actorTypeSignal.combineWith(actorAlreadyActedSignal))) --> { case (_event, at, acted) =>
               actorName.update { name =>
-                model.actorAdder.onNext(Actor.createActor(at, name))
+                if(acted) then model.actorActedAdder.onNext(Actor.createActor(at, name)) else model.actorAdder.onNext(Actor.createActor(at, name))
                 ""
               }
             }
@@ -365,6 +378,7 @@ final class Model:
     val resetScene: Observer[Unit] = sceneUpdater((scene, _) => scene.reset)
 
     val actorAdder: Observer[Actor] = sceneUpdater((scene, actor) => scene.addActor(actor))
+    val actorActedAdder: Observer[Actor] = sceneUpdater((scene, actor) => scene.addActedActor(actor))
     val actorRemover: Observer[Actor] = sceneUpdater((scene, actor) => scene.removeActor(actor))
 
     val greenUpdater: Observer[Int] = optSceneUpdater((scene, green) => scene.updateGreen(green))

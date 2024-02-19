@@ -5,6 +5,10 @@ case class ActorQueue[A](acting: Option[A], acted: List[A], remaining: List[A]):
       copy(remaining = remaining :+ actor)
     end addActor
 
+    def addActedActor(actor: A): ActorQueue[A] =
+      copy(acted = acted :+ actor)
+    end addActedActor
+
     def removeActor(actor: A): ActorQueue[A] =
       copy(acting.filterNot(_ == actor), acted.filterNot(_ == actor), remaining.filterNot(_ == actor))
     end removeActor

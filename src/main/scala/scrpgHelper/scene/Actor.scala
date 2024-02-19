@@ -13,6 +13,12 @@ enum ActorType:
         case _ => false
     end hasDie
 
+    val getDieSize: Option[Int] = this match
+        case Minion(d) => Some(d)
+        case Lieutenant(d) => Some(d)
+        case _ => None
+    end getDieSize
+
     def withDieSize(n: Int): ActorType = this match
         case Minion(_) => Minion(n)
         case Lieutenant(_) => Lieutenant(n)
