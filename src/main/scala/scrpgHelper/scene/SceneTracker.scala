@@ -212,10 +212,10 @@ object SceneTracker:
             tpe := "text",
             value <-- actorName,
             onInput.mapToValue --> actorName,
-            onKeyPress.compose(_.withCurrentValueOf(actorType)) --> { case (event, at) =>
+            onKeyPress.compose(_.withCurrentValueOf(actorTypeSignal.combineWith(actorAlreadyActedSignal))) --> { case (event, at, acted) =>
               if(event.key == "Enter") {
                 actorName.update { name =>
-                  model.actorAdder.onNext(Actor.createActor(at, name))
+                  if(acted) then model.actorActedAdder.onNext(Actor.createActor(at, name)) else model.actorAdder.onNext(Actor.createActor(at, name))
                   ""
                 }
               }
