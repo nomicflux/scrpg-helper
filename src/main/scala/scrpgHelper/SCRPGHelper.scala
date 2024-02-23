@@ -19,17 +19,19 @@ def SCRPGHelper(): Unit =
 object Main:
     import scrpgHelper.rolls.RollChart
     import scrpgHelper.scene.SceneTracker
+    import scrpgHelper.challenges.ChallengeCreator
 
     val model = new Model
 
     val baseRoute = Route.static(Page.RollChart, root / "scrpg-helper" / endOfSegments)
     val rollRoute = Route.static(Page.RollChart, root / "scrpg-helper" / "rollChart" / endOfSegments)
     val sceneRoute = Route.static(Page.SceneTracker, root / "scrpg-helper" / "sceneTracker" / endOfSegments)
+    val challengeRoute = Route.static(Page.ChallengeCreator, root / "scrpg-helper" / "challengeCreator" / endOfSegments)
 
     implicit val rw: ReadWriter[Page] = macroRW
 
     val router = new Router[Page](
-        routes = List(rollRoute, baseRoute, sceneRoute),
+        routes = List(rollRoute, baseRoute, sceneRoute, challengeRoute),
         getPageTitle = _.toString,
         serializePage = page => write(page)(rw),
         deserializePage = pageStr => read(pageStr)(rw),
@@ -58,7 +60,8 @@ object Main:
         className := "nav-button",
         (page match
             case Page.RollChart => "Roll Dice"
-            case Page.SceneTracker => "Scene Tracker"),
+            case Page.SceneTracker => "Scene Tracker"
+            case Page.ChallengeCreator => "Challenge Creator"),
         disabled <-- router.currentPageSignal.map(_ == page),
         onClick --> { _event => router.pushState(page) }
       )
@@ -74,11 +77,12 @@ object Main:
     def pageElement(page: Page): Element = page match
         case Page.RollChart => RollChart.rollChart()
         case Page.SceneTracker => SceneTracker.sceneTracker()
+        case Page.ChallengeCreator => ChallengeCreator.challengeCreator()
     end pageElement
 end Main
 
 enum Page:
-    case RollChart, SceneTracker
+    case RollChart, SceneTracker, ChallengeCreator
 end Page
 
 final class Model:
