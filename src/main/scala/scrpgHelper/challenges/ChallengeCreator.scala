@@ -20,66 +20,81 @@ object ChallengeCreator:
 
     def renderChallenges(): Element =
       div(
-        children <-- model.challengesSignal.split(_.id){ (id, cs, s) => renderChallenge(cs, s, model.varForId(id)) }
+        children <-- model.challengesSignal.split(_.id){ (id, cs, s) => renderChallenge(cs, s) }
       )
     end renderChallenges
 
-    def renderChallenge(box: ChallengeBox, signal: Signal[ChallengeBox], observer: Var[Option[ChallengeBox]]): Element =
-      val owner: Owner = ???
+    def renderChallenge(box: ChallengeBox, signal: Signal[ChallengeBox]): Element =
       div(
+        className := "challenge-box",
         (box.challenge match
           case CompoundChallenge.Simple(c) => renderSimpleChallenge(c,
                                                                     signal.map(_.challenge.forId(c.id)),
-                                                                    observer.zoom(mbox => mbox.flatMap(_.challenge.forId(c.id)))((box, mc) => {
-                                                                                                                                   box.flatMap { b =>
-                                                                                                                                     mc.flatMap { c =>
-                                                                                                                                        b.updateAtId(c.id, _ => Some(c))
-                                                                                                                                     }
-                                                                                                                                   }
-                                                                                                                   })(owner))
+                                                                    model.observerForIds(box.id, c.id))
           case CompoundChallenge.And(cs) => renderSimultaneousChallenges(cs)
           case CompoundChallenge.AndThen(c, n) => renderSerialChallenges(c, n)
           case CompoundChallenge.Or(cs) => renderBranchingChallenges(cs)),
-        box.timers.map(renderTimer(_)),
+        box.timers.map(timer => renderTimer(
+                         timer,
+                         signal.map(box => box.timers.filter(_.getId() == timer.getId()).head),
+                         model.timerObserver(timer.getId()),
+                       )),
       )
     end renderChallenge
 
     def renderSimpleChallenge(challenge: SimpleChallenge,
                               signal: Signal[Option[SimpleChallenge]],
-                              observer: Var[Option[SimpleChallenge]]): Element =
+                              observer: Observer[(Boolean, Int)]): Element =
       div(
-        className := "challenge-box",
+        className := "simple-challenge-box",
         (1 to challenge.total).map(n => renderChallengeCheckbox(n, signal, observer)),
       )
     end renderSimpleChallenge
 
     def renderChallengeCheckbox(n: Int,
                                 signal: Signal[Option[SimpleChallenge]],
-                                observer: Var[Option[SimpleChallenge]]): Element =
+                                observer: Observer[(Boolean, Int)]): Element =
       span(
-        className := "challenge-box-checkbox",
+        className := "challenge-box-checkbox-span",
         input(
           tpe := "checkbox",
-          checked <-- signal.map(_.fold(false)(c => c.checked <= n))
+          className := "challenge-box-checkbox",
+          checked <-- signal.map(_.fold(false)(c => c.checked >= n)),
+          onChange.mapToChecked --> { checked => observer.onNext(checked, n) }
         )
       )
     end renderChallengeCheckbox
 
-    def renderChallengeCheckbox(signal: Signal[Boolean], observer: Observer[Boolean]): Element =
-      span(
-        input(
-          tpe := "checkbox",
-          checked <-- signal,
-          onChange.mapToChecked --> { b => observer.onNext(b) },
-        )
-      )
-    end renderChallengeCheckbox
-
-    def renderTimer(timer: Timer): Element =
-      div(
-
-      )
+    def renderTimer(timer: Timer, signal: Signal[Timer], observer: Observer[Boolean]): Element =
+      timer match
+        case st: Timer.SimpleTimer => renderSimpleTimer(st, signal, observer)
+        case sct: Timer.StatusChangeTimer => renderStatusChangeTimer(sct, signal, observer)
     end renderTimer
+
+    def renderSimpleTimer(timer: Timer.SimpleTimer, signal: Signal[Timer], observer: Observer[Boolean]): Element =
+      div(
+        className := "timer-box",
+        (1 to timer.total).map(n => renderTimerCheckbox(n, signal, observer)),
+      )
+    end renderSimpleTimer
+
+    def renderTimerCheckbox(n: Int,
+                            signal: Signal[Timer],
+                            observer: Observer[Boolean]): Element =
+      span(
+        className := "timer-checkbox-span",
+        input(
+          tpe := "checkbox",
+          className := "timer-checkbox",
+          checked <-- signal.map(_.getChecked() >= n),
+          onChange.mapToChecked --> { checked => observer.onNext(checked) }
+        )
+      )
+    end renderTimerCheckbox
+
+    def renderStatusChangeTimer(timer: Timer.StatusChangeTimer, signal: Signal[Timer], observer: Observer[Boolean]): Element =
+      div()
+    end renderStatusChangeTimer
 
     def renderSimultaneousChallenges(challenges: List[CompoundChallenge]): Element =
       div(
@@ -107,12 +122,26 @@ object ChallengeCreator:
 end ChallengeCreator
 
 final class Model:
-    val challenges: Var[List[ChallengeBox]] = Var(List(ChallengeBox.createSimpleChallengeBox(2)))
+    val challenges: Var[List[ChallengeBox]] = Var(List(ChallengeBox.createSimpleChallengeBox(2).addTimer(Timer.createSimpleTimer(3))))
     val challengesSignal = challenges.signal
 
-    def varForId(id: ChallengeBoxId): Var[Option[ChallengeBox]] =
-      challenges.zoom(_.filter(_.id == id).headOption){ (boxes, mnewBox) =>
-        mnewBox.fold(boxes.filterNot(_.id == id))(newBox => boxes.map(b => if b.id == id then newBox else b))
+    def observerForIds(boxId: ChallengeBoxId, challengeId: SimpleChallengeId): Observer[(Boolean, Int)] =
+      challenges.updater { case (boxes, (checked, n)) =>
+        boxes.map { box =>
+          if(box.id == boxId) {
+            box.updateAtId(challengeId, challenge => Some(challenge.checkAtBox(checked, n)))
+          } else {
+            Some(box)
+          }
+        }.collect { case Some(box) => box }
       }
-    end varForId
+    end observerForIds
+
+    def timerObserver(timerId: TimerId): Observer[Boolean] =
+      challenges.updater { case (boxes, checked) =>
+        boxes.map { box =>
+          box.updateTimer(timerId, timer => Some(if checked then timer.checkBox() else timer.uncheckBox()))
+        }
+      }
+    end timerObserver
 end Model

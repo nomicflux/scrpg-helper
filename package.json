@@ -15,6 +15,7 @@
     "vite": "^4.1.0"
   },
   "dependencies": {
-    "chart.js": "^2.9.4"
+    "chart.js": "^2.9.4",
+    "esbuild": "^0.20.1"
   }
 }

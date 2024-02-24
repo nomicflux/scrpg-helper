@@ -15,6 +15,14 @@ case class SimpleChallenge(id: SimpleChallengeId, total: Int, checked: Int, esca
     def setEscalate(e: Boolean): SimpleChallenge =
       copy(escalated = e)
     end setEscalate
+
+    def checkAtBox(toCheck: Boolean, n: Int): SimpleChallenge =
+      if(toCheck) {
+        copy(checked = checked + 1)
+      } else {
+        copy(checked = checked - 1)
+      }
+    end checkAtBox
 end SimpleChallenge
 
 object SimpleChallenge:
@@ -38,6 +46,16 @@ enum Timer:
         case SimpleTimer(id, total, checked) => if(checked < total) then SimpleTimer(id, total, checked + 1) else this
         case StatusChangeTimer(_, _) => this
     end checkBox
+
+    def uncheckBox(): Timer = this match
+        case SimpleTimer(id, total, checked) => if(checked > 0) then SimpleTimer(id, total, checked - 1) else this
+        case StatusChangeTimer(_, _) => this
+    end uncheckBox
+
+    def getChecked(): Int = this match
+        case SimpleTimer(_, _, checked) => checked
+        case StatusChangeTimer(_, _) => 0
+    end getChecked
 
     def completed(currentStatus: Status): Boolean = this match
         case SimpleTimer(_, total, checked) => checked >= total
@@ -159,6 +177,21 @@ case class ChallengeBox(
       val newC = challenge.updateAtId(id, c => f(c))
       newC.map(c => this.copy(challenge = c))
     end updateAtId
+
+    def updateTimer(id: TimerId, f: Timer => Option[Timer]): ChallengeBox =
+      val newTimers = timers.map { timer =>
+        if(timer.getId() == id) {
+          f(timer)
+        } else {
+          Some(timer)
+        }
+      }.collect { case Some(timer) => timer }
+      copy(timers = newTimers)
+    end updateTimer
+
+    def addTimer(timer: Timer): ChallengeBox =
+      copy(timers = timers :+ timer)
+    end addTimer
 end ChallengeBox
 
 object ChallengeBox:

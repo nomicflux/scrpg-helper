@@ -530,6 +530,48 @@ span.help {
   margin: 0 auto;
 }
 
+div.challenge-box {
+  border: 1px solid grey;
+  border-radius: 5%;
+  padding: 25px;
+}
+
+.challenge-box-checkbox {
+  -webkit-appearance: none;
+  display: inline-block;
+  border: 1px ridge white;
+  border-radius: 10%;
+  padding: 10px;
+  margin: 10px;
+}
+
+.challenge-box-checkbox:checked {
+  -webkit-appearance: none;
+  display: inline-block;
+  opacity: 0.5;
+  background: cyan;
+}
+
+div.timer-box {
+
+}
+
+.timer-checkbox {
+  -webkit-appearance: none;
+  display: inline-block;
+  border: 1px groove #ff4466;
+  border-radius: 10%;
+  padding: 10px;
+  margin: 10px;
+}
+
+.timer-checkbox:checked {
+  -webkit-appearance: none;
+  display: inline-block;
+  opacity: 0.5;
+  background: red;
+}
+
 button.spinner {
   font-size: 12px;
   width: fit-content;
