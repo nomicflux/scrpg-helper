@@ -8,6 +8,8 @@ import org.scalajs.dom
 import com.raquo.laminar.api.L.{*, given}
 
 object ChallengeCreator:
+    import scrpgHelper.components.NumBox
+
     val model = new Model()
 
     def challengeCreator(): Element =
@@ -123,31 +125,22 @@ object ChallengeCreator:
 
       div(
         className := "challenge-box-creator",
-        span(
-          className := "simple-challenge-creator",
-          span("# of Challenge Checkboxes"),
-          input(
-            tpe := "text",
-            size := 2,
-            controlled(
-              value <-- challengeCheckboxesSignal.map(_.toString),
-              onInput.mapToValue.map(_.toIntOption).collect { case Some(n) => n } --> { n => challengeCheckboxes.update { _ => n } }
-            )
-          )
-        ),
-        span(
-          className := "simple-timer-creator",
-          span("# of Timer Checkboxes"),
-          input(
-            tpe := "text",
-            size := 2,
-            controlled(
-              value <-- timerCheckboxesSignal.map(_.toString),
-              onInput.mapToValue.map(_.toIntOption).collect { case Some(n) => n } --> { n => timerCheckboxes.update { _ => n } }
-            )
-          )
-        )
-
+        NumBox(
+          challengeCheckboxesSignal,
+          challengeCheckboxes.updater { (n, x) => n + x },
+          challengeCheckboxes.updater { (_, m) => m }
+        ).withLabel("# of Challenge Checkboxes")
+          .withSpanClassName("simple-challenge-creator")
+          .withMinVal(0)
+          .render(),
+        NumBox(
+          timerCheckboxesSignal,
+          timerCheckboxes.updater { (n, x) => n + x },
+          timerCheckboxes.updater { (_, m) => m }
+        ).withLabel("# of Timer Checkboxes")
+          .withSpanClassName("simple-timer-creator")
+          .withMinVal(0)
+          .render(),
       )
     end renderChallengeCreator
 end ChallengeCreator

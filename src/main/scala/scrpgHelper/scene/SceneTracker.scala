@@ -276,12 +276,15 @@ object SceneTracker:
         className := "render-box-updater",
         NumBox(model.greenSignal, model.greenIncrementer, model.greenUpdater)
           .withLabel("Green").withSpanClassName("status-updater-span").withInputClassName("status-updater status-green")
+          .withMinVal(0)
           .render(),
         NumBox(model.yellowSignal, model.yellowIncrementer, model.yellowUpdater)
           .withLabel("Yellow").withSpanClassName("status-updater-span").withInputClassName("status-updater status-yellow")
+          .withMinVal(0)
           .render(),
         NumBox(model.redSignal, model.redIncrementer, model.redUpdater)
           .withLabel("Red").withSpanClassName("status-updater-span").withInputClassName("status-updater status-red")
+          .withMinVal(0)
           .render(),
       )
     end renderBoxUpdater
