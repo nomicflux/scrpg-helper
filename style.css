@@ -397,7 +397,7 @@ span.actor-change-die-size.actor-has-die-true button {
 }
 
 span.actor-change-die-size.actor-has-die-true button.actor-die-show-change-false {
-  #display: none;
+
 }
 
 button.advance-tracker {
