@@ -76,8 +76,8 @@ object Main:
 
     def pageElement(page: Page): Element = page match
         case Page.RollChart => RollChart.rollChart()
-        case Page.SceneTracker => SceneTracker.sceneTracker()
-        case Page.ChallengeCreator => ChallengeCreator.challengeCreator()
+        case Page.SceneTracker => SceneTracker.sceneTracker(model.challengeModel)
+        case Page.ChallengeCreator => ChallengeCreator.challengeCreator(model.challengeModel)
     end pageElement
 end Main
 
@@ -86,4 +86,7 @@ enum Page:
 end Page
 
 final class Model:
+    import scrpgHelper.challenges.ChallengeCreatorModel
+
+    val challengeModel = new ChallengeCreatorModel()
 end Model

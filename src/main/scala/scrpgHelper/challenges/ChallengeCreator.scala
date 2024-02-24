@@ -10,23 +10,21 @@ import com.raquo.laminar.api.L.{*, given}
 object ChallengeCreator:
     import scrpgHelper.components.NumBox
 
-    val model = new Model()
-
-    def challengeCreator(): Element =
+    def challengeCreator(model: ChallengeCreatorModel): Element =
       div(
         h1("Challenge Creator"),
-        renderChallengeCreator(),
-        renderChallenges(),
+        renderChallengeCreator(model),
+        renderChallenges(model),
       )
     end challengeCreator
 
-    def renderChallenges(): Element =
+    def renderChallenges(model: ChallengeCreatorModel): Element =
       div(
-        children <-- model.challengesSignal.split(_.id){ (id, cs, s) => renderChallenge(cs, s) }
+        children <-- model.challengesSignal.split(_.id){ (id, cs, s) => renderChallenge(model, cs, s) }
       )
     end renderChallenges
 
-    def renderChallenge(box: ChallengeBox, signal: Signal[ChallengeBox]): Element =
+    def renderChallenge(model: ChallengeCreatorModel, box: ChallengeBox, signal: Signal[ChallengeBox]): Element =
       div(
         className := "challenge-box",
         (box.challenge match
@@ -121,7 +119,7 @@ object ChallengeCreator:
       )
     end renderBranchingChallenges
 
-    def renderChallengeCreator(): Element =
+    def renderChallengeCreator(model: ChallengeCreatorModel): Element =
       val challengeCheckboxes: Var[Int] = Var(1)
       val timerCheckboxes: Var[Int] = Var(0)
 
@@ -157,7 +155,7 @@ object ChallengeCreator:
     end renderChallengeCreator
 end ChallengeCreator
 
-final class Model:
+final class ChallengeCreatorModel:
     val challenges: Var[List[ChallengeBox]] = Var(List())
     val challengesSignal = challenges.signal
 
@@ -187,4 +185,4 @@ final class Model:
         }
       }
     end timerObserver
-end Model
+end ChallengeCreatorModel

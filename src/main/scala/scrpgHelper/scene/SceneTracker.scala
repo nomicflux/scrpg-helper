@@ -8,12 +8,14 @@ import org.scalajs.dom
 import com.raquo.laminar.api.L.{*, given}
 
 object SceneTracker:
+    import scrpgHelper.challenges.ChallengeCreator
+    import scrpgHelper.challenges.ChallengeCreatorModel
     import scrpgHelper.status.Status
     import scrpgHelper.components.NumBox
 
-    val model = new Model
+    val model = new SceneTrackerModel
 
-    def sceneTracker(): Element =
+    def sceneTracker(challengeCreator: ChallengeCreatorModel): Element =
       div(
         className <-- model.sceneSignal.map { scene =>
           s"scene-tracker-page scene-status-${scene.currentStatus.toString.toLowerCase}"
@@ -21,6 +23,10 @@ object SceneTracker:
         h1("Scene Tracker"),
         div(className := "undo-section", resetButton(), undoButton(), redoButton()),
         div(className := "setup-section", renderBoxUpdater()),
+        div(h3("Challenges"),
+            className <-- challengeCreator.challengesSignal.map(cs => s"challenge-holder challenges-${cs.size > 0}"),
+            div(className := "challenge-section",
+                ChallengeCreator.renderChallenges(challengeCreator))),
         div(advanceTrackerButton()),
         renderSceneTracker(),
         renderActors(),
@@ -290,7 +296,7 @@ object SceneTracker:
     end renderBoxUpdater
 end SceneTracker
 
-final class Model:
+final class SceneTrackerModel:
     val sceneTracker: Var[Scene[Actor]] = Var(Scene(2,4,2))
     val sceneSignal = sceneTracker.signal
 
@@ -373,4 +379,4 @@ final class Model:
     }
     val actorDieIncreaser: Observer[Actor] = optSceneUpdater((scene, actor) => scene.updateActor(actor, a => a.increaseDieSize()))
     val actorDieDecreaser: Observer[Actor] = optSceneUpdater((scene, actor) => scene.updateActor(actor, a => a.decreaseDieSize()))
-end Model
+end SceneTrackerModel
