@@ -38,8 +38,8 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: './dist'
+      - name: Create404
+        run: cp ./dist/index.html ./dist/404.html
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Create404
-        run: cp ./scrpg-helper/dist/index.html ./scrpg-helper/dist/404.html
