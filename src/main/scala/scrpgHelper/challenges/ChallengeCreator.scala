@@ -41,6 +41,11 @@ object ChallengeCreator:
                          signal.map(box => box.timers.filter(_.getId() == timer.getId()).head),
                          model.timerObserver(timer.getId()),
                        )),
+        div(
+          className := "remove-challenge-box",
+          "✘",
+          onClick --> { _ => model.challenges.update { cs => cs.filter(_.id != box.id) } }
+        )
       )
     end renderChallenge
 
@@ -117,7 +122,7 @@ object ChallengeCreator:
     end renderBranchingChallenges
 
     def renderChallengeCreator(): Element =
-      val challengeCheckboxes: Var[Int] = Var(0)
+      val challengeCheckboxes: Var[Int] = Var(1)
       val timerCheckboxes: Var[Int] = Var(0)
 
       val challengeCheckboxesSignal = challengeCheckboxes.signal
@@ -131,7 +136,7 @@ object ChallengeCreator:
           challengeCheckboxes.updater { (_, m) => m }
         ).withLabel("# of Challenge Checkboxes")
           .withSpanClassName("simple-challenge-creator")
-          .withMinVal(0)
+          .withMinVal(1)
           .render(),
         NumBox(
           timerCheckboxesSignal,
@@ -141,13 +146,27 @@ object ChallengeCreator:
           .withSpanClassName("simple-timer-creator")
           .withMinVal(0)
           .render(),
+        button(
+          tpe := "button",
+          "Create Challenge",
+          onClick.compose(_.withCurrentValueOf(challengeCheckboxesSignal, timerCheckboxesSignal)) --> { case (_, c, t) =>
+            model.createSimpleChallenge(c, Some(t).filter(_ >= 1))
+          }
+        )
       )
     end renderChallengeCreator
 end ChallengeCreator
 
 final class Model:
-    val challenges: Var[List[ChallengeBox]] = Var(List(ChallengeBox.createSimpleChallengeBox(2).addTimer(Timer.createSimpleTimer(3))))
+    val challenges: Var[List[ChallengeBox]] = Var(List())
     val challengesSignal = challenges.signal
+
+    def createSimpleChallenge(challengeChecks: Int, timerChecks: Option[Int]): Unit =
+      challenges.update { cs =>
+        val c = ChallengeBox.createSimpleChallengeBox(challengeChecks)
+        cs :+  timerChecks.fold(c)(n => c.addTimer(Timer.createSimpleTimer(n)))
+      }
+    end createSimpleChallenge
 
     def observerForIds(boxId: ChallengeBoxId, challengeId: SimpleChallengeId): Observer[(Boolean, Int)] =
       challenges.updater { case (boxes, (checked, n)) =>

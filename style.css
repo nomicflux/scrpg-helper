@@ -530,10 +530,25 @@ span.help {
   margin: 0 auto;
 }
 
+div.challenge-box-creator {
+  margin: 10px;
+  border: 2px groove grey;
+  border-radius: 5%;
+}
+
 div.challenge-box {
   border: 1px solid grey;
-  border-radius: 5%;
+  border-radius: 15px;
   padding: 25px;
+  margin: 5px;
+}
+
+.remove-challenge-box {
+  color: red;
+}
+
+.remove-challenge-box:hover {
+  cursor: pointer;
 }
 
 .challenge-box-checkbox {
