@@ -42,4 +42,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
       - name: Create404
-        run: cp ./dist/index.html ./dist/404.html
+        run: cp ./scrpg-helper/dist/index.html ./scrpg-helper/dist/404.html
