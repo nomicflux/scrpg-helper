@@ -543,6 +543,16 @@ div.challenge-box {
   margin: 5px;
 }
 
+div.challenge-box.challenge-box-completed-true {
+  background: #000044;
+  border: 1px groove blue;
+}
+
+div.challenge-box.challenge-box-timeout-true {
+  background: #440000;
+  border: 1px groove red;
+}
+
 .remove-challenge-box {
   color: red;
 }

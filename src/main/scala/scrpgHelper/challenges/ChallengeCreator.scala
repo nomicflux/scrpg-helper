@@ -12,7 +12,7 @@ object ChallengeCreator:
 
     def challengeCreator(model: ChallengeCreatorModel): Element =
       div(
-        h1("Challenge Creator"),
+        h1("Challenge Creator (Experimental)"),
         renderChallengeCreator(model),
         renderChallenges(model),
       )
@@ -27,6 +27,8 @@ object ChallengeCreator:
     def renderChallenge(model: ChallengeCreatorModel, box: ChallengeBox, signal: Signal[ChallengeBox]): Element =
       div(
         className := "challenge-box",
+        className <-- signal.map(box => s"challenge-box-completed-${box.completed()}"),
+        className <-- signal.map(box => s"challenge-box-timeout-${box.timeout(None)}"),
         (box.challenge match
           case CompoundChallenge.Simple(c) => renderSimpleChallenge(c,
                                                                     signal.map(_.challenge.forId(c.id)),
@@ -36,7 +38,7 @@ object ChallengeCreator:
           case CompoundChallenge.Or(cs) => renderBranchingChallenges(cs)),
         box.timers.map(timer => renderTimer(
                          timer,
-                         signal.map(box => box.timers.filter(_.getId() == timer.getId()).head),
+                         signal.map(box => box.timers.filter(_.getId() == timer.getId()).headOption),
                          model.timerObserver(timer.getId()),
                        )),
         div(
@@ -70,13 +72,13 @@ object ChallengeCreator:
       )
     end renderChallengeCheckbox
 
-    def renderTimer(timer: Timer, signal: Signal[Timer], observer: Observer[Boolean]): Element =
+    def renderTimer(timer: Timer, signal: Signal[Option[Timer]], observer: Observer[Boolean]): Element =
       timer match
         case st: Timer.SimpleTimer => renderSimpleTimer(st, signal, observer)
         case sct: Timer.StatusChangeTimer => renderStatusChangeTimer(sct, signal, observer)
     end renderTimer
 
-    def renderSimpleTimer(timer: Timer.SimpleTimer, signal: Signal[Timer], observer: Observer[Boolean]): Element =
+    def renderSimpleTimer(timer: Timer.SimpleTimer, signal: Signal[Option[Timer]], observer: Observer[Boolean]): Element =
       div(
         className := "timer-box",
         (1 to timer.total).map(n => renderTimerCheckbox(n, signal, observer)),
@@ -84,20 +86,20 @@ object ChallengeCreator:
     end renderSimpleTimer
 
     def renderTimerCheckbox(n: Int,
-                            signal: Signal[Timer],
+                            signal: Signal[Option[Timer]],
                             observer: Observer[Boolean]): Element =
       span(
         className := "timer-checkbox-span",
         input(
           tpe := "checkbox",
           className := "timer-checkbox",
-          checked <-- signal.map(_.getChecked() >= n),
+          checked <-- signal.map(_.fold(false)(_.getChecked() >= n)),
           onChange.mapToChecked --> { checked => observer.onNext(checked) }
         )
       )
     end renderTimerCheckbox
 
-    def renderStatusChangeTimer(timer: Timer.StatusChangeTimer, signal: Signal[Timer], observer: Observer[Boolean]): Element =
+    def renderStatusChangeTimer(timer: Timer.StatusChangeTimer, signal: Signal[Option[Timer]], observer: Observer[Boolean]): Element =
       div()
     end renderStatusChangeTimer
 

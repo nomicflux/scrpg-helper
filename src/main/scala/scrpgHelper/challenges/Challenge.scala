@@ -57,9 +57,9 @@ enum Timer:
         case StatusChangeTimer(_, _) => 0
     end getChecked
 
-    def completed(currentStatus: Status): Boolean = this match
+    def completed(currentStatus: Option[Status]): Boolean = this match
         case SimpleTimer(_, total, checked) => checked >= total
-        case StatusChangeTimer(_, statuses) => !statuses.filter(currentStatus >= _).isEmpty
+        case StatusChangeTimer(_, statuses) => currentStatus.fold(false)(s => !statuses.filter(s >= _).isEmpty)
     end completed
 end Timer
 
@@ -165,7 +165,7 @@ case class ChallengeBox(
       challenge.completed()
     end completed
 
-    def timeout(status: Status): Boolean =
+    def timeout(status: Option[Status]): Boolean =
       timers.foldLeft[Boolean](false)(_ || _.completed(status))
     end timeout
 
