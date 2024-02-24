@@ -11,6 +11,7 @@ import com.raquo.laminar.api.L.{*, given}
 object RollChart:
     import Die.*
     import EffectDieType.*
+    import scrpgHelper.components.NumBox
     import typings.chartJs.mod.{Chart, ChartDataSets}
 
     val model: Model = new Model
@@ -91,27 +92,8 @@ object RollChart:
         tr(th("Modifier"), th("Overcome"), th("Attack / Defend"), th("Boost / Hinder")),
         tr(
           td(
-            button(
-              tpe := "button",
-              className := "spinner",
-              "-",
-              onClick --> { _ =>  modifierVar.update(n => n - 1) }
-            ),
-            input(
-              tpe := "input",
-              size := 2,
-              inputMode := "numeric",
-              controlled(
-                value <-- modifierSignal.map(_.toString),
-                onInput.mapToValue.map(_.toIntOption).collect { case Some(n) => n } --> { n => modifierVar.update(_ => n) }
-              )
-            ),
-            button(
-              tpe := "button",
-              className := "spinner",
-              "+",
-              onClick --> { _ =>  modifierVar.update(n => n + 1) }
-            ),
+            NumBox(modifierSignal, modifierVar.updater { (n, x) => n + x }, modifierVar.updater { (_, m) => m })
+              .render()
           ),
           td(
             className <-- withModifierSignal.map(_.fold("")(Overcome.fromNumber(_).toClassName)),

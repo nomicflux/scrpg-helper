@@ -9,6 +9,7 @@ import com.raquo.laminar.api.L.{*, given}
 
 object SceneTracker:
     import scrpgHelper.status.Status
+    import scrpgHelper.components.NumBox
 
     val model = new Model
 
@@ -273,43 +274,17 @@ object SceneTracker:
     def renderBoxUpdater(): Element =
       div(
         className := "render-box-updater",
-        numInput(model.greenSignal, model.greenIncrementer, model.greenUpdater, "Green"),
-        numInput(model.yellowSignal,  model.yellowIncrementer, model.yellowUpdater, "Yellow"),
-        numInput(model.redSignal, model.redIncrementer, model.redUpdater, "Red"),
+        NumBox(model.greenSignal, model.greenIncrementer, model.greenUpdater)
+          .withLabel("Green").withSpanClassName("status-updater-span").withInputClassName("status-updater status-green")
+          .render(),
+        NumBox(model.yellowSignal, model.yellowIncrementer, model.yellowUpdater)
+          .withLabel("Yellow").withSpanClassName("status-updater-span").withInputClassName("status-updater status-yellow")
+          .render(),
+        NumBox(model.redSignal, model.redIncrementer, model.redUpdater)
+          .withLabel("Red").withSpanClassName("status-updater-span").withInputClassName("status-updater status-red")
+          .render(),
       )
     end renderBoxUpdater
-
-    def numInput(nSignal: Signal[Int], nIncrementer: Observer[Int], nObserver: Observer[Int], label: String): Element =
-        span(
-          className := s"status-updater-span",
-          span(label),
-          button(
-            tpe := "button",
-            className := "spinner",
-            "-",
-            onClick --> { _ =>  nIncrementer.onNext(-1) }
-          ),
-          input(
-            tpe := "text",
-            size := 1,
-            inputMode := "numeric",
-            className := s"status-updater status-${label.toLowerCase}",
-            controlled(
-              value <-- nSignal.map(_.toString),
-              onInput.mapToValue.map(_.toIntOption).map(_.filter(_ >= 0)).collect {
-                case Some(n)  => n
-              } --> nObserver
-            )
-          ),
-          button(
-            tpe := "button",
-            className := "spinner",
-            "+",
-            onClick --> { _ =>  nIncrementer.onNext(1) }
-          ),
-
-        )
-    end numInput
 end SceneTracker
 
 final class Model:

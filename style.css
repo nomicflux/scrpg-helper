@@ -539,7 +539,7 @@ div.challenge-box {
 .challenge-box-checkbox {
   -webkit-appearance: none;
   display: inline-block;
-  border: 1px ridge white;
+  border: 1px ridge #00ffff;
   border-radius: 10%;
   padding: 10px;
   margin: 10px;
@@ -549,7 +549,7 @@ div.challenge-box {
   -webkit-appearance: none;
   display: inline-block;
   opacity: 0.5;
-  background: cyan;
+  background: #00aaff;
 }
 
 div.timer-box {
@@ -570,6 +570,10 @@ div.timer-box {
   display: inline-block;
   opacity: 0.5;
   background: red;
+}
+
+.challenge-box-creator span {
+  display: block;
 }
 
 button.spinner {

@@ -115,7 +115,38 @@ object ChallengeCreator:
     end renderBranchingChallenges
 
     def renderChallengeCreator(): Element =
+      val challengeCheckboxes: Var[Int] = Var(0)
+      val timerCheckboxes: Var[Int] = Var(0)
+
+      val challengeCheckboxesSignal = challengeCheckboxes.signal
+      val timerCheckboxesSignal = timerCheckboxes.signal
+
       div(
+        className := "challenge-box-creator",
+        span(
+          className := "simple-challenge-creator",
+          span("# of Challenge Checkboxes"),
+          input(
+            tpe := "text",
+            size := 2,
+            controlled(
+              value <-- challengeCheckboxesSignal.map(_.toString),
+              onInput.mapToValue.map(_.toIntOption).collect { case Some(n) => n } --> { n => challengeCheckboxes.update { _ => n } }
+            )
+          )
+        ),
+        span(
+          className := "simple-timer-creator",
+          span("# of Timer Checkboxes"),
+          input(
+            tpe := "text",
+            size := 2,
+            controlled(
+              value <-- timerCheckboxesSignal.map(_.toString),
+              onInput.mapToValue.map(_.toIntOption).collect { case Some(n) => n } --> { n => timerCheckboxes.update { _ => n } }
+            )
+          )
+        )
 
       )
     end renderChallengeCreator
