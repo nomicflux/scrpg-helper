@@ -41,3 +41,5 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Create404
+        run: cp ./dist/index.html ./dist/404.html
