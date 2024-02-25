@@ -546,11 +546,13 @@ div.challenge-box {
 div.challenge-box.challenge-box-completed-true {
   background: #000044;
   border: 1px groove blue;
+  opacity: 0.5;
 }
 
 div.challenge-box.challenge-box-timeout-true {
   background: #440000;
   border: 1px groove red;
+  opacity: 0.5;
 }
 
 .remove-challenge-box {
@@ -606,16 +608,26 @@ div.timer-box {
 }
 
 div.challenge-holder h3 {
-  margin-bottom: 0;
-  padding-bottom: 0;
+  margin: 10px;
+  padding: 0;
 }
 
 div.challenge-holder.challenges-false {
   display: none;
 }
 
+div.challenge-holder.challenges-true {
+  display: block;
+  margin-top: 25px;
+  margin-bottom: -4em;
+}
+
+div.challenge-holder div.challenge-section {
+}
+
 div.challenge-section {
   transform: scale(0.5, 0.5);
+  transform-origin: top;
 }
 
 div.challenge-section div.challenge-box {

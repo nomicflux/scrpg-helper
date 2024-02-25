@@ -157,6 +157,7 @@ final class ChallengeBoxId
 
 case class ChallengeBox(
   id: ChallengeBoxId,
+  name: String,
   challenge: CompoundChallenge,
   timers: List[Timer],
   shown: Boolean
@@ -195,9 +196,10 @@ case class ChallengeBox(
 end ChallengeBox
 
 object ChallengeBox:
-    def createSimpleChallengeBox(n: Int): ChallengeBox =
+    def createSimpleChallengeBox(name: String, n: Int): ChallengeBox =
       ChallengeBox(
         new ChallengeBoxId(),
+        name,
         CompoundChallenge.fromSimpleChallenge(SimpleChallenge.createSimpleChallenge(n)),
         List(),
         true

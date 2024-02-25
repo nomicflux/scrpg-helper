@@ -26,9 +26,10 @@ object ChallengeCreator:
 
     def renderChallenge(model: ChallengeCreatorModel, box: ChallengeBox, signal: Signal[ChallengeBox]): Element =
       div(
-        className := "challenge-box",
+        className := "challenge-box challenge-creator-holder",
         className <-- signal.map(box => s"challenge-box-completed-${box.completed()}"),
         className <-- signal.map(box => s"challenge-box-timeout-${box.timeout(None)}"),
+        h3(child.text <-- signal.map(_.name)),
         (box.challenge match
           case CompoundChallenge.Simple(c) => renderSimpleChallenge(c,
                                                                     signal.map(_.challenge.forId(c.id)),
@@ -122,14 +123,24 @@ object ChallengeCreator:
     end renderBranchingChallenges
 
     def renderChallengeCreator(model: ChallengeCreatorModel): Element =
+      val name: Var[String] = Var("")
       val challengeCheckboxes: Var[Int] = Var(1)
       val timerCheckboxes: Var[Int] = Var(0)
 
+      val nameSignal = name.signal
       val challengeCheckboxesSignal = challengeCheckboxes.signal
       val timerCheckboxesSignal = timerCheckboxes.signal
 
       div(
         className := "challenge-box-creator",
+        div(
+          span("Name"),
+          input(
+            tpe := "text",
+            value <-- nameSignal,
+            onInput.mapToValue --> { n => name.update { _ => n } },
+          )
+        ),
         NumBox(
           challengeCheckboxesSignal,
           challengeCheckboxes.updater { (n, x) => n + x },
@@ -149,8 +160,8 @@ object ChallengeCreator:
         button(
           tpe := "button",
           "Create Challenge",
-          onClick.compose(_.withCurrentValueOf(challengeCheckboxesSignal, timerCheckboxesSignal)) --> { case (_, c, t) =>
-            model.createSimpleChallenge(c, Some(t).filter(_ >= 1))
+          onClick.compose(_.withCurrentValueOf(nameSignal, challengeCheckboxesSignal, timerCheckboxesSignal)) --> { case (_, n, c, t) =>
+            model.createSimpleChallenge(n, c, Some(t).filter(_ >= 1))
           }
         )
       )
@@ -161,9 +172,9 @@ final class ChallengeCreatorModel:
     val challenges: Var[List[ChallengeBox]] = Var(List())
     val challengesSignal = challenges.signal
 
-    def createSimpleChallenge(challengeChecks: Int, timerChecks: Option[Int]): Unit =
+    def createSimpleChallenge(name: String, challengeChecks: Int, timerChecks: Option[Int]): Unit =
       challenges.update { cs =>
-        val c = ChallengeBox.createSimpleChallengeBox(challengeChecks)
+        val c = ChallengeBox.createSimpleChallengeBox(name, challengeChecks)
         cs :+  timerChecks.fold(c)(n => c.addTimer(Timer.createSimpleTimer(n)))
       }
     end createSimpleChallenge
