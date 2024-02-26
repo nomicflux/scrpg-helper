@@ -16,11 +16,17 @@ case class SimpleChallenge(id: SimpleChallengeId, total: Int, checked: Int, esca
       copy(escalated = e)
     end setEscalate
 
+    def toggleEscalate(): SimpleChallenge =
+      copy(escalated = !escalated)
+    end toggleEscalate
+
     def checkAtBox(toCheck: Boolean, n: Int): SimpleChallenge =
-      if(toCheck) {
+      if(toCheck && checked < total) {
         copy(checked = checked + 1)
-      } else {
+      } else if(!toCheck && checked > 0) {
         copy(checked = checked - 1)
+      } else {
+        this
       }
     end checkAtBox
 end SimpleChallenge
@@ -173,6 +179,10 @@ case class ChallengeBox(
     def setShown(s: Boolean): ChallengeBox =
       copy(shown = s)
     end setShown
+
+    def toggleShown(): ChallengeBox =
+      copy(shown = !shown)
+    end toggleShown
 
     def updateAtId(id: SimpleChallengeId, f: SimpleChallenge => Option[SimpleChallenge]): Option[ChallengeBox] =
       val newC = challenge.updateAtId(id, c => f(c))

@@ -638,12 +638,187 @@ div.challenge-section div.challenge-box div.remove-challenge-box {
   display: none;
 }
 
+div.challenge-section div.challenge-box div.escalation-checkbox-container {
+  display: none;
+}
+
+div.challenge-section div.challenge-box div.show-challenge-box {
+  display: none;
+}
+
+div.challenge-creator-section div.obfuscated-checkboxes {
+  display: none;
+}
+
+div.challenge-section div.challenge-box.challenge-box-shown-false div.shown-checkboxes {
+  display: none;
+}
+
+div.challenge-section div.challenge-box.challenge-box-shown-false.challenge-box-completed-true div.shown-checkboxes {
+  display: block;
+}
+div.challenge-section div.challenge-box.challenge-box-shown-false.challenge-box-timeout-true div.shown-checkboxes {
+  display: block;
+}
+
+div.challenge-section div.challenge-box.challenge-box-shown-false div.obfuscated-checkboxes {
+  display: block;
+  opacity: 0.8;
+}
+div.challenge-section div.challenge-box.challenge-box-shown-false.challenge-box-completed-true div.obfuscated-checkboxes {
+  display: none;
+}
+div.challenge-section div.challenge-box.challenge-box-shown-false.challenge-box-timeout-true div.obfuscated-checkboxes {
+  display: none;
+}
+
+div.challenge-section div.challenge-box.challenge-box-shown-true div.obfuscated-checkboxes {
+  display: none;
+}
+
+div.challenge-creator-section div.shown-checkboxes {
+}
+
 div.name-box {
   cursor: pointer;
 }
 
 .hidden {
   display: none;
+}
+
+.obfuscated-checkboxes {
+  cursor: pointer;
+  display: inline-block;
+}
+
+.obfuscated-checkboxes input::before {
+  font-size: 1.5em;
+  content: "?";
+  margin: 0;
+  box-shadow: inset 1em 1em var(--form-control-color);
+  border-radius: 20%;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+div.simple-challenge-box .obfuscated-checkboxes input::before {
+  color: #00aaff;
+}
+
+div.timer-box .obfuscated-checkboxes input::before {
+  color: #ff4466;
+}
+
+.obfuscated-checkboxes input {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+  padding: 0.25em;
+  cursor: pointer;
+}
+
+div.simple-challenge-box .obfuscated-checkboxes input::before {
+  border: 2px groove #00ffff;
+}
+
+div.timer-box .obfuscated-checkboxes input::before {
+  border: 2px ridge #ff0000;
+}
+
+.obfuscated-checkboxes:hover input::before {
+  background: #666666;
+  font-weight: bold;
+}
+
+.checkbox-container {
+  cursor: pointer;
+  width: fit-content;
+  display: inline-block;
+}
+
+.checkbox-container span {
+  margin-right: 0.15em;
+}
+
+.checkbox-container input::before {
+  font-size: 1.5em;
+  content: "⇑";
+  margin: 0;
+  padding: 0;
+  height: 2em;
+  width: 2em;
+  cursor: pointer;
+  box-shadow: inset 1em 1em var(--form-control-color);
+}
+
+.checkbox-container input {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+.checkbox-container:hover input {
+  color: #ffd700;
+  font-weight: bold;
+}
+
+.checkbox-container input:checked::before {
+  content: "⇣";
+}
+
+div.escalated-true {
+
+}
+
+div.escalated-true .challenge-box-checkbox {
+  border: 3px groove #aaffff;
+  background: #888888;
+}
+
+div.escalated-true .challenge-box-checkbox.challenge-box-checkbox:checked {
+  background: #00ffff;
+}
+
+div.escalated-false {
+
+}
+
+div.escalation-checkbox-container {
+  padding: 5px;
+}
+
+div.escalation-checkbox-container:hover {
+  border: 1px solid #888888;
+  border-radius: 20px;
+  background: #444444;
+  padding: 4px;
+}
+
+div.show-challenge-box {
+  display: inline-block;
+  cursor: pointer;
+  border-radius: 20px;
+  width: fit-content;
+  padding: 10px;
+}
+
+.show-challenge-box .shown-challenge-box-true {
+  opacity: 1;
+}
+
+.show-challenge-box .shown-challenge-box-false {
+  opacity: 0.3;
+}
+
+div.show-challenge-box span {
+  padding-right: 5px;
+}
+
+div.show-challenge-box:hover {
+  background: #444444;
+  border: 1px ridge grey;
+  padding: 9px;
 }
 
 button.spinner {
