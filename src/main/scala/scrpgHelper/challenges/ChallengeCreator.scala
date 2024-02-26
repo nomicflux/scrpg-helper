@@ -59,21 +59,25 @@ object ChallengeCreator:
       val nameVar: Var[String] = Var(origName)
       val nameSignal = nameVar.signal
 
+      def updateName(newName: String): Unit =
+        observer.onNext(newName)
+        editing.update(_ => false)
+      end updateName
+
       div(
+        className := "name-box",
         onClick --> { _ => editing.update(_ => true) },
         input(
           tpe := "text",
           className <-- editingSignal.map(e => if e then "" else "hidden"),
           value <-- nameSignal,
           onBlur.compose(_.withCurrentValueOf(nameSignal)) --> { (_, newName) =>
-            observer.onNext(newName)
-            editing.update(_ => false)
+            updateName(newName)
           },
           onInput.mapToValue --> nameVar,
           onKeyPress.compose(_.withCurrentValueOf(nameSignal)) --> { (event, newName) =>
             if(event.key == "Enter") {
-              observer.onNext(newName)
-              editing.update(_ => false)
+              updateName(newName)
             }
           },
         ),

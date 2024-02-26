@@ -213,6 +213,13 @@ object SceneTracker:
       val dieSize: Var[Int] = Var(4)
       val dieSizeSignal = dieSize.signal
 
+      def addActor(at: ActorType, acted: Boolean): Unit =
+        actorName.update { name =>
+          if(acted) then model.actorActedAdder.onNext(Actor.createActor(at, name)) else model.actorAdder.onNext(Actor.createActor(at, name))
+          ""
+        }
+      end addActor
+
       div(
         className := "add-actor",
         span(
@@ -222,10 +229,7 @@ object SceneTracker:
             onInput.mapToValue --> actorName,
             onKeyPress.compose(_.withCurrentValueOf(actorTypeSignal.combineWith(actorAlreadyActedSignal))) --> { case (event, at, acted) =>
               if(event.key == "Enter") {
-                actorName.update { name =>
-                  if(acted) then model.actorActedAdder.onNext(Actor.createActor(at, name)) else model.actorAdder.onNext(Actor.createActor(at, name))
-                  ""
-                }
+                addActor(at, acted)
               }
             },
           )
@@ -268,10 +272,7 @@ object SceneTracker:
             tpe := "button",
             "Add Actor",
             onClick.compose(_.withCurrentValueOf(actorTypeSignal.combineWith(actorAlreadyActedSignal))) --> { case (_event, at, acted) =>
-              actorName.update { name =>
-                if(acted) then model.actorActedAdder.onNext(Actor.createActor(at, name)) else model.actorAdder.onNext(Actor.createActor(at, name))
-                ""
-              }
+              addActor(at, acted)
             }
           )
         )
