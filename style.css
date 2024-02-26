@@ -619,14 +619,14 @@ div.challenge-holder.challenges-false {
 div.challenge-holder.challenges-true {
   display: block;
   margin-top: 25px;
-  margin-bottom: -4em;
+  margin-bottom: -3em;
 }
 
 div.challenge-holder div.challenge-section {
 }
 
 div.challenge-section {
-  transform: scale(0.5, 0.5);
+  transform: scale(0.7, 0.7);
   transform-origin: top;
 }
 
@@ -635,6 +635,10 @@ div.challenge-section div.challenge-box {
 }
 
 div.challenge-section div.challenge-box div.remove-challenge-box {
+  display: none;
+}
+
+.hidden {
   display: none;
 }
 

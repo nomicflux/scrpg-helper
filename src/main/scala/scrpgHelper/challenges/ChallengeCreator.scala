@@ -25,11 +25,13 @@ object ChallengeCreator:
     end renderChallenges
 
     def renderChallenge(model: ChallengeCreatorModel, box: ChallengeBox, signal: Signal[ChallengeBox]): Element =
+      val nameObserver = model.nameObserver(box.id)
+
       div(
         className := "challenge-box challenge-creator-holder",
         className <-- signal.map(box => s"challenge-box-completed-${box.completed()}"),
         className <-- signal.map(box => s"challenge-box-timeout-${box.timeout(None)}"),
-        h3(child.text <-- signal.map(_.name)),
+        renderNameBox(box.name, signal, nameObserver),
         (box.challenge match
           case CompoundChallenge.Simple(c) => renderSimpleChallenge(c,
                                                                     signal.map(_.challenge.forId(c.id)),
@@ -49,6 +51,39 @@ object ChallengeCreator:
         )
       )
     end renderChallenge
+
+    def renderNameBox(origName: String, boxSignal: Signal[ChallengeBox], observer: Observer[String]): Element =
+      val editing: Var[Boolean] = Var(false)
+      val editingSignal = editing.signal
+
+      val nameVar: Var[String] = Var(origName)
+      val nameSignal = nameVar.signal
+
+      div(
+        onClick --> { _ => editing.update(_ => true) },
+        input(
+          tpe := "text",
+          className <-- editingSignal.map(e => if e then "" else "hidden"),
+          value <-- nameSignal,
+          onBlur.compose(_.withCurrentValueOf(nameSignal)) --> { (_, newName) =>
+            observer.onNext(newName)
+            editing.update(_ => false)
+          },
+          onInput.mapToValue --> nameVar,
+          onKeyPress.compose(_.withCurrentValueOf(nameSignal)) --> { (event, newName) =>
+            if(event.key == "Enter") {
+              observer.onNext(newName)
+              editing.update(_ => false)
+            }
+          },
+        ),
+        h3(
+          className <-- editingSignal.map(e => if e then "hidden" else ""),
+          child.text <-- boxSignal.map(_.name),
+        ),
+      )
+
+    end renderNameBox
 
     def renderSimpleChallenge(challenge: SimpleChallenge,
                               signal: Signal[Option[SimpleChallenge]],
@@ -198,4 +233,16 @@ final class ChallengeCreatorModel:
         }
       }
     end timerObserver
+
+    def nameObserver(boxId: ChallengeBoxId): Observer[String] =
+      challenges.updater { (boxes, name) =>
+        boxes.map { box =>
+          if(box.id == boxId) {
+            box.copy(name = name)
+          } else {
+            box
+          }
+        }
+      }
+    end nameObserver
 end ChallengeCreatorModel
