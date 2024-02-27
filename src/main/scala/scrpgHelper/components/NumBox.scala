@@ -45,9 +45,15 @@ case class NumBox(label: Option[String],
     end inBounds
 
     def render(): Element =
+      val cname = spanClassName.getOrElse("span")
+      span(
+        className := s"$cname numbox",
         span(
-          className := spanClassName.getOrElse(""),
-          span(label.getOrElse("")),
+          className := s"$cname-label numbox-label",
+          label.getOrElse("")
+        ),
+        span(
+          className := s"$cname-numbox numbox-box",
           button(
             tpe := "button",
             className := "spinner",
@@ -74,7 +80,8 @@ case class NumBox(label: Option[String],
             "+",
             onClick --> { _ =>  incrementer.onNext(1) }
           ),
-        )
+        ),
+      )
     end render
 end NumBox
 

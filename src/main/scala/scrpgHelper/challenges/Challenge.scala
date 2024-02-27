@@ -117,6 +117,11 @@ enum CompoundChallenge:
       Or(this +: challenges)
     end or
 
+    def getId(): Option[SimpleChallengeId] = this match
+      case Simple(c) => Some(c.id)
+      case _ => None
+    end getId
+
     def completed(): Boolean = this match
       case Simple(challenge) => challenge.completed
       case And(challenges) => challenges.foldLeft[Boolean](true)(_ && _.completed())
@@ -131,13 +136,11 @@ enum CompoundChallenge:
       case Or(challenges) => challenges.foldLeft[Option[SimpleChallenge]](None)((acc, c) => acc.orElse(c.forId(id)))
     end forId
 
-    def updateAtId(id: SimpleChallengeId, f: SimpleChallenge => Option[SimpleChallenge]): Option[CompoundChallenge] = this match
-      case Simple(challenge) => Some(challenge).filter(_.id == id).flatMap(f).map(Simple(_))
-      case And(challenges) => Some(And(challenges.collect(c => c.updateAtId(id, f) match
-                                                       case Some(v) => v)))
-      case AndThen(thisChallenge, nextChallenge) => thisChallenge.updateAtId(id, f).orElse(nextChallenge.updateAtId(id, f))
-      case Or(challenges) => Some(Or(challenges.collect(c => c.updateAtId(id, f) match
-                                                       case Some(v) => v)))
+    def updateAtId(id: SimpleChallengeId, f: SimpleChallenge => SimpleChallenge): CompoundChallenge = this match
+      case Simple(challenge) => if challenge.id == id then Simple(f(challenge)) else this
+      case And(challenges) => And(challenges.map(_.updateAtId(id, f)))
+      case AndThen(thisChallenge, nextChallenge) => thisChallenge.updateAtId(id, f).andThen(nextChallenge.updateAtId(id, f))
+      case Or(challenges) => Or(challenges.map(_.updateAtId(id, f)))
     end updateAtId
 end CompoundChallenge
 
@@ -184,19 +187,19 @@ case class ChallengeBox(
       copy(shown = !shown)
     end toggleShown
 
-    def updateAtId(id: SimpleChallengeId, f: SimpleChallenge => Option[SimpleChallenge]): Option[ChallengeBox] =
+    def updateAtId(id: SimpleChallengeId, f: SimpleChallenge => SimpleChallenge): ChallengeBox =
       val newC = challenge.updateAtId(id, c => f(c))
-      newC.map(c => this.copy(challenge = c))
+      copy(challenge = newC)
     end updateAtId
 
-    def updateTimer(id: TimerId, f: Timer => Option[Timer]): ChallengeBox =
+    def updateTimer(id: TimerId, f: Timer => Timer): ChallengeBox =
       val newTimers = timers.map { timer =>
         if(timer.getId() == id) {
           f(timer)
         } else {
-          Some(timer)
+          timer
         }
-      }.collect { case Some(timer) => timer }
+      }
       copy(timers = newTimers)
     end updateTimer
 
@@ -215,4 +218,22 @@ object ChallengeBox:
         true
       )
     end createSimpleChallengeBox
+
+    def createSimultaneousChallengeBox(name: String, ns: List[Int]): ChallengeBox =
+      if(ns.size == 1) {
+        createSimpleChallengeBox(name, ns.head)
+      } else {
+        ChallengeBox(
+          new ChallengeBoxId(),
+          name,
+          CompoundChallenge.and(
+            ns.map(n =>
+              CompoundChallenge.fromSimpleChallenge(SimpleChallenge.createSimpleChallenge(n))
+            )
+          ),
+          List(),
+          true
+        )
+      }
+    end createSimultaneousChallengeBox
 end ChallengeBox

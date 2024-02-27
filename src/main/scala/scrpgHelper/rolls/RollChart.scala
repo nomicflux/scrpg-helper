@@ -181,7 +181,7 @@ object RollChart:
             ((counts.take(n - 1) :+ 0.0) ++ counts.drop(n)).toJSArray
           }
           chart.data.datasets.get(1).data = roll.fold(List().toJSArray){ n =>
-            ((List.fill(n - 1)(0.0) :+ counts.drop(n-1).head)).toJSArray
+            ((List.fill(n - 1)(0.0) :+ counts.drop(n-1).headOption.getOrElse(0.0))).toJSArray
           }
           chart.update()
         }
@@ -245,7 +245,7 @@ object RollChart:
                         }
                         chart.data.datasets.get(1).data = roll.fold(List().toJSArray){ n =>
                           val m = Overcome.fromNumber(n + modifier).ordinal + 1
-                          ((List.fill(m - 1)(0.0) :+ counts.drop(m-1).head)).toJSArray
+                          ((List.fill(m - 1)(0.0) :+ counts.drop(m-1).headOption.getOrElse(0.0))).toJSArray
                         }
                         chart.update()
                       }

@@ -424,6 +424,41 @@ button.redo:disabled {
   opacity: 0.2;
 }
 
+.rows-setup {
+  display: block;
+}
+
+.rows-setup table {
+  margin: 20px;
+}
+
+.row-changer {
+  display: inline-block;
+}
+
+.row-changer-buttons {
+  border-radius: 5px;
+  border: 1px groove grey;
+  padding: 5px;
+}
+
+.row-changer button:disabled {
+  opacity: 0.3;
+}
+
+button.size-button {
+  width: fit-content;
+  padding: 5px;
+}
+
+button.decrease-button {
+  color: red;
+}
+
+button.increase-button {
+  color: blue;
+}
+
 div.scene-tracker-page {
   border-radius: 5%;
   border: 1px solid black;
@@ -555,12 +590,30 @@ div.challenge-box.challenge-box-timeout-true {
   opacity: 0.5;
 }
 
+div.challenge-box-footer {
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+}
+
 .remove-challenge-box {
+  display: block;
+  margin: auto;
   color: red;
+  width: fit-content;
+  block-size: fit-content;
+  padding: 5px;
+  align-items: center;
+  justify-content: center;
 }
 
 .remove-challenge-box:hover {
   cursor: pointer;
+  background: #444444;
+  border: 1px inset grey;
+  padding: 4px;
+  border-radius: 20%;
 }
 
 .challenge-box-checkbox {
@@ -702,6 +755,19 @@ div.name-box {
   padding-right: 5px;
 }
 
+span.numbox {
+  display: inline-block;
+}
+
+span.numbox-label {
+  display: inline-block;
+  padding-right: 1em;
+}
+
+span.numbox-box {
+  display: inline-block;
+}
+
 div.simple-challenge-box .obfuscated-checkboxes input::before {
   color: #00aaff;
 }
@@ -796,7 +862,8 @@ div.escalation-checkbox-container:hover {
 }
 
 div.show-challenge-box {
-  display: inline-block;
+  display: block;
+  margin: auto;
   cursor: pointer;
   border-radius: 20px;
   width: fit-content;
