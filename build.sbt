@@ -10,6 +10,7 @@ lazy val scrpgHelper = project.in(file("."))
         _.withModuleKind(ModuleKind.ESModule)
             .withModuleSplitStyle(ModuleSplitStyle.SmallModulesFor(List("scprgHelper")))
       },
+      useCoursier := true,
       libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.4.0",
       libraryDependencies += "com.raquo" %%% "airstream" % "17.0.0-M6",
       libraryDependencies += "com.raquo" %%% "laminar" % "17.0.0-M6",
