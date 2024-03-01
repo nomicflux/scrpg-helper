@@ -42,14 +42,15 @@ object ChallengeCreator:
         s"challenge-box-timeout-${box.timeout(None)}"
       ),
       className <-- signal.map(box => s"challenge-box-shown-${box.shown}"),
-      renderNameBox(origBox.name, signal, nameObserver),
+      renderNameBox(origBox.name, signal.map(box => Some(box.name)), nameObserver),
       (origBox.challenge match
         case CompoundChallenge.Simple(c) =>
           renderSimpleChallenge(
             c,
             signal.map(_.challenge.forId(c.id)),
             model.escalationObserver(origBox.id, c.id),
-            model.checkboxObserver(origBox.id, c.id)
+            model.checkboxObserver(origBox.id, c.id),
+            model.challengeNameObserver(origBox.id, c.id),
           )
         case CompoundChallenge.And(cs) =>
           renderSimultaneousChallenges(
@@ -72,7 +73,8 @@ object ChallengeCreator:
           signal.map(box =>
             box.timers.filter(_.getId() == timer.getId()).headOption
           ),
-          model.timerObserver(timer.getId())
+          model.timerCheckboxObserver(timer.getId()),
+          model.timerNameObserver(timer.getId())
         )
       ),
       div(
@@ -111,7 +113,7 @@ object ChallengeCreator:
 
   def renderNameBox(
       origName: String,
-      boxSignal: Signal[ChallengeBox],
+      signal: Signal[Option[String]],
       observer: Observer[String]
   ): Element =
     val editing: Var[Boolean] = Var(false)
@@ -145,7 +147,7 @@ object ChallengeCreator:
       ),
       h3(
         className <-- editingSignal.map(e => if e then "hidden" else ""),
-        child.text <-- boxSignal.map(_.name)
+        child.text <-- signal.map(_.getOrElse(""))
       )
     )
   end renderNameBox
@@ -154,7 +156,8 @@ object ChallengeCreator:
       challenge: SimpleChallenge,
       signal: Signal[Option[SimpleChallenge]],
       escalationObserver: Observer[Unit],
-      checkboxObserver: Observer[(Boolean, Int)]
+      checkboxObserver: Observer[(Boolean, Int)],
+      nameObserver: Observer[String]
   ): Element =
     div(
       className := "simple-challenge-box",
@@ -162,8 +165,9 @@ object ChallengeCreator:
         mc.fold("")(c => s"escalated-${c.escalated}")
       ),
       div(
-        className := "name",
-        child.text <-- signal.map(mc => mc.flatMap(_.name).getOrElse(""))
+        renderNameBox(challenge.name.getOrElse(""),
+                      signal.map(c => c.flatMap(_.name)),
+                      nameObserver),
       ),
       div(
         className := "container-row",
@@ -226,30 +230,34 @@ object ChallengeCreator:
       timer: Timer,
       boxSignal: Signal[ChallengeBox],
       signal: Signal[Option[Timer]],
-      observer: Observer[Boolean]
+      checkboxObserver: Observer[Boolean],
+      nameObserver: Observer[String]
   ): Element =
     timer match
       case st: Timer.SimpleTimer =>
-        renderSimpleTimer(st, boxSignal, signal, observer)
+        renderSimpleTimer(st, boxSignal, signal, checkboxObserver, nameObserver)
       case sct: Timer.StatusChangeTimer =>
-        renderStatusChangeTimer(sct, boxSignal, signal, observer)
+        renderStatusChangeTimer(sct, boxSignal, signal, checkboxObserver, nameObserver)
   end renderTimer
 
   def renderSimpleTimer(
       timer: Timer.SimpleTimer,
       boxSignal: Signal[ChallengeBox],
       signal: Signal[Option[Timer]],
-      observer: Observer[Boolean]
+      checkboxObserver: Observer[Boolean],
+      nameObserver: Observer[String]
   ): Element =
     div(
       className := "timer-box",
       div(
         className := "name",
-        child.text <-- signal.map(_.flatMap(_.getName()).getOrElse(""))
+        renderNameBox(timer.name.getOrElse(""),
+                      signal.map(_.flatMap(_.getName())),
+                      nameObserver)
       ),
       div(
         className := "shown-checkboxes",
-        (1 to timer.total).map(n => renderTimerCheckbox(n, signal, observer))
+        (1 to timer.total).map(n => renderTimerCheckbox(n, signal, checkboxObserver))
       ),
       div(
         className := "obfuscated-checkboxes",
@@ -257,7 +265,7 @@ object ChallengeCreator:
           input(
             tpe := "checkbox",
             className := "challenge-box-obfuscated",
-            onClick --> { _ => observer.onNext(true) }
+            onClick --> { _ => checkboxObserver.onNext(true) }
           )
         )
       )
@@ -284,7 +292,8 @@ object ChallengeCreator:
       timer: Timer.StatusChangeTimer,
       boxSignal: Signal[ChallengeBox],
       signal: Signal[Option[Timer]],
-      observer: Observer[Boolean]
+      checkboxObserver: Observer[Boolean],
+      nameObserver: Observer[String]
   ): Element =
     div()
   end renderStatusChangeTimer
@@ -302,7 +311,8 @@ object ChallengeCreator:
             c,
             signal.map(_.forId(c.id)),
             model.escalationObserver(boxId, c.id),
-            model.checkboxObserver(boxId, c.id)
+            model.checkboxObserver(boxId, c.id),
+            model.challengeNameObserver(boxId, c.id),
           )
       })
     )
@@ -521,7 +531,14 @@ final class ChallengeCreatorModel:
     observerForIds(boxId, challengeId, (c, _) => c.toggleEscalate())
   end escalationObserver
 
-  def timerObserver(timerId: TimerId): Observer[Boolean] =
+  def challengeNameObserver(
+      boxId: ChallengeBoxId,
+      challengeId: SimpleChallengeId
+  ): Observer[String] =
+    observerForIds(boxId, challengeId, (c, name) => c.copy(name = Some(name)))
+  end challengeNameObserver
+
+  def timerCheckboxObserver(timerId: TimerId): Observer[Boolean] =
     challenges.updater { case (boxes, checked) =>
       boxes.map { box =>
         box.updateTimer(
@@ -530,7 +547,18 @@ final class ChallengeCreatorModel:
         )
       }
     }
-  end timerObserver
+  end timerCheckboxObserver
+
+  def timerNameObserver(timerId: TimerId): Observer[String] =
+    challenges.updater { case (boxes, name) =>
+      boxes.map { box =>
+        box.updateTimer(
+          timerId,
+          timer => timer.changeName(name)
+        )
+      }
+    }
+  end timerNameObserver
 
   def nameObserver(boxId: ChallengeBoxId): Observer[String] =
     challenges.updater { (boxes, name) =>

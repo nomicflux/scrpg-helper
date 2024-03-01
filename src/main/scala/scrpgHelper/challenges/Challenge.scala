@@ -59,6 +59,11 @@ enum Timer:
     case StatusChangeTimer(_, name, _) => name
   end getName
 
+  def changeName(name: String): Timer = this match
+    case st: SimpleTimer => st.copy(name = Some(name))
+    case sct: StatusChangeTimer => sct.copy(name = Some(name))
+  end changeName
+
   def checkBox(): Timer = this match
     case SimpleTimer(id, name, total, checked) =>
       if (checked < total) then SimpleTimer(id, name, total, checked + 1) else this
