@@ -850,7 +850,14 @@ div.escalated-false {
 
 }
 
-div.escalation-checkbox-container {
+div.container-row {
+  display: flex;
+  flex-direction: row;
+  margin: auto;
+  justify-content: center;
+}
+
+div.checkbox-container {
   padding: 5px;
 }
 
@@ -888,12 +895,17 @@ div.show-challenge-box:hover {
   padding: 9px;
 }
 
+div.name {
+  display: block;
+}
+
 button.spinner {
-  font-size: 12px;
+  font-size: 14px;
+  font-weight: bold;
   width: fit-content;
-  padding: 2px;
+  padding: 2px 4px;
   margin: 0 1px;
-  color: grey;
+  color: #aaaaaa;
 }
 button.spinner:hover {
   color: white;

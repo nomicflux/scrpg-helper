@@ -5,235 +5,284 @@ import typings.std.stdStrings.offer
 
 final class SimpleChallengeId
 
-case class SimpleChallenge(id: SimpleChallengeId, total: Int, checked: Int, escalated: Boolean):
-    def checkBox(): SimpleChallenge =
-      if(checked < total) then copy(checked = checked + 1) else this
-    end checkBox
+case class SimpleChallenge(
+    id: SimpleChallengeId,
+    name: Option[String],
+    total: Int,
+    checked: Int,
+    escalated: Boolean
+):
+  def checkBox(): SimpleChallenge =
+    if (checked < total) then copy(checked = checked + 1) else this
+  end checkBox
 
-    val completed: Boolean = checked >= total
+  val completed: Boolean = checked >= total
 
-    def setEscalate(e: Boolean): SimpleChallenge =
-      copy(escalated = e)
-    end setEscalate
+  def setEscalate(e: Boolean): SimpleChallenge =
+    copy(escalated = e)
+  end setEscalate
 
-    def toggleEscalate(): SimpleChallenge =
-      copy(escalated = !escalated)
-    end toggleEscalate
+  def toggleEscalate(): SimpleChallenge =
+    copy(escalated = !escalated)
+  end toggleEscalate
 
-    def checkAtBox(toCheck: Boolean, n: Int): SimpleChallenge =
-      if(toCheck && checked < total) {
-        copy(checked = checked + 1)
-      } else if(!toCheck && checked > 0) {
-        copy(checked = checked - 1)
-      } else {
-        this
-      }
-    end checkAtBox
+  def checkAtBox(toCheck: Boolean, n: Int): SimpleChallenge =
+    if (toCheck && checked < total) {
+      copy(checked = checked + 1)
+    } else if (!toCheck && checked > 0) {
+      copy(checked = checked - 1)
+    } else {
+      this
+    }
+  end checkAtBox
 end SimpleChallenge
 
 object SimpleChallenge:
-    def createSimpleChallenge(n: Int): SimpleChallenge =
-        SimpleChallenge(new SimpleChallengeId(), n, 0, false)
-    end createSimpleChallenge
+  def createSimpleChallenge(name: Option[String], n: Int): SimpleChallenge =
+    SimpleChallenge(new SimpleChallengeId(), name, n, 0, false)
+  end createSimpleChallenge
 end SimpleChallenge
 
 final class TimerId
 
 enum Timer:
-    case SimpleTimer(id: TimerId, total: Int, checked: Int)
-    case StatusChangeTimer(id: TimerId, onStatus: Set[Status])
+  case SimpleTimer(id: TimerId, name: Option[String], total: Int, checked: Int)
+  case StatusChangeTimer(id: TimerId, name: Option[String], onStatus: Set[Status])
 
-    def getId(): TimerId = this match
-        case SimpleTimer(id, _, _) => id
-        case StatusChangeTimer(id, _) => id
-    end getId
+  def getId(): TimerId = this match
+    case SimpleTimer(id, _, _, _)    => id
+    case StatusChangeTimer(id, _, _) => id
+  end getId
 
-    def checkBox(): Timer = this match
-        case SimpleTimer(id, total, checked) => if(checked < total) then SimpleTimer(id, total, checked + 1) else this
-        case StatusChangeTimer(_, _) => this
-    end checkBox
+  def getName(): Option[String] = this match
+    case SimpleTimer(_, name, _, _) => name
+    case StatusChangeTimer(_, name, _) => name
+  end getName
 
-    def uncheckBox(): Timer = this match
-        case SimpleTimer(id, total, checked) => if(checked > 0) then SimpleTimer(id, total, checked - 1) else this
-        case StatusChangeTimer(_, _) => this
-    end uncheckBox
+  def checkBox(): Timer = this match
+    case SimpleTimer(id, name, total, checked) =>
+      if (checked < total) then SimpleTimer(id, name, total, checked + 1) else this
+    case StatusChangeTimer(_, _, _) => this
+  end checkBox
 
-    def getChecked(): Int = this match
-        case SimpleTimer(_, _, checked) => checked
-        case StatusChangeTimer(_, _) => 0
-    end getChecked
+  def uncheckBox(): Timer = this match
+    case SimpleTimer(id, name, total, checked) =>
+      if (checked > 0) then SimpleTimer(id, name, total, checked - 1) else this
+    case StatusChangeTimer(_, _, _) => this
+  end uncheckBox
 
-    def completed(currentStatus: Option[Status]): Boolean = this match
-        case SimpleTimer(_, total, checked) => checked >= total
-        case StatusChangeTimer(_, statuses) => currentStatus.fold(false)(s => !statuses.filter(s >= _).isEmpty)
-    end completed
+  def getChecked(): Int = this match
+    case SimpleTimer(_, _, _, checked) => checked
+    case StatusChangeTimer(_, _, _)    => 0
+  end getChecked
+
+  def completed(currentStatus: Option[Status]): Boolean = this match
+    case SimpleTimer(_, _, total, checked) => checked >= total
+    case StatusChangeTimer(_, _, statuses) =>
+      currentStatus.fold(false)(s => !statuses.filter(s >= _).isEmpty)
+  end completed
 end Timer
 
 object Timer:
-    def createSimpleTimer(n: Int): Timer =
-      SimpleTimer(new TimerId(), n, 0)
-    end createSimpleTimer
+  def createSimpleTimer(name: Option[String], n: Int): Timer =
+    SimpleTimer(new TimerId(), name, n, 0)
+  end createSimpleTimer
 
-    def createYellowStatusTimer(): Timer =
-      StatusChangeTimer(new TimerId(), Set(Status.Yellow))
-    end createYellowStatusTimer
+  def createYellowStatusTimer(name: Option[String]): Timer =
+    StatusChangeTimer(new TimerId(), name, Set(Status.Yellow))
+  end createYellowStatusTimer
 
-    def createRedStatusTimer(): Timer =
-      StatusChangeTimer(new TimerId(), Set(Status.Red))
-    end createRedStatusTimer
+  def createRedStatusTimer(name: Option[String]): Timer =
+    StatusChangeTimer(new TimerId(), name, Set(Status.Red))
+  end createRedStatusTimer
 
-    def createStatusChangeTimer(currentStatus: Status): Timer =
-      StatusChangeTimer(new TimerId(), Set(Status.Yellow, Status.Red).filterNot(_ == currentStatus))
-    end createStatusChangeTimer
+  def createStatusChangeTimer(name: Option[String], currentStatus: Status): Timer =
+    StatusChangeTimer(
+      new TimerId(),
+      name,
+      Set(Status.Yellow, Status.Red).filterNot(_ == currentStatus)
+    )
+  end createStatusChangeTimer
 end Timer
 
 enum CompoundChallenge:
-    case Simple(challenge: SimpleChallenge)
-    case And(challenges: List[CompoundChallenge])
-    case AndThen(thisChallenge: CompoundChallenge, nextChallenge: CompoundChallenge)
-    case Or(challenges: List[CompoundChallenge])
+  case Simple(challenge: SimpleChallenge)
+  case And(challenges: List[CompoundChallenge])
+  case AndThen(
+      thisChallenge: CompoundChallenge,
+      nextChallenge: CompoundChallenge
+  )
+  case Or(challenges: List[CompoundChallenge])
 
-    def andThen(challenge: CompoundChallenge): CompoundChallenge =
-      AndThen(this, challenge)
-    end andThen
+  def andThen(challenge: CompoundChallenge): CompoundChallenge =
+    AndThen(this, challenge)
+  end andThen
 
-    def andThen(challenges: List[CompoundChallenge]): CompoundChallenge =
-      challenges.fold(this)(AndThen(_, _))
-    end andThen
+  def andThen(challenges: List[CompoundChallenge]): CompoundChallenge =
+    challenges.fold(this)(AndThen(_, _))
+  end andThen
 
-    def and(challenge: CompoundChallenge): CompoundChallenge =
-      And(List(this, challenge))
-    end and
+  def and(challenge: CompoundChallenge): CompoundChallenge =
+    And(List(this, challenge))
+  end and
 
-    def and(challenges: List[CompoundChallenge]): CompoundChallenge =
-      And(this +: challenges)
-    end and
+  def and(challenges: List[CompoundChallenge]): CompoundChallenge =
+    And(this +: challenges)
+  end and
 
-    def or(challenge: CompoundChallenge): CompoundChallenge =
-      Or(List(this, challenge))
-    end or
+  def or(challenge: CompoundChallenge): CompoundChallenge =
+    Or(List(this, challenge))
+  end or
 
-    def or(challenges: List[CompoundChallenge]): CompoundChallenge =
-      Or(this +: challenges)
-    end or
+  def or(challenges: List[CompoundChallenge]): CompoundChallenge =
+    Or(this +: challenges)
+  end or
 
-    def getId(): Option[SimpleChallengeId] = this match
-      case Simple(c) => Some(c.id)
-      case _ => None
-    end getId
+  def getId(): Option[SimpleChallengeId] = this match
+    case Simple(c) => Some(c.id)
+    case _         => None
+  end getId
 
-    def completed(): Boolean = this match
-      case Simple(challenge) => challenge.completed
-      case And(challenges) => challenges.foldLeft[Boolean](true)(_ && _.completed())
-      case AndThen(thisChallenge, nextChallenge) => thisChallenge.completed() && nextChallenge.completed()
-      case Or(challenges) => challenges.foldLeft[Boolean](false)(_ || _.completed())
-    end completed
+  def completed(): Boolean = this match
+    case Simple(challenge) => challenge.completed
+    case And(challenges) =>
+      challenges.foldLeft[Boolean](true)(_ && _.completed())
+    case AndThen(thisChallenge, nextChallenge) =>
+      thisChallenge.completed() && nextChallenge.completed()
+    case Or(challenges) =>
+      challenges.foldLeft[Boolean](false)(_ || _.completed())
+  end completed
 
-    def forId(id: SimpleChallengeId): Option[SimpleChallenge] = this match
-      case Simple(challenge) => Some(challenge).filter(_.id == id)
-      case And(challenges) => challenges.foldLeft[Option[SimpleChallenge]](None)((acc, c) => acc.orElse(c.forId(id)))
-      case AndThen(thisChallenge, nextChallenge) => thisChallenge.forId(id).orElse(nextChallenge.forId(id))
-      case Or(challenges) => challenges.foldLeft[Option[SimpleChallenge]](None)((acc, c) => acc.orElse(c.forId(id)))
-    end forId
+  def forId(id: SimpleChallengeId): Option[SimpleChallenge] = this match
+    case Simple(challenge) => Some(challenge).filter(_.id == id)
+    case And(challenges) =>
+      challenges.foldLeft[Option[SimpleChallenge]](None)((acc, c) =>
+        acc.orElse(c.forId(id))
+      )
+    case AndThen(thisChallenge, nextChallenge) =>
+      thisChallenge.forId(id).orElse(nextChallenge.forId(id))
+    case Or(challenges) =>
+      challenges.foldLeft[Option[SimpleChallenge]](None)((acc, c) =>
+        acc.orElse(c.forId(id))
+      )
+  end forId
 
-    def updateAtId(id: SimpleChallengeId, f: SimpleChallenge => SimpleChallenge): CompoundChallenge = this match
-      case Simple(challenge) => if challenge.id == id then Simple(f(challenge)) else this
-      case And(challenges) => And(challenges.map(_.updateAtId(id, f)))
-      case AndThen(thisChallenge, nextChallenge) => thisChallenge.updateAtId(id, f).andThen(nextChallenge.updateAtId(id, f))
-      case Or(challenges) => Or(challenges.map(_.updateAtId(id, f)))
-    end updateAtId
+  def updateAtId(
+      id: SimpleChallengeId,
+      f: SimpleChallenge => SimpleChallenge
+  ): CompoundChallenge = this match
+    case Simple(challenge) =>
+      if challenge.id == id then Simple(f(challenge)) else this
+    case And(challenges) => And(challenges.map(_.updateAtId(id, f)))
+    case AndThen(thisChallenge, nextChallenge) =>
+      thisChallenge.updateAtId(id, f).andThen(nextChallenge.updateAtId(id, f))
+    case Or(challenges) => Or(challenges.map(_.updateAtId(id, f)))
+  end updateAtId
 end CompoundChallenge
 
 object CompoundChallenge:
-    def fromSimpleChallenge(challenge: SimpleChallenge) =
-      Simple(challenge)
-    end fromSimpleChallenge
+  def fromSimpleChallenge(challenge: SimpleChallenge) =
+    Simple(challenge)
+  end fromSimpleChallenge
 
-    def and(challenges: List[CompoundChallenge]): CompoundChallenge =
-      And(challenges)
-    end and
+  def and(challenges: List[CompoundChallenge]): CompoundChallenge =
+    And(challenges)
+  end and
 
-    def or(challenges: List[CompoundChallenge]): CompoundChallenge =
-      Or(challenges)
-    end or
+  def or(challenges: List[CompoundChallenge]): CompoundChallenge =
+    Or(challenges)
+  end or
 
-    def andThen(challenge: CompoundChallenge, challenges: List[CompoundChallenge]): CompoundChallenge =
-      challenges.fold(challenge)(_.andThen(_))
-    end andThen
+  def andThen(
+      challenge: CompoundChallenge,
+      challenges: List[CompoundChallenge]
+  ): CompoundChallenge =
+    challenges.fold(challenge)(_.andThen(_))
+  end andThen
 end CompoundChallenge
 
 final class ChallengeBoxId
 
 case class ChallengeBox(
-  id: ChallengeBoxId,
-  name: String,
-  challenge: CompoundChallenge,
-  timers: List[Timer],
-  shown: Boolean
+    id: ChallengeBoxId,
+    name: String,
+    challenge: CompoundChallenge,
+    timers: List[Timer],
+    shown: Boolean
 ):
-    def completed(): Boolean =
-      challenge.completed()
-    end completed
+  def completed(): Boolean =
+    challenge.completed()
+  end completed
 
-    def timeout(status: Option[Status]): Boolean =
-      timers.foldLeft[Boolean](false)(_ || _.completed(status))
-    end timeout
+  def timeout(status: Option[Status]): Boolean =
+    timers.foldLeft[Boolean](false)(_ || _.completed(status))
+  end timeout
 
-    def setShown(s: Boolean): ChallengeBox =
-      copy(shown = s)
-    end setShown
+  def setShown(s: Boolean): ChallengeBox =
+    copy(shown = s)
+  end setShown
 
-    def toggleShown(): ChallengeBox =
-      copy(shown = !shown)
-    end toggleShown
+  def toggleShown(): ChallengeBox =
+    copy(shown = !shown)
+  end toggleShown
 
-    def updateAtId(id: SimpleChallengeId, f: SimpleChallenge => SimpleChallenge): ChallengeBox =
-      val newC = challenge.updateAtId(id, c => f(c))
-      copy(challenge = newC)
-    end updateAtId
+  def updateAtId(
+      id: SimpleChallengeId,
+      f: SimpleChallenge => SimpleChallenge
+  ): ChallengeBox =
+    val newC = challenge.updateAtId(id, c => f(c))
+    copy(challenge = newC)
+  end updateAtId
 
-    def updateTimer(id: TimerId, f: Timer => Timer): ChallengeBox =
-      val newTimers = timers.map { timer =>
-        if(timer.getId() == id) {
-          f(timer)
-        } else {
-          timer
-        }
+  def updateTimer(id: TimerId, f: Timer => Timer): ChallengeBox =
+    val newTimers = timers.map { timer =>
+      if (timer.getId() == id) {
+        f(timer)
+      } else {
+        timer
       }
-      copy(timers = newTimers)
-    end updateTimer
+    }
+    copy(timers = newTimers)
+  end updateTimer
 
-    def addTimer(timer: Timer): ChallengeBox =
-      copy(timers = timers :+ timer)
-    end addTimer
+  def addTimer(timer: Timer): ChallengeBox =
+    copy(timers = timers :+ timer)
+  end addTimer
 end ChallengeBox
 
 object ChallengeBox:
-    def createSimpleChallengeBox(name: String, n: Int): ChallengeBox =
+  def createSimpleChallengeBox(boxName: String, challengeName: Option[String], n: Int): ChallengeBox =
+    ChallengeBox(
+      new ChallengeBoxId(),
+      boxName,
+      CompoundChallenge.fromSimpleChallenge(
+        SimpleChallenge.createSimpleChallenge(challengeName, n)
+      ),
+      List(),
+      true
+    )
+  end createSimpleChallengeBox
+
+  def createSimultaneousChallengeBox(
+      boxName: String,
+      ns: List[(Option[String], Int)]
+  ): ChallengeBox =
+    if (ns.size == 1) {
+      createSimpleChallengeBox(boxName, ns.head._1, ns.head._2)
+    } else {
       ChallengeBox(
         new ChallengeBoxId(),
-        name,
-        CompoundChallenge.fromSimpleChallenge(SimpleChallenge.createSimpleChallenge(n)),
+        boxName,
+        CompoundChallenge.and(
+          ns.map(n =>
+            CompoundChallenge.fromSimpleChallenge(
+              SimpleChallenge.createSimpleChallenge(n._1, n._2)
+            )
+          )
+        ),
         List(),
         true
       )
-    end createSimpleChallengeBox
-
-    def createSimultaneousChallengeBox(name: String, ns: List[Int]): ChallengeBox =
-      if(ns.size == 1) {
-        createSimpleChallengeBox(name, ns.head)
-      } else {
-        ChallengeBox(
-          new ChallengeBoxId(),
-          name,
-          CompoundChallenge.and(
-            ns.map(n =>
-              CompoundChallenge.fromSimpleChallenge(SimpleChallenge.createSimpleChallenge(n))
-            )
-          ),
-          List(),
-          true
-        )
-      }
-    end createSimultaneousChallengeBox
+    }
+  end createSimultaneousChallengeBox
 end ChallengeBox

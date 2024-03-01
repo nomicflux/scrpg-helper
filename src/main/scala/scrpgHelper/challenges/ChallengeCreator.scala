@@ -162,35 +162,44 @@ object ChallengeCreator:
         mc.fold("")(c => s"escalated-${c.escalated}")
       ),
       div(
-        className := "checkbox-container escalation-checkbox-container",
-        span(
-          child.text <-- signal.map(mc =>
-            mc.fold("")(c => if c.escalated then "De-escalate" else "Escalate")
+        className := "name",
+        child.text <-- signal.map(mc => mc.flatMap(_.name).getOrElse(""))
+      ),
+      div(
+        className := "container-row",
+        div(
+          className := "checkbox-container escalation-checkbox-container",
+          span(
+            child.text <-- signal.map(mc =>
+              mc.fold("")(c =>
+                if c.escalated then "De-escalate" else "Escalate"
+              )
+            ),
+            " Twists:"
           ),
-          " Twists:"
-        ),
-        input(
-          tpe := "checkbox",
-          className := "escalate-checkbox",
-          checked <-- signal.map(mc => mc.fold(false)(_.escalated))
-        ),
-        onClick --> { _ =>
-          escalationObserver.onNext(())
-        }
-      ),
-      div(
-        className := "shown-checkboxes",
-        (1 to challenge.total).map(n =>
-          renderChallengeCheckbox(n, signal, checkboxObserver)
-        )
-      ),
-      div(
-        className := "obfuscated-checkboxes",
-        span(
           input(
             tpe := "checkbox",
-            className := "challenge-box-obfuscated",
-            onClick --> { _ => checkboxObserver.onNext(true, 0) }
+            className := "escalate-checkbox",
+            checked <-- signal.map(mc => mc.fold(false)(_.escalated))
+          ),
+          onClick --> { _ =>
+            escalationObserver.onNext(())
+          }
+        ),
+        div(
+          className := "shown-checkboxes",
+          (1 to challenge.total).map(n =>
+            renderChallengeCheckbox(n, signal, checkboxObserver)
+          )
+        ),
+        div(
+          className := "obfuscated-checkboxes",
+          span(
+            input(
+              tpe := "checkbox",
+              className := "challenge-box-obfuscated",
+              onClick --> { _ => checkboxObserver.onNext(true, 0) }
+            )
           )
         )
       )
@@ -234,6 +243,10 @@ object ChallengeCreator:
   ): Element =
     div(
       className := "timer-box",
+      div(
+        className := "name",
+        child.text <-- signal.map(_.flatMap(_.getName()).getOrElse(""))
+      ),
       div(
         className := "shown-checkboxes",
         (1 to timer.total).map(n => renderTimerCheckbox(n, signal, observer))
@@ -314,35 +327,46 @@ object ChallengeCreator:
 
   def challengeCheckboxCreatorRow(
       id: Int,
-      nSignal: Signal[Int],
-      nObserver: Observer[Int => Int]
+      nSignal: Signal[(Option[String], Int)],
+      nObserver: Observer[Int => Int],
+      nameObserver: Observer[Option[String]]
   ): Element =
     tr(
       td(
         div(
           NumBox(
-            nSignal,
+            nSignal.map(_._2),
             nObserver.contramap(n => x => n + x),
-            nObserver.contramap(_ => m => m)
+            nObserver.contramap(n => m => m)
           ).withSpanClassName("simple-challenge-creator")
             .withMinVal(1)
             .render()
         )
       ),
-      td()
+      td(
+        input(
+          tpe := "input",
+          value <-- nSignal.map(_._1.getOrElse("")),
+          onInput.mapToValue --> { newName =>
+            nameObserver.onNext(Some(newName))
+          }
+        )
+      )
     )
   end challengeCheckboxCreatorRow
 
   def challengeCheckboxCreator(
       header: String,
       minNum: Int,
-      signal: Signal[List[Int]],
-      observer: Observer[List[Int] => List[Int]]
+      signal: Signal[List[(Option[String], Int)]],
+      observer: Observer[
+        List[(Option[String], Int)] => List[(Option[String], Int)]
+      ]
   ): Element =
     val rowsObserver = observer.contramap(a =>
       ls => {
         a match
-          case Action.Increase => ls :+ 1
+          case Action.Increase => ls :+ (None, 1)
           case Action.Decrease => ls.init
       }
     )
@@ -377,7 +401,15 @@ object ChallengeCreator:
           sn.map(_._1),
           observer.contramap(f =>
             ls =>
-              ls.zipWithIndex.map { case (n, i) => if i == id then f(n) else n }
+              ls.zipWithIndex.map { case (n, i) =>
+                if i == id then (n._1, f(n._2)) else n
+              }
+          ),
+          observer.contramap(newName =>
+            ls =>
+              ls.zipWithIndex.map { case (n, i) =>
+                if i == id then (newName, n._2) else n
+              }
           )
         )
       }
@@ -386,8 +418,10 @@ object ChallengeCreator:
 
   def renderChallengeCreator(model: ChallengeCreatorModel): Element =
     val name: Var[String] = Var("")
-    val challengeCheckboxes: Var[List[Int]] = Var(List(1))
-    val timerCheckboxes: Var[List[Int]] = Var(List(1))
+    val challengeCheckboxes: Var[List[(Option[String], Int)]] = Var(
+      List((None, 1))
+    )
+    val timerCheckboxes: Var[List[(Option[String], Int)]] = Var(List((None, 1)))
 
     val nameSignal = name.signal
     val challengeCheckboxesSignal = challengeCheckboxes.signal
@@ -441,13 +475,13 @@ final class ChallengeCreatorModel:
 
   def createChallenge(
       name: String,
-      challengeChecks: List[Int],
-      timerChecks: List[Int]
+      challengeChecks: List[(Option[String], Int)],
+      timerChecks: List[(Option[String], Int)]
   ): Unit =
     challenges.update { cs =>
       val c = ChallengeBox.createSimultaneousChallengeBox(name, challengeChecks)
       cs :+ timerChecks.foldLeft(c)((d, n) =>
-        d.addTimer(Timer.createSimpleTimer(n))
+        d.addTimer(Timer.createSimpleTimer(n._1, n._2))
       )
     }
   end createChallenge
