@@ -13,12 +13,12 @@ object RenderChallenge:
     div(
       className := "challenge-creator-section",
       children <-- model.challengesSignal.split(_.id) { (id, cs, s) =>
-        renderChallenge(model, cs, s)
+        renderChallengeBox(model, cs, s)
       }
     )
   end renderChallenges
 
-  def renderChallenge(
+  def renderChallengeBox(
       model: ChallengeCreatorModel,
       origBox: ChallengeBox,
       signal: Signal[ChallengeBox]
@@ -35,29 +35,7 @@ object RenderChallenge:
       ),
       className <-- signal.map(box => s"challenge-box-shown-${box.shown}"),
       NameBox(origBox.name, signal.map(box => Some(box.name)), nameObserver).render(),
-      (origBox.challenge match
-        case CompoundChallenge.Simple(c) =>
-          renderSimpleChallenge(
-            c,
-            signal.map(_.challenge.forId(c.id)),
-            model.escalationObserver(origBox.id, c.id),
-            model.checkboxObserver(origBox.id, c.id),
-            model.challengeNameObserver(origBox.id, c.id),
-          )
-        case CompoundChallenge.And(cs) =>
-          renderSimultaneousChallenges(
-            model,
-            origBox.id,
-            signal.map(b =>
-              b.challenge match
-                case CompoundChallenge.And(cs) => cs
-                case _                         => List()
-            ),
-            signal.map(_.challenge)
-          )
-        case CompoundChallenge.AndThen(c, n) => renderSerialChallenges(c, n)
-        case CompoundChallenge.Or(cs)        => renderBranchingChallenges(cs)
-      ),
+      renderChallenge(origBox, signal, model),
       origBox.timers.map(timer =>
         RenderTimer.renderTimer(
           timer,
@@ -101,6 +79,35 @@ object RenderChallenge:
         )
       )
     )
+  end renderChallengeBox
+
+  def renderChallenge(
+    origBox: ChallengeBox,
+    signal: Signal[ChallengeBox],
+    model: ChallengeCreatorModel,
+  ): Element =
+      origBox.challenge match
+        case CompoundChallenge.Simple(c) =>
+          renderSimpleChallenge(
+            c,
+            signal.map(_.challenge.forId(c.id)),
+            model.escalationObserver(origBox.id, c.id),
+            model.checkboxObserver(origBox.id, c.id),
+            model.challengeNameObserver(origBox.id, c.id),
+          )
+        case CompoundChallenge.And(cs) =>
+          renderSimultaneousChallenges(
+            model,
+            origBox.id,
+            signal.map(b =>
+              b.challenge match
+                case CompoundChallenge.And(cs) => cs
+                case _                         => List()
+            ),
+            signal.map(_.challenge)
+          )
+        case CompoundChallenge.AndThen(c, n) => renderSerialChallenges(c, n)
+        case CompoundChallenge.Or(cs)        => renderBranchingChallenges(cs)
   end renderChallenge
 
   def renderSimpleChallenge(
