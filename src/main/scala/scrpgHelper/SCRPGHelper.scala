@@ -61,7 +61,7 @@ object Main:
         (page match
             case Page.RollChart => "Roll Dice"
             case Page.SceneTracker => "Scene Tracker"
-            case Page.ChallengeCreator => "Challenge Creator (Experimental)"),
+            case Page.ChallengeCreator => "Challenge Creator"),
         disabled <-- router.currentPageSignal.map(_ == page),
         onClick --> { _event => router.pushState(page) }
       )

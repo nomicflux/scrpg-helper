@@ -14,7 +14,7 @@ object ChallengeCreator:
   def challengeCreator(model: ChallengeCreatorModel): Element =
     val noStatusSignal: Signal[Option[Status]] = Signal.fromValue[Option[Status]](None)
     div(
-      h1("Challenge Creator (Experimental)"),
+      h1("Challenge Creator"),
       renderChallengeCreator(model),
       RenderChallenge.renderChallenges(model, noStatusSignal)
     )
