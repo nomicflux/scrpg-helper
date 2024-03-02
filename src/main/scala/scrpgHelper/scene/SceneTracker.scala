@@ -8,8 +8,8 @@ import org.scalajs.dom
 import com.raquo.laminar.api.L.{*, given}
 
 object SceneTracker:
-  import scrpgHelper.challenges.ChallengeCreator
   import scrpgHelper.challenges.ChallengeCreatorModel
+  import scrpgHelper.challenges.RenderChallenge
   import scrpgHelper.status.Status
   import scrpgHelper.components.NumBox
 
@@ -36,7 +36,7 @@ object SceneTracker:
         ),
         div(
           className := "challenge-section",
-          ChallengeCreator.renderChallenges(challengeCreator)
+          RenderChallenge.renderChallenges(challengeCreator)
         )
       ),
       div(advanceTrackerButton()),

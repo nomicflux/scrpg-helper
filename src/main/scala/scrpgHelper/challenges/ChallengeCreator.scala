@@ -7,329 +7,16 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.*
 
 object ChallengeCreator:
+  import scrpgHelper.components.NameBox
   import scrpgHelper.components.NumBox
 
   def challengeCreator(model: ChallengeCreatorModel): Element =
     div(
       h1("Challenge Creator (Experimental)"),
       renderChallengeCreator(model),
-      renderChallenges(model)
+      RenderChallenge.renderChallenges(model)
     )
   end challengeCreator
-
-  def renderChallenges(model: ChallengeCreatorModel): Element =
-    div(
-      className := "challenge-creator-section",
-      children <-- model.challengesSignal.split(_.id) { (id, cs, s) =>
-        renderChallenge(model, cs, s)
-      }
-    )
-  end renderChallenges
-
-  def renderChallenge(
-      model: ChallengeCreatorModel,
-      origBox: ChallengeBox,
-      signal: Signal[ChallengeBox]
-  ): Element =
-    val nameObserver = model.nameObserver(origBox.id)
-
-    div(
-      className := "challenge-box challenge-creator-holder",
-      className <-- signal.map(box =>
-        s"challenge-box-completed-${box.completed()}"
-      ),
-      className <-- signal.map(box =>
-        s"challenge-box-timeout-${box.timeout(None)}"
-      ),
-      className <-- signal.map(box => s"challenge-box-shown-${box.shown}"),
-      renderNameBox(origBox.name, signal.map(box => Some(box.name)), nameObserver),
-      (origBox.challenge match
-        case CompoundChallenge.Simple(c) =>
-          renderSimpleChallenge(
-            c,
-            signal.map(_.challenge.forId(c.id)),
-            model.escalationObserver(origBox.id, c.id),
-            model.checkboxObserver(origBox.id, c.id),
-            model.challengeNameObserver(origBox.id, c.id),
-          )
-        case CompoundChallenge.And(cs) =>
-          renderSimultaneousChallenges(
-            model,
-            origBox.id,
-            signal.map(b =>
-              b.challenge match
-                case CompoundChallenge.And(cs) => cs
-                case _                         => List()
-            ),
-            signal.map(_.challenge)
-          )
-        case CompoundChallenge.AndThen(c, n) => renderSerialChallenges(c, n)
-        case CompoundChallenge.Or(cs)        => renderBranchingChallenges(cs)
-      ),
-      origBox.timers.map(timer =>
-        renderTimer(
-          timer,
-          signal,
-          signal.map(box =>
-            box.timers.filter(_.getId() == timer.getId()).headOption
-          ),
-          model.timerCheckboxObserver(timer.getId()),
-          model.timerNameObserver(timer.getId())
-        )
-      ),
-      div(
-        className := "challenge-box-footer",
-        div(
-          className := "remove-challenge-box",
-          "✘",
-          onClick --> { _ =>
-            model.challenges.update { cs => cs.filter(_.id != origBox.id) }
-          }
-        ),
-        div(
-          className := "show-challenge-box",
-          span(
-            "Show checkboxes on Scene Tracker:"
-          ),
-          span(
-            className <-- signal.map(box =>
-              s"shown-challenge-box-${box.shown}"
-            ),
-            "👁"
-          ),
-          onClick --> { _ =>
-            model.challenges.update { cs =>
-              cs.map { box =>
-                if (box.id == origBox.id) {
-                  box.toggleShown()
-                } else { box }
-              }
-            }
-          }
-        )
-      )
-    )
-  end renderChallenge
-
-  def renderNameBox(
-      origName: String,
-      signal: Signal[Option[String]],
-      observer: Observer[String]
-  ): Element =
-    val editing: Var[Boolean] = Var(false)
-    val editingSignal = editing.signal
-
-    val nameVar: Var[String] = Var(origName)
-    val nameSignal = nameVar.signal
-
-    def updateName(newName: String): Unit =
-      observer.onNext(newName)
-      editing.update(_ => false)
-    end updateName
-
-    div(
-      className := "name-box",
-      onClick --> { _ => editing.update(_ => true) },
-      input(
-        tpe := "text",
-        className <-- editingSignal.map(e => if e then "" else "hidden"),
-        value <-- nameSignal,
-        onBlur.compose(_.withCurrentValueOf(nameSignal)) --> { (_, newName) =>
-          updateName(newName)
-        },
-        onInput.mapToValue --> nameVar,
-        onKeyPress.compose(_.withCurrentValueOf(nameSignal)) --> {
-          (event, newName) =>
-            if (event.key == "Enter") {
-              updateName(newName)
-            }
-        }
-      ),
-      h3(
-        className <-- editingSignal.map(e => if e then "hidden" else ""),
-        child.text <-- signal.map(_.getOrElse(""))
-      )
-    )
-  end renderNameBox
-
-  def renderSimpleChallenge(
-      challenge: SimpleChallenge,
-      signal: Signal[Option[SimpleChallenge]],
-      escalationObserver: Observer[Unit],
-      checkboxObserver: Observer[(Boolean, Int)],
-      nameObserver: Observer[String]
-  ): Element =
-    div(
-      className := "simple-challenge-box",
-      className <-- signal.map(mc =>
-        mc.fold("")(c => s"escalated-${c.escalated}")
-      ),
-      div(
-        renderNameBox(challenge.name.getOrElse(""),
-                      signal.map(c => c.flatMap(_.name)),
-                      nameObserver),
-      ),
-      div(
-        className := "container-row",
-        div(
-          className := "checkbox-container escalation-checkbox-container",
-          span(
-            child.text <-- signal.map(mc =>
-              mc.fold("")(c =>
-                if c.escalated then "De-escalate" else "Escalate"
-              )
-            ),
-            " Twists:"
-          ),
-          input(
-            tpe := "checkbox",
-            className := "escalate-checkbox",
-            checked <-- signal.map(mc => mc.fold(false)(_.escalated))
-          ),
-          onClick --> { _ =>
-            escalationObserver.onNext(())
-          }
-        ),
-        div(
-          className := "shown-checkboxes",
-          (1 to challenge.total).map(n =>
-            renderChallengeCheckbox(n, signal, checkboxObserver)
-          )
-        ),
-        div(
-          className := "obfuscated-checkboxes",
-          span(
-            input(
-              tpe := "checkbox",
-              className := "challenge-box-obfuscated",
-              onClick --> { _ => checkboxObserver.onNext(true, 0) }
-            )
-          )
-        )
-      )
-    )
-  end renderSimpleChallenge
-
-  def renderChallengeCheckbox(
-      n: Int,
-      signal: Signal[Option[SimpleChallenge]],
-      observer: Observer[(Boolean, Int)]
-  ): Element =
-    span(
-      className := "challenge-box-checkbox-span",
-      input(
-        tpe := "checkbox",
-        className := "challenge-box-checkbox",
-        checked <-- signal.map(_.fold(false)(c => c.checked >= n)),
-        onChange.mapToChecked --> { checked => observer.onNext(checked, n) }
-      )
-    )
-  end renderChallengeCheckbox
-
-  def renderTimer(
-      timer: Timer,
-      boxSignal: Signal[ChallengeBox],
-      signal: Signal[Option[Timer]],
-      checkboxObserver: Observer[Boolean],
-      nameObserver: Observer[String]
-  ): Element =
-    timer match
-      case st: Timer.SimpleTimer =>
-        renderSimpleTimer(st, boxSignal, signal, checkboxObserver, nameObserver)
-      case sct: Timer.StatusChangeTimer =>
-        renderStatusChangeTimer(sct, boxSignal, signal, checkboxObserver, nameObserver)
-  end renderTimer
-
-  def renderSimpleTimer(
-      timer: Timer.SimpleTimer,
-      boxSignal: Signal[ChallengeBox],
-      signal: Signal[Option[Timer]],
-      checkboxObserver: Observer[Boolean],
-      nameObserver: Observer[String]
-  ): Element =
-    div(
-      className := "timer-box",
-      div(
-        className := "name",
-        renderNameBox(timer.name.getOrElse(""),
-                      signal.map(_.flatMap(_.getName())),
-                      nameObserver)
-      ),
-      div(
-        className := "shown-checkboxes",
-        (1 to timer.total).map(n => renderTimerCheckbox(n, signal, checkboxObserver))
-      ),
-      div(
-        className := "obfuscated-checkboxes",
-        span(
-          input(
-            tpe := "checkbox",
-            className := "challenge-box-obfuscated",
-            onClick --> { _ => checkboxObserver.onNext(true) }
-          )
-        )
-      )
-    )
-  end renderSimpleTimer
-
-  def renderTimerCheckbox(
-      n: Int,
-      signal: Signal[Option[Timer]],
-      observer: Observer[Boolean]
-  ): Element =
-    span(
-      className := "timer-checkbox-span",
-      input(
-        tpe := "checkbox",
-        className := "timer-checkbox",
-        checked <-- signal.map(_.fold(false)(_.getChecked() >= n)),
-        onChange.mapToChecked --> { checked => observer.onNext(checked) }
-      )
-    )
-  end renderTimerCheckbox
-
-  def renderStatusChangeTimer(
-      timer: Timer.StatusChangeTimer,
-      boxSignal: Signal[ChallengeBox],
-      signal: Signal[Option[Timer]],
-      checkboxObserver: Observer[Boolean],
-      nameObserver: Observer[String]
-  ): Element =
-    div()
-  end renderStatusChangeTimer
-
-  def renderSimultaneousChallenges(
-      model: ChallengeCreatorModel,
-      boxId: ChallengeBoxId,
-      challenges: Signal[List[CompoundChallenge]],
-      signal: Signal[CompoundChallenge]
-  ): Element =
-    div(
-      children <-- challenges.map(_.collect {
-        case CompoundChallenge.Simple(c) =>
-          renderSimpleChallenge(
-            c,
-            signal.map(_.forId(c.id)),
-            model.escalationObserver(boxId, c.id),
-            model.checkboxObserver(boxId, c.id),
-            model.challengeNameObserver(boxId, c.id),
-          )
-      })
-    )
-  end renderSimultaneousChallenges
-
-  def renderSerialChallenges(
-      challenge: CompoundChallenge,
-      nextChallenge: CompoundChallenge
-  ): Element =
-    div(
-    )
-  end renderSerialChallenges
-
-  def renderBranchingChallenges(challenges: List[CompoundChallenge]): Element =
-    div(
-    )
-  end renderBranchingChallenges
 
   enum Action:
     case Increase, Decrease
@@ -339,9 +26,16 @@ object ChallengeCreator:
       id: Int,
       nSignal: Signal[(Option[String], Int)],
       nObserver: Observer[Int => Int],
+      els: List[Element],
       nameObserver: Observer[Option[String]]
   ): Element =
     tr(
+      td(
+        div(
+          className := "creator-extra-els",
+          els
+        )
+      ),
       td(
         div(
           NumBox(
@@ -365,18 +59,21 @@ object ChallengeCreator:
     )
   end challengeCheckboxCreatorRow
 
-  def challengeCheckboxCreator(
+  def challengeCheckboxCreator[A](
       header: String,
       minNum: Int,
-      signal: Signal[List[(Option[String], Int)]],
+      signal: Signal[List[(Option[String], A)]],
       observer: Observer[
-        List[(Option[String], Int)] => List[(Option[String], Int)]
-      ]
+        List[(Option[String], A)] => List[(Option[String], A)]
+      ],
+      f: A => Int,
+      g: Int => A,
+      els: (Signal[(Option[String], A)], Observer[A => A]) => List[Element]
   ): Element =
     val rowsObserver = observer.contramap(a =>
       ls => {
         a match
-          case Action.Increase => ls :+ (None, 1)
+          case Action.Increase => ls :+ (None, g(1))
           case Action.Decrease => ls.init
       }
     )
@@ -384,7 +81,10 @@ object ChallengeCreator:
     table(
       className := "row-changer",
       thead(
-        td(h4(header)),
+        td(
+          colSpan := 2,
+          h4(header)
+        ),
         td(
           div(
             "+/- Rows",
@@ -406,15 +106,18 @@ object ChallengeCreator:
         )
       ),
       children <-- signal.map(_.zipWithIndex).split(_._2) { case (id, n, sn) =>
-        challengeCheckboxCreatorRow(
-          id,
-          sn.map(_._1),
-          observer.contramap(f =>
+        val s = sn.map(_._1)
+        val o: Observer[A => A] = observer.contramap(f =>
             ls =>
               ls.zipWithIndex.map { case (n, i) =>
                 if i == id then (n._1, f(n._2)) else n
               }
-          ),
+          )
+        challengeCheckboxCreatorRow(
+          id,
+          s.map(n => (n._1, f(n._2))),
+          o.contramap(h => n => g(h(f(n)))),
+          els(s, o),
           observer.contramap(newName =>
             ls =>
               ls.zipWithIndex.map { case (n, i) =>
@@ -449,17 +152,23 @@ object ChallengeCreator:
       ),
       div(
         className := "rows-setup",
-        challengeCheckboxCreator(
+        challengeCheckboxCreator[Int](
           "# of Challenge Checkboxes",
           1,
           challengeCheckboxesSignal,
-          challengeCheckboxes.updater { (cs, f) => f(cs) }
+          challengeCheckboxes.updater { (cs, f) => f(cs) },
+          identity,
+          identity,
+          { (s, o) => List() }
         ),
-        challengeCheckboxCreator(
+        challengeCheckboxCreator[Int](
           "# of Timer Checkboxes",
           0,
           timerCheckboxesSignal,
-          timerCheckboxes.updater { (ts, f) => f(ts) }
+          timerCheckboxes.updater { (ts, f) => f(ts) },
+          identity,
+          identity,
+          { (s, o) => List() }
         )
       ),
       button(
