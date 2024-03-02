@@ -590,6 +590,11 @@ div.challenge-box.challenge-box-timeout-true {
   opacity: 0.5;
 }
 
+div.challenge-box.challenge-box-completed-true.challenge-box-timeout-true {
+  background: #220044;
+  border: 1px groove blue;
+}
+
 div.challenge-box-footer {
   text-align: center;
   align-items: center;
@@ -910,4 +915,43 @@ button.spinner {
 }
 button.spinner:hover {
   color: white;
+}
+
+button.timer-button {
+  padding: 5px;
+  font-size: 0.9em;
+}
+
+button.timer-button-yellow {
+  background: #ffd700;
+  color: black;
+}
+
+button.timer-button-red {
+  background: #dd0000;
+  color: black;
+}
+
+div.timer-box {
+
+}
+
+div.timer-div {
+  border-radius: 10px;
+  border: 2px ridge grey;
+  padding: 5px;
+}
+
+div.timer-div-yellow {
+  background: #ffd700;
+  color: black;
+}
+
+div.timer-div-red {
+  background: #dd0000;
+  color: black;
+}
+
+div.timer-div-timeout {
+  opacity: 0.3;
 }

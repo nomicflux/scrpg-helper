@@ -36,7 +36,7 @@ object SceneTracker:
         ),
         div(
           className := "challenge-section",
-          RenderChallenge.renderChallenges(challengeCreator)
+          RenderChallenge.renderChallenges(challengeCreator, model.sceneSignal.map(s => Some(s.currentStatus)))
         )
       ),
       div(advanceTrackerButton()),

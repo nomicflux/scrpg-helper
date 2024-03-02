@@ -13,12 +13,12 @@ final class ChallengeCreatorModel:
   def createChallenge(
       name: String,
       challengeChecks: List[(Option[String], Int)],
-      timerChecks: List[(Option[String], Int)]
+      timerChecks: List[(Option[String], PreTimer)]
   ): Unit =
     challenges.update { cs =>
       val c = ChallengeBox.createSimultaneousChallengeBox(name, challengeChecks)
       cs :+ timerChecks.foldLeft(c)((d, n) =>
-        d.addTimer(Timer.createSimpleTimer(n._1, n._2))
+        d.addTimer(Timer.createTimer(n._1, n._2))
       )
     }
   end createChallenge

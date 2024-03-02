@@ -8,11 +8,13 @@ import scala.scalajs.js.annotation.*
 
 object RenderTimer:
   import scrpgHelper.components.NameBox
+  import scrpgHelper.status.Status
 
   def renderTimer(
       timer: Timer,
       boxSignal: Signal[ChallengeBox],
       signal: Signal[Option[Timer]],
+      statusSignal: Signal[Option[Status]],
       checkboxObserver: Observer[Boolean],
       nameObserver: Observer[String]
   ): Element =
@@ -20,7 +22,7 @@ object RenderTimer:
       case st: Timer.SimpleTimer =>
         renderSimpleTimer(st, boxSignal, signal, checkboxObserver, nameObserver)
       case sct: Timer.StatusChangeTimer =>
-        renderStatusChangeTimer(sct, boxSignal, signal, checkboxObserver, nameObserver)
+        renderStatusChangeTimer(sct, boxSignal, signal, statusSignal, nameObserver)
   end renderTimer
 
   def renderSimpleTimer(
@@ -75,9 +77,24 @@ object RenderTimer:
       timer: Timer.StatusChangeTimer,
       boxSignal: Signal[ChallengeBox],
       signal: Signal[Option[Timer]],
-      checkboxObserver: Observer[Boolean],
+      statusSignal: Signal[Option[Status]],
       nameObserver: Observer[String]
   ): Element =
-    div()
+    div(
+      className := "timer-box",
+      div(
+        className := "name",
+        NameBox(timer.name.getOrElse(""),
+                signal.map(_.flatMap(_.getName())),
+                nameObserver).render(),
+      ),
+      div(
+        className := "timer-div",
+        className := (if timer.onStatus.contains(Status.Yellow) then "timer-div-yellow" else ""),
+        className := (if timer.onStatus.contains(Status.Red) then "timer-div-red" else ""),
+        className <-- statusSignal.map { s => if timer.completed(s) then "timer-div-timeout" else "timer-div-active" },
+        child.text <-- statusSignal.map { s => if timer.completed(s) then "Too late!" else s"Until ${timer.statusString()}"}
+      )
+    )
   end renderStatusChangeTimer
 end RenderTimer

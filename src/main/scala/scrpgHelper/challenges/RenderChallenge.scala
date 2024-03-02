@@ -8,12 +8,14 @@ import scala.scalajs.js.annotation.*
 
 object RenderChallenge:
   import scrpgHelper.components.NameBox
+  import scrpgHelper.status.Status
 
-  def renderChallenges(model: ChallengeCreatorModel): Element =
+  def renderChallenges(model: ChallengeCreatorModel,
+                       statusSignal: Signal[Option[Status]]): Element =
     div(
       className := "challenge-creator-section",
       children <-- model.challengesSignal.split(_.id) { (id, cs, s) =>
-        renderChallengeBox(model, cs, s)
+        renderChallengeBox(model, cs, s, statusSignal)
       }
     )
   end renderChallenges
@@ -21,7 +23,8 @@ object RenderChallenge:
   def renderChallengeBox(
       model: ChallengeCreatorModel,
       origBox: ChallengeBox,
-      signal: Signal[ChallengeBox]
+      signal: Signal[ChallengeBox],
+      statusSignal: Signal[Option[Status]]
   ): Element =
     val nameObserver = model.nameObserver(origBox.id)
 
@@ -30,9 +33,9 @@ object RenderChallenge:
       className <-- signal.map(box =>
         s"challenge-box-completed-${box.completed()}"
       ),
-      className <-- signal.map(box =>
-        s"challenge-box-timeout-${box.timeout(None)}"
-      ),
+      className <-- signal.combineWith(statusSignal).map{ case (box, status) =>
+        s"challenge-box-timeout-${box.timeout(status)}"
+      },
       className <-- signal.map(box => s"challenge-box-shown-${box.shown}"),
       NameBox(origBox.name, signal.map(box => Some(box.name)), nameObserver).render(),
       renderChallenge(origBox, signal, model),
@@ -43,8 +46,9 @@ object RenderChallenge:
           signal.map(box =>
             box.timers.filter(_.getId() == timer.getId()).headOption
           ),
+          statusSignal,
           model.timerCheckboxObserver(timer.getId()),
-          model.timerNameObserver(timer.getId())
+          model.timerNameObserver(timer.getId()),
         )
       ),
       div(

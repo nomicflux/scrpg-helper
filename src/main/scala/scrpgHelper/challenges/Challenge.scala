@@ -1,7 +1,6 @@
 package scrpgHelper.challenges
 
 import scrpgHelper.status.Status
-import typings.std.stdStrings.offer
 
 final class SimpleChallengeId
 
@@ -42,73 +41,6 @@ object SimpleChallenge:
     SimpleChallenge(new SimpleChallengeId(), name, n, 0, false)
   end createSimpleChallenge
 end SimpleChallenge
-
-final class TimerId
-
-enum Timer:
-  case SimpleTimer(id: TimerId, name: Option[String], total: Int, checked: Int)
-  case StatusChangeTimer(id: TimerId, name: Option[String], onStatus: Set[Status])
-
-  def getId(): TimerId = this match
-    case SimpleTimer(id, _, _, _)    => id
-    case StatusChangeTimer(id, _, _) => id
-  end getId
-
-  def getName(): Option[String] = this match
-    case SimpleTimer(_, name, _, _) => name
-    case StatusChangeTimer(_, name, _) => name
-  end getName
-
-  def changeName(name: String): Timer = this match
-    case st: SimpleTimer => st.copy(name = Some(name))
-    case sct: StatusChangeTimer => sct.copy(name = Some(name))
-  end changeName
-
-  def checkBox(): Timer = this match
-    case SimpleTimer(id, name, total, checked) =>
-      if (checked < total) then SimpleTimer(id, name, total, checked + 1) else this
-    case StatusChangeTimer(_, _, _) => this
-  end checkBox
-
-  def uncheckBox(): Timer = this match
-    case SimpleTimer(id, name, total, checked) =>
-      if (checked > 0) then SimpleTimer(id, name, total, checked - 1) else this
-    case StatusChangeTimer(_, _, _) => this
-  end uncheckBox
-
-  def getChecked(): Int = this match
-    case SimpleTimer(_, _, _, checked) => checked
-    case StatusChangeTimer(_, _, _)    => 0
-  end getChecked
-
-  def completed(currentStatus: Option[Status]): Boolean = this match
-    case SimpleTimer(_, _, total, checked) => checked >= total
-    case StatusChangeTimer(_, _, statuses) =>
-      currentStatus.fold(false)(s => !statuses.filter(s >= _).isEmpty)
-  end completed
-end Timer
-
-object Timer:
-  def createSimpleTimer(name: Option[String], n: Int): Timer =
-    SimpleTimer(new TimerId(), name, n, 0)
-  end createSimpleTimer
-
-  def createYellowStatusTimer(name: Option[String]): Timer =
-    StatusChangeTimer(new TimerId(), name, Set(Status.Yellow))
-  end createYellowStatusTimer
-
-  def createRedStatusTimer(name: Option[String]): Timer =
-    StatusChangeTimer(new TimerId(), name, Set(Status.Red))
-  end createRedStatusTimer
-
-  def createStatusChangeTimer(name: Option[String], currentStatus: Status): Timer =
-    StatusChangeTimer(
-      new TimerId(),
-      name,
-      Set(Status.Yellow, Status.Red).filterNot(_ == currentStatus)
-    )
-  end createStatusChangeTimer
-end Timer
 
 enum CompoundChallenge:
   case Simple(challenge: SimpleChallenge)

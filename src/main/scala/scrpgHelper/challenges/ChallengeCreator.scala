@@ -9,12 +9,14 @@ import scala.scalajs.js.annotation.*
 object ChallengeCreator:
   import scrpgHelper.components.NameBox
   import scrpgHelper.components.NumBox
+  import scrpgHelper.status.Status
 
   def challengeCreator(model: ChallengeCreatorModel): Element =
+    val noStatusSignal: Signal[Option[Status]] = Signal.fromValue[Option[Status]](None)
     div(
       h1("Challenge Creator (Experimental)"),
       renderChallengeCreator(model),
-      RenderChallenge.renderChallenges(model)
+      RenderChallenge.renderChallenges(model, noStatusSignal)
     )
   end challengeCreator
 
@@ -24,7 +26,7 @@ object ChallengeCreator:
 
   def challengeCheckboxCreatorRow(
       id: Int,
-      nSignal: Signal[(Option[String], Int)],
+      nSignal: Signal[(Option[String], Option[Int])],
       nObserver: Observer[Int => Int],
       els: List[Element],
       nameObserver: Observer[Option[String]]
@@ -38,8 +40,9 @@ object ChallengeCreator:
       ),
       td(
         div(
+          className <-- nSignal.map(n => n._2.fold("hidden")(_ => "shown")),
           NumBox(
-            nSignal.map(_._2),
+            nSignal.map(_._2.getOrElse(0)),
             nObserver.contramap(n => x => n + x),
             nObserver.contramap(n => m => m)
           ).withSpanClassName("simple-challenge-creator")
@@ -66,7 +69,7 @@ object ChallengeCreator:
       observer: Observer[
         List[(Option[String], A)] => List[(Option[String], A)]
       ],
-      f: A => Int,
+      f: A => Option[Int],
       g: Int => A,
       els: (Signal[(Option[String], A)], Observer[A => A]) => List[Element]
   ): Element =
@@ -116,7 +119,7 @@ object ChallengeCreator:
         challengeCheckboxCreatorRow(
           id,
           s.map(n => (n._1, f(n._2))),
-          o.contramap(h => n => g(h(f(n)))),
+          o.contramap(h => n => g(h(f(n).getOrElse(0)))),
           els(s, o),
           observer.contramap(newName =>
             ls =>
@@ -134,7 +137,7 @@ object ChallengeCreator:
     val challengeCheckboxes: Var[List[(Option[String], Int)]] = Var(
       List((None, 1))
     )
-    val timerCheckboxes: Var[List[(Option[String], Int)]] = Var(List((None, 1)))
+    val timerCheckboxes: Var[List[(Option[String], PreTimer)]] = Var(List((None, PreTimer.fromInt(1))))
 
     val nameSignal = name.signal
     val challengeCheckboxesSignal = challengeCheckboxes.signal
@@ -157,18 +160,18 @@ object ChallengeCreator:
           1,
           challengeCheckboxesSignal,
           challengeCheckboxes.updater { (cs, f) => f(cs) },
-          identity,
+          Some(_),
           identity,
           { (s, o) => List() }
         ),
-        challengeCheckboxCreator[Int](
+        challengeCheckboxCreator[PreTimer](
           "# of Timer Checkboxes",
           0,
           timerCheckboxesSignal,
           timerCheckboxes.updater { (ts, f) => f(ts) },
-          identity,
-          identity,
-          { (s, o) => List() }
+          PreTimer.toInt(_),
+          PreTimer.fromInt(_),
+          { (s, o) => List(renderTimerButton(s, o)) }
         )
       ),
       button(
@@ -186,5 +189,35 @@ object ChallengeCreator:
       )
     )
   end renderChallengeCreator
-end ChallengeCreator
 
+  def renderTimerButton(signal: Signal[(Option[String], PreTimer)],
+                        observer: Observer[PreTimer => PreTimer]): Element =
+    def rotateTimer(timer: PreTimer): PreTimer = timer match
+      case PreTimer.WithNum(_) => PreTimer.WithStatus(Status.Yellow)
+      case PreTimer.WithStatus(Status.Yellow) => PreTimer.WithStatus(Status.Red)
+      case PreTimer.WithStatus(Status.Red) => PreTimer.WithNum(1)
+      case _ => PreTimer.WithNum(1)
+    end rotateTimer
+
+    div(
+      className := "timer-button-div",
+      button(
+        tpe := "button",
+        className := "timer-button",
+        className <-- signal.map(n => n._2 match
+                                   case PreTimer.WithNum(_) => "timer-button-number"
+                                   case PreTimer.WithStatus(Status.Yellow) => "timer-button-yellow"
+                                   case PreTimer.WithStatus(Status.Red) => "timer-button-red"
+                                   case _ => "timer-button-illegal"
+        ),
+        child.text <-- signal.map(n => n._2 match
+                                   case PreTimer.WithNum(_) => "# Boxes"
+                                   case PreTimer.WithStatus(Status.Yellow) => "On Yellow"
+                                   case PreTimer.WithStatus(Status.Red) => "On Red"
+                                   case _ => "???"
+        ),
+        onClick --> { _ => observer.onNext(p => rotateTimer(p)) }
+      )
+    )
+  end renderTimerButton
+end ChallengeCreator
