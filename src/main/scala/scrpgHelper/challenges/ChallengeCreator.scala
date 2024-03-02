@@ -165,7 +165,7 @@ object ChallengeCreator:
           { (s, o) => List() }
         ),
         challengeCheckboxCreator[PreTimer](
-          "# of Timer Checkboxes",
+          "Status / # of Timer Checkboxes",
           0,
           timerCheckboxesSignal,
           timerCheckboxes.updater { (ts, f) => f(ts) },
