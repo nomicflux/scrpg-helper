@@ -217,7 +217,13 @@ object SceneTracker:
     } else {
       "scene-future"
     }
-    val positionText = if position == currentPosition then "✘" else " "
+    val positionText = if (position == currentPosition) {
+      "◯"
+    } else if (position < currentPosition) {
+      "✘"
+    } else {
+      " "
+    }
     td(
       className := s"scene-box $statusClass $positionClass",
       div(
