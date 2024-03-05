@@ -11,14 +11,15 @@ object CharGen:
     val model = new CharGenModel()
 
     def charGen(): Element =
+        val character = new CharacterModel()
         div(
           h1("Character Generation"),
-          child <-- model.pageSignal.map(renderPage(_))
+          child <-- model.pageSignal.map(renderPage(_, character))
         )
     end charGen
 
-    def renderPage(page: CharGenPage): Element = page match
-        case CharGenPage.BackgroundPage => RenderBackground.renderBackgrounds()
+    def renderPage(page: CharGenPage, character: CharacterModel): Element = page match
+        case CharGenPage.BackgroundPage => RenderBackground.renderBackgrounds(character)
     end renderPage
 end CharGen
 
