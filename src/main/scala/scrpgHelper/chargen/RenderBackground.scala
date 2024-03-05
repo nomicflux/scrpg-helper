@@ -80,7 +80,10 @@ object RenderBackground:
       td(),
       td(
         renderPrinciples(
-          Principle.categoryToPrinciples(background.principleCategory)
+          Principle.categoryToPrinciples(background.principleCategory),
+          character.abilitiesSignal.map(l => l.map(_.name).toSet),
+          character.removeAbility,
+          character.addAbility,
         )
       ),
       td(
@@ -88,8 +91,8 @@ object RenderBackground:
           background.backgroundDice,
           background.mandatoryQualities ++ background.qualityList,
           character.qualitiesSignal.map(l => l.map(_._1.name).toSet),
-          character.addQuality,
           character.removeQuality,
+          character.addQuality,
         )
       ),
       td(background.powerSourceDice.map(_.n.toString).reduceLeft(_ + "," + _))
@@ -100,8 +103,8 @@ object RenderBackground:
     dice: List[Die],
     qualities: List[Quality],
     charQualities: Signal[Set[String]],
+    removeQuality: Observer[(Quality, Die)],
     addQuality: Observer[(Quality, Die)],
-    removeQuality: Observer[(Quality, Die)]
   ): Element =
     div(
       dice.map { d =>
@@ -117,23 +120,15 @@ object RenderBackground:
     )
   end renderQualities
 
-  def renderPrinciples(principles: List[Principle]): Element =
-    val principle: Var[Option[Principle]] = Var(None)
-
-    val principleMap: Map[Option[String], Principle] =
-      principles.map(p => (p.name, p)).toMap
-
-    select(
-      principles.map(p =>
-        option(
-          value := p.name.getOrElse(""),
-          p.name.getOrElse("<none>")
-        )
-      ),
-      onChange.mapToValue --> { pn =>
-        principle.update(_ => principleMap.get(Some(pn)))
-      }
-    )
+  def renderPrinciples(principles: List[Principle],
+                       charAbilities: Signal[Set[String]],
+                       removePrinciple: Observer[Principle],
+                       addPrinciple: Observer[Principle],
+  ): Element =
+    SelectWithPrevChoice(principles, p => p.name)
+      .render(charAbilities,
+              removePrinciple,
+              addPrinciple)
   end renderPrinciples
 end RenderBackground
 

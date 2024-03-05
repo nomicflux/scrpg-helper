@@ -8,7 +8,7 @@ enum PrincipleCategory:
 end PrincipleCategory
 
 case class Principle(
-  name: Option[String],
+  name: String,
   category: AbilityCategory,
   diePool: Set[EffectDieType],
   principleCategory: PrincipleCategory,
@@ -17,7 +17,7 @@ case class Principle(
     val action: Action = Action.Overcome
 
     def changeName(s: String): Principle =
-      copy(name = Some(s))
+      copy(name = s)
     end changeName
 end Principle
 
@@ -26,7 +26,7 @@ object Principle:
 
     def of(name: String, principleCategory: PrincipleCategory): Principle =
       new Principle(
-        Some(name),
+        name,
         AbilityCategory.Action,
         Set(EffectDieType.Max),
         principleCategory)
@@ -38,7 +38,7 @@ object Principle:
       effectDieType: EffectDieType,
       principleCategory: PrincipleCategory): Principle =
       new Principle(
-        Some(name),
+        name,
         abilityCategory,
         Set(effectDieType),
         principleCategory)

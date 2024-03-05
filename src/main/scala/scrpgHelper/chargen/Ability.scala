@@ -14,13 +14,13 @@ end Target
 
 trait Ability[A]:
   val status: Status
-  val name: Option[String]
+  val name: String
   val category: AbilityCategory
   def changeName(s: String): A
 end Ability
 
 case class SimpleAbility(
-    name: Option[String],
+    name: String,
     action: Action,
     status: Status,
     diePool: Set[EffectDieType],
@@ -29,13 +29,13 @@ case class SimpleAbility(
     targets: List[Target]
 ) extends Ability[SimpleAbility]:
   def changeName(s: String): SimpleAbility =
-    copy(name = Some(s))
+    copy(name = s)
   end changeName
 end SimpleAbility
 
 object SimpleAbility:
   def apply(
-      name: Option[String],
+      name: String,
       action: Action,
       status: Status,
       die: EffectDieType,
