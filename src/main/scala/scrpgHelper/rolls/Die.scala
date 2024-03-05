@@ -16,6 +16,9 @@ case class Die(n: Int):
     def values: Range = 1 to n
 
     def roll(): Int = Random.nextInt(n) + 1
+
+    override def toString(): String =
+      s"d$n"
 end Die
 
 object Die:
@@ -31,6 +34,14 @@ object Die:
           l <- d3.values
       yield (n, m, l)
     end cartesian
+
+    def rollForCharGen(ds: List[Die]): Set[Int] =
+      val allRolls: List[Option[Int]] = ds.map(d => Some(d.roll())) ++ List.fill(ds.size - 1)(None)
+      val rolled: Iterator[Int] = for {
+        rolls <- allRolls.combinations(ds.size)
+      } yield rolls.collect { case Some(n) => n }.sum
+      rolled.toSet
+    end rollForCharGen
 
     def fromEffects(n: Int, m: Int, l: Int, effects: Seq[EffectDieType]): Int =
       effects.map(_.getEffect(n, m, l)).sum

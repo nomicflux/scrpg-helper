@@ -129,4 +129,12 @@ object Principle:
       Principle.of("The Veteran", Responsibility),
       Principle.of("Youth", Responsibility),
     )
+
+    def categoryToPrinciples(category: PrincipleCategory): List[Principle] = category match
+        case Esoteric => esotericPrinciples
+        case Expertise => expertisePrinciples
+        case Ideals => idealsPrinciples
+        case Identity => identityPrinciples
+        case Responsibility => responsibilityPrinciples
+    end categoryToPrinciples
 end Principle

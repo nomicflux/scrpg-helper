@@ -20,6 +20,7 @@ object Main:
     import scrpgHelper.rolls.RollChart
     import scrpgHelper.scene.SceneTracker
     import scrpgHelper.challenges.ChallengeCreator
+    import scrpgHelper.chargen.CharGen
 
     val model = new Model
 
@@ -27,11 +28,12 @@ object Main:
     val rollRoute = Route.static(Page.RollChart, root / "scrpg-helper" / "rollChart" / endOfSegments)
     val sceneRoute = Route.static(Page.SceneTracker, root / "scrpg-helper" / "sceneTracker" / endOfSegments)
     val challengeRoute = Route.static(Page.ChallengeCreator, root / "scrpg-helper" / "challengeCreator" / endOfSegments)
+    val chargenRoute = Route.static(Page.CharGen, root / "scrpg-helper" / "charGen" / endOfSegments)
 
     implicit val rw: ReadWriter[Page] = macroRW
 
     val router = new Router[Page](
-        routes = List(rollRoute, baseRoute, sceneRoute, challengeRoute),
+        routes = List(rollRoute, baseRoute, sceneRoute, challengeRoute, chargenRoute),
         getPageTitle = _.toString,
         serializePage = page => write(page)(rw),
         deserializePage = pageStr => read(pageStr)(rw),
@@ -61,7 +63,8 @@ object Main:
         (page match
             case Page.RollChart => "Roll Dice"
             case Page.SceneTracker => "Scene Tracker"
-            case Page.ChallengeCreator => "Challenge Creator"),
+            case Page.ChallengeCreator => "Challenge Creator"
+            case Page.CharGen => "Character Generation"),
         disabled <-- router.currentPageSignal.map(_ == page),
         onClick --> { _event => router.pushState(page) }
       )
@@ -78,11 +81,12 @@ object Main:
         case Page.RollChart => RollChart.rollChart()
         case Page.SceneTracker => SceneTracker.sceneTracker(model.challengeModel)
         case Page.ChallengeCreator => ChallengeCreator.challengeCreator(model.challengeModel)
+        case Page.CharGen => CharGen.charGen()
     end pageElement
 end Main
 
 enum Page:
-    case RollChart, SceneTracker, ChallengeCreator
+    case RollChart, SceneTracker, ChallengeCreator, CharGen
 end Page
 
 final class Model:

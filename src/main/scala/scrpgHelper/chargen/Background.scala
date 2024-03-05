@@ -9,7 +9,7 @@ final case class Background(
   mandatoryQualities: List[Quality],
   principleCategory: PrincipleCategory,
   backgroundDice: List[Die],
-  powersourceDice: List[Die],
+  powerSourceDice: List[Die],
 )
 
 object Background:
@@ -23,9 +23,9 @@ object Background:
       qualityList: List[Quality],
       principleCategory: PC,
       backgroundDice: List[Die],
-      powersourceDice: List[Die]
+      powerSourceDice: List[Die]
     ): Background =
-       new Background(name, number, qualityList, List(), principleCategory, backgroundDice, powersourceDice)
+       new Background(name, number, qualityList, List(), principleCategory, backgroundDice, powerSourceDice)
     end apply
 
     def apply(
@@ -35,9 +35,9 @@ object Background:
       mandatoryQualities: List[Quality],
       principleCategory: PC,
       backgroundDice: List[Die],
-      powersourceDice: List[Die]
+      powerSourceDice: List[Die]
     ): Background =
-       new Background(name, number, qualityList, mandatoryQualities, principleCategory, backgroundDice, powersourceDice)
+       new Background(name, number, qualityList, mandatoryQualities, principleCategory, backgroundDice, powerSourceDice)
     end apply
 
     val upperClass: Background = Background(

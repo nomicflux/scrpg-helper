@@ -1,6 +1,6 @@
 :root {
   font-family: Bangers, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.7em;
+  line-height: 1.5em;
   font-size: 1.3em;
   font-weight: 400;
 
@@ -957,4 +957,22 @@ div.timer-div-red {
 
 div.timer-div-timeout {
   opacity: 0.3;
+}
+
+div.choice-section .undecided {
+  color: #bbbbbb;
+  opacity: 0.8;
+}
+
+div.choice-section .chosen {
+  color: #ccccff;
+  font-weight: bold;
+  border-radius: 10px;
+  border: 1px solid grey;
+  opacity: 1.0;
+}
+
+div.choice-section .unchosen {
+  color: #888888;
+  opacity: 0.6;
 }
