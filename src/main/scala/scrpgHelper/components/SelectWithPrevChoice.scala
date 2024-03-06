@@ -20,6 +20,17 @@ case class SelectWithPrevChoice[A](items: List[A],
       Some(a)
     }
 
+    def updateValue(name: String, prevA: Option[A]): Unit =
+        val ma = lookup.get(name)
+        prevA.foreach { a =>
+          remover.onNext(a)
+        }
+        ma.foreach { a =>
+          adder.onNext(a)
+          prevChoiceUpdater.onNext(a)
+        }
+    end updateValue
+
     select(
       option(
         value := "",
@@ -32,17 +43,8 @@ case class SelectWithPrevChoice[A](items: List[A],
           toName(a)
         )
       },
-      onChange.mapToValue.compose(_.withCurrentValueOf(prevChoiceSignal)) --> {
-        (name, prevA) =>
-          val ma = lookup.get(name)
-          prevA.foreach { a =>
-            remover.onNext(a)
-          }
-          ma.foreach { a =>
-            adder.onNext(a)
-            prevChoiceUpdater.onNext(a)
-          }
-      }
+      onFocus.mapToValue.compose(_.withCurrentValueOf(prevChoiceSignal)) --> { (n, pA) => updateValue(n, pA) },
+      onChange.mapToValue.compose(_.withCurrentValueOf(prevChoiceSignal)) --> { (n, pA) => updateValue(n, pA) }
     )
 
   end render

@@ -11,23 +11,32 @@ import scrpgHelper.rolls.Die
 
 final class CharacterModel:
     val qualities: Var[List[(Quality, Die)]] = Var(List())
-    val qualitiesSignal = qualities.signal
 
     val abilities: Var[List[Ability[_ <: Ability[_]]]] = Var(List())
-    val abilitiesSignal = abilities.signal
 
-    val addQuality: Observer[(Quality, Die)] = qualities.updater { case (l, (q, d)) =>
-      l :+ (q, d)
-    }
-    val removeQuality: Observer[(Quality, Die)] = qualities.updater { case (l, (q, d)) =>
-      l.filter(qd => qd._1 != q)
-    }
+    val qualityStaging: Var[Map[Background, List[(Quality, Die)]]] = Var(Map())
+    def qualitiesSignal(background: Signal[Option[Background]]): Signal[List[(Quality, Die)]] =
+      qualities.signal.combineWith(qualityStaging.signal, background).map((qs, m, mb) => qs ++ mb.flatMap(b => m.get(b)).getOrElse(List()))
 
-    val addAbility: Observer[Ability[_ <: Ability[_]]] = abilities.updater { (l, a) =>
-      l :+ a
+    def addQuality(background: Background): Observer[(Quality, Die)] = qualityStaging.updater { case (m, (q, d)) =>
+      val currVal = m.getOrElse(background, List())
+      m + (background -> (currVal :+ (q, d)))
     }
-    val removeAbility: Observer[Ability[_ <: Ability[_]]] = abilities.updater { (l, a) =>
-      l.filter(_ != a)
+    def removeQuality(background: Background): Observer[(Quality, Die)] = qualityStaging.updater { case (m, (q, d)) =>
+      val currVal = m.getOrElse(background, List())
+      m  + (background -> (currVal.filter(_._1 != q)))
     }
 
+    val stagingAbilities: Var[Map[Background, List[Ability[_ <: Ability[_]]]]] = Var(Map())
+    def abilitiesSignal(background: Signal[Option[Background]]): Signal[List[Ability[_ <: Ability[_]]]] =
+      abilities.signal.combineWith(stagingAbilities.signal, background).map((as, m, mb) => as ++ mb.flatMap(b => m.get(b)).getOrElse(List()))
+
+    def addAbility(background: Background): Observer[Ability[_ <: Ability[_]]] = stagingAbilities.updater { (m, a) =>
+      val currVal = m.getOrElse(background, List())
+      m + (background -> (currVal :+ a))
+    }
+    def removeAbility(background: Background): Observer[Ability[_ <: Ability[_]]] = stagingAbilities.updater { (m, a) =>
+      val currVal = m.getOrElse(background, List())
+      m  + (background -> (currVal.filter(_ != a)))
+    }
 end CharacterModel

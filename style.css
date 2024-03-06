@@ -976,3 +976,23 @@ div.choice-section .unchosen {
   color: #888888;
   opacity: 0.6;
 }
+
+div.choice-section .picked {
+  transform: scale(1.2, 1.2);
+  border-radius: 10px;
+  outline: 3px groove grey;
+}
+
+div.choice-section .unchosen.picked {
+  color: #ffcccc;
+  opacity: 0.9;
+}
+
+div.choice-section td {
+  padding: 0.5em;
+}
+
+div.choice-section .choice-die-box {
+  margin: 0px 0.5em;
+  display: inline-block;
+}

@@ -20,17 +20,8 @@ object RenderBackground:
       h2("Backgrounds"),
       renderRollButton(model.rollTrigger),
       renderShownToggle(model.showUnchosenSignal, model.shownToggle),
-      table(
-        Background.backgrounds.map(
-          renderBackgroundRow(
-            model.rollsSignal,
-            model.showUnchosenSignal,
-            character,
-            _
-          )
-        )
-      )
-    )
+      renderBackgroundTable(model.rollsSignal, model.showUnchosenSignal, character)
+   )
   end renderBackgrounds
 
   def renderRollButton(rollTrigger: Observer[Unit]): Element =
@@ -57,9 +48,44 @@ object RenderBackground:
     )
   end renderShownToggle
 
+  def renderBackgroundTable(
+    rollsSignal: Signal[Option[Set[Int]]],
+    shownSignal: Signal[Boolean],
+    character: CharacterModel,
+  ): Element =
+    val pickedBackground: Var[Option[Background]] = Var(None)
+    val pickedBackgroundSignal = pickedBackground.signal
+    val changeBackground: Observer[Background] = pickedBackground.updater { (mb, b) =>
+      Some(b)
+    }
+
+    table(
+      tr(
+        th(),
+        th("Background"),
+        th(colSpan := 2,
+           "Principle of"),
+        th("Qualities"),
+        th("Power Source Dice"),
+      ),
+      Background.backgrounds.map(
+        renderBackgroundRow(
+          rollsSignal,
+          shownSignal,
+          pickedBackgroundSignal,
+          changeBackground,
+          character,
+          _
+        )
+      )
+    )
+  end renderBackgroundTable
+
   def renderBackgroundRow(
       rollsSignal: Signal[Option[Set[Int]]],
       shownSignal: Signal[Boolean],
+      pickedBackgroundSignal: Signal[Option[Background]],
+      changeBackground: Observer[Background],
       character: CharacterModel,
       background: Background
   ): Element =
@@ -75,27 +101,31 @@ object RenderBackground:
             }
           }
       },
+      className <-- pickedBackgroundSignal.map(mb => if mb.fold(false)(_ == background) then "picked" else "unpicked"),
       td(background.number.toString),
       td(h3(background.name)),
-      td(),
+      td(s"(${background.principleCategory.toString})"),
       td(
         renderPrinciples(
           Principle.categoryToPrinciples(background.principleCategory),
-          character.abilitiesSignal.map(l => l.map(_.name).toSet),
-          character.removeAbility,
-          character.addAbility,
+          character.abilitiesSignal(pickedBackgroundSignal).map(l => l.map(_.name).toSet),
+          character.removeAbility(background),
+          character.addAbility(background),
         )
       ),
       td(
         renderQualities(
           background.backgroundDice,
           background.mandatoryQualities ++ background.qualityList,
-          character.qualitiesSignal.map(l => l.map(_._1.name).toSet),
-          character.removeQuality,
-          character.addQuality,
+          character.qualitiesSignal(pickedBackgroundSignal).map(l => l.map(_._1.name).toSet),
+          character.removeQuality(background),
+          character.addQuality(background),
         )
       ),
-      td(background.powerSourceDice.map(_.n.toString).reduceLeft(_ + "," + _))
+      td(background.powerSourceDice.map(_.toString).reduceLeft(_ + " , " + _)),
+      onMouseDown --> { _ => changeBackground.onNext(background) },
+      onFocus --> { _ => changeBackground.onNext(background) },
+      onClick --> { _ => changeBackground.onNext(background) },
     )
   end renderBackgroundRow
 
@@ -109,6 +139,7 @@ object RenderBackground:
     div(
       dice.map { d =>
         span(
+          className := "choice-die-box",
           d.toString,
           ":",
           SelectWithPrevChoice(qualities.map(q => (q, d)), qd => qd._1.name)
