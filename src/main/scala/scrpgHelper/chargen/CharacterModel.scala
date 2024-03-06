@@ -19,12 +19,12 @@ final class CharacterModel:
       qualities.signal.combineWith(qualityStaging.signal, background).map((qs, m, mb) => qs ++ mb.flatMap(b => m.get(b)).getOrElse(List()))
 
     def addQuality(background: Background): Observer[(Quality, Die)] = qualityStaging.updater { case (m, (q, d)) =>
-      val currVal = m.getOrElse(background, List())
-      m + (background -> (currVal :+ (q, d)))
+      val newList = m.getOrElse(background, List()) :+ (q, d)
+      m + (background -> newList)
     }
     def removeQuality(background: Background): Observer[(Quality, Die)] = qualityStaging.updater { case (m, (q, d)) =>
-      val currVal = m.getOrElse(background, List())
-      m  + (background -> (currVal.filter(_._1 != q)))
+      val newList = m.getOrElse(background, List()).filter(_._1 != q)
+      m + (background -> newList)
     }
 
     val stagingAbilities: Var[Map[Background, List[Ability[_ <: Ability[_]]]]] = Var(Map())
@@ -32,11 +32,11 @@ final class CharacterModel:
       abilities.signal.combineWith(stagingAbilities.signal, background).map((as, m, mb) => as ++ mb.flatMap(b => m.get(b)).getOrElse(List()))
 
     def addAbility(background: Background): Observer[Ability[_ <: Ability[_]]] = stagingAbilities.updater { (m, a) =>
-      val currVal = m.getOrElse(background, List())
-      m + (background -> (currVal :+ a))
+      val newList = m.getOrElse(background, List()) :+ a
+      m + (background -> newList)
     }
     def removeAbility(background: Background): Observer[Ability[_ <: Ability[_]]] = stagingAbilities.updater { (m, a) =>
-      val currVal = m.getOrElse(background, List())
-      m  + (background -> (currVal.filter(_ != a)))
+      val newList = m.getOrElse(background, List()).filter(_ != a)
+      m + (background -> newList)
     }
 end CharacterModel

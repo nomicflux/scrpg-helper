@@ -81,6 +81,12 @@ object RenderBackground:
     )
   end renderBackgroundTable
 
+  def mandatoryQualityCheck(background: Background)(qds: List[(Quality, Die)])(qd: (Quality, Die), prevChoice: Option[(Quality, Die)]): Boolean =
+    val baseSet = qds.map(_._1).toSet
+    val newSet = prevChoice.fold(baseSet)(pc => baseSet - pc._1) + qd._1
+    background.mandatoryQualities.toSet.diff(newSet).isEmpty || newSet.size < background.backgroundDice.size
+  end mandatoryQualityCheck
+
   def renderBackgroundRow(
       rollsSignal: Signal[Option[Set[Int]]],
       shownSignal: Signal[Boolean],
@@ -108,7 +114,10 @@ object RenderBackground:
       td(
         renderPrinciples(
           Principle.categoryToPrinciples(background.principleCategory),
-          character.abilitiesSignal(pickedBackgroundSignal).map(l => l.map(_.name).toSet),
+          character.abilitiesSignal(pickedBackgroundSignal).map{l =>
+            val abilitySet = l.map(_.name).toSet
+            a => abilitySet.contains(a.name)
+          },
           character.removeAbility(background),
           character.addAbility(background),
         )
@@ -117,7 +126,10 @@ object RenderBackground:
         renderQualities(
           background.backgroundDice,
           background.mandatoryQualities ++ background.qualityList,
-          character.qualitiesSignal(pickedBackgroundSignal).map(l => l.map(_._1.name).toSet),
+          character.qualitiesSignal(pickedBackgroundSignal).map{l =>
+            val qualitySet: Set[Quality] = l.map(_._1).toSet
+            (qd, mpc) => qualitySet.contains(qd._1) || !mandatoryQualityCheck(background)(l)(qd, mpc)
+          },
           character.removeQuality(background),
           character.addQuality(background),
         )
@@ -132,7 +144,7 @@ object RenderBackground:
   def renderQualities(
     dice: List[Die],
     qualities: List[Quality],
-    charQualities: Signal[Set[String]],
+    qualityAllowed: Signal[((Quality, Die), Option[(Quality, Die)]) => Boolean],
     removeQuality: Observer[(Quality, Die)],
     addQuality: Observer[(Quality, Die)],
   ): Element =
@@ -143,7 +155,7 @@ object RenderBackground:
           d.toString,
           ":",
           SelectWithPrevChoice(qualities.map(q => (q, d)), qd => qd._1.name)
-            .render(charQualities,
+            .render(qualityAllowed,
                     removeQuality,
                     addQuality)
         )
@@ -152,12 +164,12 @@ object RenderBackground:
   end renderQualities
 
   def renderPrinciples(principles: List[Principle],
-                       charAbilities: Signal[Set[String]],
+                       abilityAllowed: Signal[Principle => Boolean],
                        removePrinciple: Observer[Principle],
                        addPrinciple: Observer[Principle],
   ): Element =
     SelectWithPrevChoice(principles, p => p.name)
-      .render(charAbilities,
+      .render(abilityAllowed.map(f => (a, _) => f(a)),
               removePrinciple,
               addPrinciple)
   end renderPrinciples

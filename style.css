@@ -983,6 +983,14 @@ div.choice-section .picked {
   outline: 3px groove grey;
 }
 
+div.choice-section .chosen.picked {
+  color: #ccffff;
+}
+
+div.choice-section .undecided.picked {
+  color: #ddffdd;
+}
+
 div.choice-section .unchosen.picked {
   color: #ffcccc;
   opacity: 0.9;
@@ -995,4 +1003,20 @@ div.choice-section td {
 div.choice-section .choice-die-box {
   margin: 0px 0.5em;
   display: inline-block;
+}
+
+select.selector-with-prev-choice {
+  appearance: none;
+}
+
+select.selector-with-prev-choice option {
+
+}
+
+select.selector-with-prev-choice option:disabled {
+  background-color: red;
+}
+
+select.selector-with-prev-choice option:selected {
+
 }
