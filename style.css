@@ -1005,18 +1005,33 @@ div.choice-section .choice-die-box {
   display: inline-block;
 }
 
+div.choice-section tr:hover {
+  outline: 1px solid grey;
+}
+
+div.choice-section .picked:hover {
+  outline: 3px ridge grey;
+}
+
+
+
 select.selector-with-prev-choice {
   appearance: none;
+  border-radius: 10px;
+  border: 1px groove #444444;
+}
+
+select.selector-with-prev-choice:hover {
+  border: 1px ridge #00ffff;
 }
 
 select.selector-with-prev-choice option {
-
+  appearance: none;
+  padding: 0.2em;
 }
 
 select.selector-with-prev-choice option:disabled {
-  background-color: red;
 }
 
 select.selector-with-prev-choice option:selected {
-
 }
