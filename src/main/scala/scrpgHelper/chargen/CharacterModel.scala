@@ -11,32 +11,41 @@ import scrpgHelper.rolls.Die
 
 final class CharacterModel:
     val qualities: Var[List[(Quality, Die)]] = Var(List())
-
     val abilities: Var[List[Ability[_ <: Ability[_]]]] = Var(List())
+    val background: Var[Option[Background]] = Var(None)
+    val backgroundSignal = background.signal
+    val changeBackground: Observer[Background] = background.updater { (_, b) => Some(b) }
 
-    val qualityStaging: Var[Map[Background, List[(Quality, Die)]]] = Var(Map())
-    def qualitiesSignal(background: Signal[Option[Background]]): Signal[List[(Quality, Die)]] =
-      qualities.signal.combineWith(qualityStaging.signal, background).map((qs, m, mb) => qs ++ mb.flatMap(b => m.get(b)).getOrElse(List()))
+    type StagingKey = Background
 
-    def addQuality(background: Background): Observer[(Quality, Die)] = qualityStaging.updater { case (m, (q, d)) =>
-      val newList = m.getOrElse(background, List()) :+ (q, d)
-      m + (background -> newList)
+    val qualityStaging: Var[Map[StagingKey, List[(Quality, Die)]]] = Var(Map())
+    def qualitiesSignal(stagingKey: Signal[Option[StagingKey]]): Signal[List[(Quality, Die)]] =
+      qualities.signal.combineWith(qualityStaging.signal, stagingKey).map((qs, m, mb) => qs ++ mb.flatMap(b => m.get(b)).getOrElse(List()))
+
+    def addQuality(stagingKey: StagingKey): Observer[(Quality, Die)] = qualityStaging.updater { case (m, (q, d)) =>
+      val newList = m.getOrElse(stagingKey, List()) :+ (q, d)
+      m + (stagingKey -> newList)
     }
-    def removeQuality(background: Background): Observer[(Quality, Die)] = qualityStaging.updater { case (m, (q, d)) =>
-      val newList = m.getOrElse(background, List()).filter(_._1 != q)
-      m + (background -> newList)
+    def removeQuality(stagingKey: StagingKey): Observer[(Quality, Die)] = qualityStaging.updater { case (m, (q, d)) =>
+      val newList = m.getOrElse(stagingKey, List()).filter(_._1 != q)
+      m + (stagingKey -> newList)
     }
 
-    val stagingAbilities: Var[Map[Background, List[Ability[_ <: Ability[_]]]]] = Var(Map())
-    def abilitiesSignal(background: Signal[Option[Background]]): Signal[List[Ability[_ <: Ability[_]]]] =
-      abilities.signal.combineWith(stagingAbilities.signal, background).map((as, m, mb) => as ++ mb.flatMap(b => m.get(b)).getOrElse(List()))
+    val abilityStaging: Var[Map[StagingKey, List[Ability[_ <: Ability[_]]]]] = Var(Map())
+    def abilitiesSignal(stagingKey: Signal[Option[StagingKey]]): Signal[List[Ability[_ <: Ability[_]]]] =
+      abilities.signal.combineWith(abilityStaging.signal, stagingKey).map((as, m, mb) => as ++ mb.flatMap(b => m.get(b)).getOrElse(List()))
 
-    def addAbility(background: Background): Observer[Ability[_ <: Ability[_]]] = stagingAbilities.updater { (m, a) =>
-      val newList = m.getOrElse(background, List()) :+ a
-      m + (background -> newList)
+    def addAbility(stagingKey: StagingKey): Observer[Ability[_ <: Ability[_]]] = abilityStaging.updater { (m, a) =>
+      val newList = m.getOrElse(stagingKey, List()) :+ a
+      m + (stagingKey -> newList)
     }
-    def removeAbility(background: Background): Observer[Ability[_ <: Ability[_]]] = stagingAbilities.updater { (m, a) =>
-      val newList = m.getOrElse(background, List()).filter(_ != a)
-      m + (background -> newList)
+    def removeAbility(stagingKey: StagingKey): Observer[Ability[_ <: Ability[_]]] = abilityStaging.updater { (m, a) =>
+      val newList = m.getOrElse(stagingKey, List()).filter(_ != a)
+      m + (stagingKey -> newList)
+    }
+
+    val validBackground: Signal[Boolean] = backgroundSignal.combineWith(qualityStaging.signal, abilityStaging.signal).map { (mb, qm, am) =>
+      mb.fold(false)(b => b.valid(qm.getOrElse(b, List()),
+                                  am.getOrElse(b, List())))
     }
 end CharacterModel

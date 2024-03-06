@@ -53,12 +53,6 @@ object RenderBackground:
     shownSignal: Signal[Boolean],
     character: CharacterModel,
   ): Element =
-    val pickedBackground: Var[Option[Background]] = Var(None)
-    val pickedBackgroundSignal = pickedBackground.signal
-    val changeBackground: Observer[Background] = pickedBackground.updater { (mb, b) =>
-      Some(b)
-    }
-
     table(
       tr(
         th(),
@@ -72,8 +66,6 @@ object RenderBackground:
         renderBackgroundRow(
           rollsSignal,
           shownSignal,
-          pickedBackgroundSignal,
-          changeBackground,
           character,
           _
         )
@@ -90,8 +82,6 @@ object RenderBackground:
   def renderBackgroundRow(
       rollsSignal: Signal[Option[Set[Int]]],
       shownSignal: Signal[Boolean],
-      pickedBackgroundSignal: Signal[Option[Background]],
-      changeBackground: Observer[Background],
       character: CharacterModel,
       background: Background
   ): Element =
@@ -107,14 +97,14 @@ object RenderBackground:
             }
           }
       },
-      className <-- pickedBackgroundSignal.map(mb => if mb.fold(false)(_ == background) then "picked" else "unpicked"),
+      className <-- character.backgroundSignal.map(mb => if mb.fold(false)(_ == background) then "picked" else "unpicked"),
       td(background.number.toString),
       td(h3(background.name)),
       td(s"(${background.principleCategory.toString})"),
       td(
         renderPrinciples(
           Principle.categoryToPrinciples(background.principleCategory),
-          character.abilitiesSignal(pickedBackgroundSignal).map{l =>
+          character.abilitiesSignal(character.backgroundSignal).map{l =>
             val abilitySet = l.map(_.name).toSet
             a => abilitySet.contains(a.name)
           },
@@ -126,7 +116,7 @@ object RenderBackground:
         renderQualities(
           background.backgroundDice,
           background.mandatoryQualities ++ background.qualityList,
-          character.qualitiesSignal(pickedBackgroundSignal).map{l =>
+          character.qualitiesSignal(character.backgroundSignal).map{l =>
             val qualitySet: Set[Quality] = l.map(_._1).toSet
             (qd, mpc) => qualitySet.contains(qd._1) || !mandatoryQualityCheck(background)(l)(qd, mpc)
           },
@@ -135,9 +125,9 @@ object RenderBackground:
         )
       ),
       td(background.powerSourceDice.map(_.toString).reduceLeft(_ + " , " + _)),
-      onMouseDown --> { _ => changeBackground.onNext(background) },
-      onFocus --> { _ => changeBackground.onNext(background) },
-      onClick --> { _ => changeBackground.onNext(background) },
+      onMouseDown --> { _ => character.changeBackground.onNext(background) },
+      onFocus --> { _ => character.changeBackground.onNext(background) },
+      onClick --> { _ => character.changeBackground.onNext(background) },
     )
   end renderBackgroundRow
 

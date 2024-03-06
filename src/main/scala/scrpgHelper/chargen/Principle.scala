@@ -16,6 +16,8 @@ case class Principle(
     val status: Status = Status.Green
     val action: Action = Action.Overcome
 
+    override def inPrincipleCategory(category: PrincipleCategory): Boolean = category == principleCategory
+
     def changeName(s: String): Principle =
       copy(name = s)
     end changeName

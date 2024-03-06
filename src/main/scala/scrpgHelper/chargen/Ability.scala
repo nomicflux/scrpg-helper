@@ -17,6 +17,8 @@ trait Ability[A]:
   val name: String
   val category: AbilityCategory
   def changeName(s: String): A
+
+  def inPrincipleCategory(category: PrincipleCategory): Boolean = false
 end Ability
 
 case class SimpleAbility(
