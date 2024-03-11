@@ -14,8 +14,11 @@ object CharGen:
         val character = new CharacterModel()
         div(
           h1("Character Generation"),
-          nextPageButton(character, model.pageSignal, model.advancePage),
-          child <-- model.pageSignal.map(renderPage(_, character))
+          div(
+            prevPageButton(character, model.pageSignal, model.retreatPage),
+            nextPageButton(character, model.pageSignal, model.advancePage),
+          ),
+          renderPage(model.pageSignal, character)
         )
     end charGen
 
@@ -33,9 +36,31 @@ object CharGen:
       )
     end nextPageButton
 
-    def renderPage(page: CharGenPage, character: CharacterModel): Element = page match
-        case CharGenPage.BackgroundPage => RenderBackground.renderBackgrounds(character)
-        case CharGenPage.PowerSourcePage => RenderPowerSource.renderPowerSources(character)
+    def prevPageButton(character: CharacterModel,
+                       pageSignal: Signal[CharGenPage],
+                       retreatPage: Observer[Unit]): Element =
+      button(
+        tpe := "button",
+        "Previous Page",
+        disabled <-- pageSignal.map(p => p match {
+                                      case CharGenPage.BackgroundPage => true
+                                      case _ => false
+                                    }),
+        onClick --> { _ => retreatPage.onNext(())}
+      )
+    end prevPageButton
+
+    def renderPage(pageSignal: Signal[CharGenPage], character: CharacterModel): Element =
+      div(
+        div(
+          className <-- pageSignal.map(p => if p == CharGenPage.BackgroundPage then "" else "hidden"),
+          RenderBackground.renderBackgrounds(character),
+        ),
+        div(
+          className <-- pageSignal.map(p => if p == CharGenPage.PowerSourcePage then "" else "hidden"),
+          RenderPowerSource.renderPowerSources(character),
+        )
+      )
     end renderPage
 end CharGen
 
@@ -50,5 +75,9 @@ final class CharGenModel:
     val advancePage: Observer[Unit] = page.updater { (p, _) => p match
       case CharGenPage.BackgroundPage => CharGenPage.PowerSourcePage
       case _ => CharGenPage.PowerSourcePage
+    }
+    val retreatPage: Observer[Unit] = page.updater { (p, _) => p match
+      case CharGenPage.PowerSourcePage => CharGenPage.BackgroundPage
+      case _ => CharGenPage.BackgroundPage
     }
 end CharGenModel
