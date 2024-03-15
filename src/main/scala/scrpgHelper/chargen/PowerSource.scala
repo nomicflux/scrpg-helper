@@ -4,35 +4,23 @@ import scrpgHelper.rolls.Die
 import scrpgHelper.rolls.EffectDieType
 import scrpgHelper.status.Status
 
-case class AbilityPool(abilities: List[Ability[_]])
-
-object AbilityPool:
-  def apply(abilities: Ability[_]*): AbilityPool =
-    new AbilityPool(abilities.toList)
-  end apply
-end AbilityPool
+case class PowerSourceWithChoices(powerSource: PowerSource,
+                                  dicePool: List[Die],
+                                  choices: List[AbilityChoice])
 
 case class PowerSource(
     name: String,
     number: Int,
-    abilityChoices: List[AbilityPool],
+    abilityPools: List[AbilityPool],
     powerList: List[Power],
-    powersDiePool: List[Die],
     archetypeDiePool: List[Die],
-    chosenAbilities: List[ChosenAbility[_]]
 ):
   def valid(): Boolean = false
-
-  def chooseAbility[A](ability: TextAbility[A], a: A)(using
-      acA: AbilityChoice[A]
-  ): Option[PowerSource] =
-    if ability.runValidation(a, chosenAbilities)
-    then Some(copy(chosenAbilities = chosenAbilities :+ ability.withChoice(a)))
-    else None
-  end chooseAbility
 end PowerSource
 
 object PowerSource:
+  import scrpgHelper.chargen.powers.*
+
   def statusValidation(
       max: Int,
       status: Status,
@@ -44,20 +32,25 @@ object PowerSource:
   def apply(
       name: String,
       number: Int,
-      abilityChoices: List[AbilityPool],
+      abilityPools: List[AbilityPool],
       powerList: List[Power],
       archetypeDiePool: List[Die]
-  ): List[Die] => PowerSource =
-    ds =>
+  ): PowerSource =
       new PowerSource(
         name,
         number,
-        abilityChoices,
+        abilityPools,
         powerList,
-        ds,
         archetypeDiePool,
-        List()
       )
   end apply
 
+  def uniquePowers(abilities: List[ChosenAbility]): Boolean =
+    val powers: List[Power] = abilities.flatMap(_.currentChoices).flatMap(_.getPower.toList)
+    powers.distinct == powers
+  end uniquePowers
+
+  def powerSources: List[PowerSource] = List(
+    Accident.accident,
+  )
 end PowerSource

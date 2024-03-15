@@ -2,60 +2,122 @@ package scrpgHelper.chargen
 
 import scala.reflect.TypeTest
 
-trait AbilityChoice[A]:
-  extension (a: A) def getPower: Option[Power]
-  extension (a: A) def getQuality: Option[Quality]
-  extension (a: A) def getAction: Option[Action]
+trait AbilityChoice:
+  val getPower: Option[Power]
+  val getQuality: Option[Quality]
+  val getAction: Option[Action]
+  val getEnergy: Option[Energy]
 
-  extension (a: A) def powerString: String = getPower(a).fold("<none chosen>")(_.name)
-  extension (a: A) def qualityString: String = getQuality(a).fold("<none chosen>")(_.name)
-  extension (a: A) def actionString: String = getAction(a).fold("<none chosen>")(_.toString)
+  def validate(l: List[AbilityChoice]): Boolean
 end AbilityChoice
 
 object AbilityChoice:
-  given AbilityChoice[Power] with
-    extension (power: Power) def getPower: Option[Power] = Some(power)
-    extension (power: Power) def getQuality: Option[Quality] = None
-    extension (power: Power) def getAction: Option[Action] = None
+  def powerString(l: List[AbilityChoice]): String =
+    l.collect { case pc: PowerChoice => pc.power.fold("<Power>")(_.name) }
+      .reduceLeftOption(_ + "," + _).getOrElse("")
 
-  given AbilityChoice[Quality] with
-    extension (quality: Quality) def getPower: Option[Power] = None
-    extension (quality: Quality) def getQuality: Option[Quality] = Some(quality)
-    extension (quality: Quality) def getAction: Option[Action] = None
+  def qualityString(l: List[AbilityChoice]): String =
+    l.collect { case qc: QualityChoice =>
+      qc.quality.fold("<Quality>")(_.name)
+    }.reduceLeftOption(_ + "," + _).getOrElse("")
 
-  given AbilityChoice[Action] with
-    extension (action: Action) def getPower: Option[Power] = None
-    extension (action: Action) def getQuality: Option[Quality] = None
-    extension (action: Action) def getAction: Option[Action] = Some(action)
+  def actionString(l: List[AbilityChoice]): String =
+    l.collect { case ac: ActionChoice =>
+      ac.action.fold("<Action>")(_.toString)
+    }.reduceLeftOption(_ + "," + _).getOrElse("")
 
-  given [A, B](using
-      acA: AbilityChoice[A],
-      acB: AbilityChoice[B]
-  ): AbilityChoice[(A, B)] with
-    extension (ab: (A, B))
-      def getPower: Option[Power] = ab._1.getPower.orElse(ab._2.getPower)
-    extension (ab: (A, B))
-      def getQuality: Option[Quality] =
-        ab._1.getQuality.orElse(ab._2.getQuality)
-    extension (ab: (A, B))
-      def getAction: Option[Action] = ab._1.getAction.orElse(ab._2.getAction)
-
-  given [A, B](using
-      acA: AbilityChoice[A],
-      acB: AbilityChoice[B],
-      ttA: TypeTest[A | B, A],
-      ttB: TypeTest[A | B, B]
-  ): AbilityChoice[A | B] with
-    extension (ab: A | B)
-      def getPower: Option[Power] = ab match
-        case ttA(a) => a.getPower
-        case ttB(b) => b.getPower
-    extension (ab: A | B)
-      def getQuality: Option[Quality] = ab match
-        case ttA(a) => a.getQuality
-        case ttB(b) => b.getQuality
-    extension (ab: A | B)
-      def getAction: Option[Action] = ab match
-        case ttA(a) => a.getAction
-        case ttB(b) => b.getAction
+  def energyString(l: List[AbilityChoice]): String =
+    l.collect { case ec: EnergyChoice =>
+      ec.energy.fold("<Energy/Element>")(_.toString)
+    }.reduceLeftOption(_ + "," + _).getOrElse("")
 end AbilityChoice
+
+case class PowerChoice(power: Option[Power], validateFn: List[Power] => Boolean)
+    extends AbilityChoice:
+  val getPower: Option[Power] = power
+  val getQuality: Option[Quality] = None
+  val getAction: Option[Action] = None
+  val getEnergy: Option[Energy] = None
+
+  def validate(l: List[AbilityChoice]): Boolean =
+    validateFn(l.collect { case pc: PowerChoice => pc.power }.collect {
+      case Some(p) => p
+    })
+end PowerChoice
+
+object PowerChoice:
+  def apply(): PowerChoice =
+    PowerChoice(None, _ => true)
+
+  def apply(vfn: List[Power] => Boolean): PowerChoice =
+    PowerChoice(None, vfn)
+end PowerChoice
+
+case class QualityChoice(
+    quality: Option[Quality],
+    validateFn: List[Quality] => Boolean
+) extends AbilityChoice:
+  val getPower: Option[Power] = None
+  val getQuality: Option[Quality] = quality
+  val getAction: Option[Action] = None
+  val getEnergy: Option[Energy] = None
+
+  def validate(l: List[AbilityChoice]): Boolean =
+    validateFn(l.collect { case qc: QualityChoice => qc.quality }.collect {
+      case Some(q) => q
+    })
+end QualityChoice
+
+object QualityChoice:
+  def apply(): QualityChoice =
+    QualityChoice(None, _ => true)
+
+  def apply(vfn: List[Quality] => Boolean): QualityChoice =
+    QualityChoice(None, vfn)
+end QualityChoice
+
+case class ActionChoice(
+    action: Option[Action],
+    validateFn: List[Action] => Boolean
+) extends AbilityChoice:
+  val getPower: Option[Power] = None
+  val getQuality: Option[Quality] = None
+  val getAction: Option[Action] = action
+  val getEnergy: Option[Energy] = None
+
+  def validate(l: List[AbilityChoice]): Boolean =
+    validateFn(l.collect { case ac: ActionChoice => ac.action }.collect {
+      case Some(a) => a
+    })
+end ActionChoice
+
+object ActionChoice:
+  def apply(): ActionChoice =
+    ActionChoice(None, _ => true)
+
+  def apply(vfn: List[Action] => Boolean): ActionChoice =
+    ActionChoice(None, vfn)
+end ActionChoice
+
+case class EnergyChoice(
+    energy: Option[Energy],
+    validateFn: List[Energy] => Boolean
+) extends AbilityChoice:
+  val getPower: Option[Power] = None
+  val getQuality: Option[Quality] = None
+  val getAction: Option[Action] = None
+  val getEnergy: Option[Energy] = energy
+
+  def validate(l: List[AbilityChoice]): Boolean =
+    validateFn(l.collect { case ec: EnergyChoice => ec.energy }.collect {
+      case Some(e) => e
+    })
+end EnergyChoice
+
+object EnergyChoice:
+  def apply(): EnergyChoice =
+    EnergyChoice(None, _ => true)
+
+  def apply(vfn: List[Energy] => Boolean): EnergyChoice =
+    EnergyChoice(None, vfn)
+end EnergyChoice

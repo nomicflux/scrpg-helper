@@ -8,10 +8,7 @@ type Description = String
 enum AbilityCategory:
   case Action, Reaction, Inherent
 
-  def toAbbreviation: String = this match
-    case Action => "A"
-    case Reaction => "R"
-    case Inherent => "I"
+  def toAbbreviation: String = this.toString.head.toString
 end AbilityCategory
 
 case class AbilityTemplate(
