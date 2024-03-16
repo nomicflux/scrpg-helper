@@ -19,7 +19,7 @@ final class CharacterModel:
     val powerSource: Var[Option[PowerSource]] = Var(None)
     val powerSourceSignal = powerSource.signal
     val chosenPowerSourceSignal = backgroundSignal.combineWith(powerSourceSignal).map { (mbg, mps) =>
-      mbg.flatMap(bg => mps.map(ps => PowerSourceWithChoices(ps, bg.powerSourceDice, List())))
+      mbg.flatMap(bg => mps.map(ps => PowerSourceWithChoices(ps, bg.powerSourceDice, Map())))
     }
     val changePowerSource: Observer[PowerSource] = powerSource.updater { (_, ps) => Some(ps) }
 
@@ -62,6 +62,12 @@ final class CharacterModel:
     def removeAbility(stagingKey: StagingKey): Observer[Ability[_]] = abilityStaging.updater { (m, a) =>
       val newList = m.getOrElse(stagingKey, List()).filter(_ != a)
       m + (stagingKey -> newList)
+    }
+
+    def toggleAbility(stagingKey: StagingKey): Observer[ChosenAbility] = abilityStaging.updater { (m, a) =>
+      val currList = m.getOrElse(stagingKey, List())
+      val newList = if currList.contains(a) then currList.filter(_ != a) else (currList :+ a)
+      if a.inPool.runValidation(newList.collect { case ca: ChosenAbility => ca }) then m + (stagingKey -> newList) else m
     }
 
     val abilityChoices: Var[Map[AbilityTemplate, List[AbilityChoice]]] = Var(Map())

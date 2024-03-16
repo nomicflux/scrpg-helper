@@ -6,7 +6,7 @@ import scrpgHelper.status.Status
 
 case class PowerSourceWithChoices(powerSource: PowerSource,
                                   dicePool: List[Die],
-                                  choices: List[AbilityChoice])
+                                  choices: Map[AbilityTemplate, ChosenAbility])
 
 case class PowerSource(
     name: String,

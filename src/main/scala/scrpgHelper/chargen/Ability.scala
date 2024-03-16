@@ -24,12 +24,16 @@ case class AbilityTemplate(
 ) extends Ability[AbilityTemplate]:
   def changeName(s: String): AbilityTemplate = copy(name = s)
 
-  def withChoices(as: List[AbilityChoice]): ChosenAbility =
-    ChosenAbility(this, as)
+  def toChosenAbility(pool: AbilityPool): ChosenAbility =
+    ChosenAbility(this, pool, baseChoices)
+
+  def withChoices(pool: AbilityPool, as: List[AbilityChoice]): ChosenAbility =
+    ChosenAbility(this, pool, as)
 end AbilityTemplate
 
 case class ChosenAbility(
   template: AbilityTemplate,
+  inPool: AbilityPool,
   currentChoices: List[AbilityChoice]
 ) extends Ability[ChosenAbility]:
   def status: Status = template.status
@@ -37,6 +41,9 @@ case class ChosenAbility(
   def category: AbilityCategory = template.category
   def changeName(s: String): ChosenAbility =
     copy(template = template.changeName(s))
+
+  def actions: List[Action] = template.actions(currentChoices)
+  def description: Description = template.description(currentChoices)
 end ChosenAbility
 
 trait Ability[A]:

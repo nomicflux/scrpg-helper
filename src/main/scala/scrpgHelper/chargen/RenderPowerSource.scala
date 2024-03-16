@@ -58,9 +58,8 @@ object RenderPowerSource:
         )
       ),
       td(
-        renderAbilityPools(
-          character,
-          powerSource.abilityPools
+        div(
+          powerSource.abilityPools.map(renderAbilityPool(character, powerSource, _))
         )
       ),
       td(
@@ -72,38 +71,45 @@ object RenderPowerSource:
     )
   end renderPowerSourceRow
 
-  def renderAbilityPools(character: CharacterModel, abilityPools: List[AbilityPool]): Element =
-    div(
-      abilityPools.map(renderAbilityPool(character, _))
-    )
-  end renderAbilityPools
-
-  def renderAbilityPool(character: CharacterModel, abilityPool: AbilityPool): Element =
+  def renderAbilityPool(character: CharacterModel,
+                        powerSource: PowerSource,
+                        abilityPool: AbilityPool): Element =
     div(
       className := "ability-pool",
       span(s"Pick ${abilityPool.max}:"),
-      renderAbilities(character, abilityPool.abilities)
+      div(
+        abilityPool.abilities.map(renderAbility(character, powerSource, abilityPool, _))
+      )
     )
   end renderAbilityPool
 
-  def renderAbilities(character: CharacterModel, abilities: List[AbilityTemplate]): Element =
-    div(
-      abilities.map(renderAbility(character, _))
-    )
-  end renderAbilities
+  def renderAbility(character: CharacterModel,
+                    powerSource: PowerSource,
+                    abilityPool: AbilityPool,
+                    template: AbilityTemplate): Element =
+    val chosenAbility: Var[ChosenAbility] = Var(template.toChosenAbility(abilityPool))
+    val chosenSignal = chosenAbility.signal
 
-  def renderAbility(character: CharacterModel, ability: AbilityTemplate): Element =
     div(
-      className := s"ability status-${ability.status.toString.toLowerCase()}",
+      className := s"ability status-${template.status.toString.toLowerCase()}",
+      className <-- character.abilitiesSignal(Signal.fromValue(Some(powerSource))).map(l => if l.collect{ case ca: ChosenAbility => ca.template}.contains(template) then "ability-selected" else "ability-unselected"),
       span(
-        child.text <-- character.abilityChoiceSignal(ability).map(acs => ability.actions(acs).map(_.toSymbol).foldLeft("")(_ + _))
+        className := "ability-actions",
+        child.text <-- chosenSignal.map(_.actions.map(_.toSymbol).foldLeft("")(_ + _))
       ),
-      span(ability.name),
-      span(ability.category.toAbbreviation),
+      span(
+        className := "ability-name",
+        child.text <-- chosenSignal.map(_.name)
+      ),
+      span(
+        className := "ability-category",
+        child.text <-- chosenSignal.map(_.category.toAbbreviation)
+      ),
       span(
         className := "ability-description",
-        child.text <-- character.abilityChoiceSignal(ability).map(acs => ability.description(acs))
+        child.text <-- chosenSignal.map(_.description)
       ),
+      onClick.compose(_.withCurrentValueOf(chosenSignal)) --> { (_, chosen) => character.toggleAbility(powerSource).onNext(chosen) },
     )
   end renderAbility
 

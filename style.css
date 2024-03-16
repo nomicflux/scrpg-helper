@@ -978,7 +978,7 @@ div.choice-section .unchosen {
 }
 
 div.choice-section .picked {
-  transform: scale(1.2, 1.2);
+  transform: scale(1.1, 1.1);
   border-radius: 10px;
   outline: 3px groove grey;
 }
@@ -1053,19 +1053,45 @@ select.selector-with-prev-choice option:selected {
 }
 
 .ability {
-  margin: 3px 0;
+  margin: 5px 0;
+  line-height: normal;
 }
 
 .ability:hover {
-  border: 1px groove grey;
-  transform: scale(1.1, 1.1);
+  border: 2px groove grey;
+  margin: 1px 0;
+  transform: scale(1.05, 1.05);
+}
+
+.ability.ability-unselected {
+  opacity: 0.8;
+}
+
+.ability.ability-selected {
+  border: 3px ridge blue;
 }
 
 .ability-pool {
   margin: 3px;
 }
 
+.ability-actions {
+  width: 10%;
+}
+
+.ability-name {
+  width: 25%;
+}
+
+.ability-category {
+  width: 10%;
+  font-weight: bold;
+  font-size: 85%;
+  opacity: 0.7;
+}
+
 .ability-description {
+  display: inline-block;
   font-size: 0.8em;
-  display: block;
+  width: 45%;
 }

@@ -46,7 +46,7 @@ object Accident:
               s"When your personal zone changes, Attack all close enemy targets by rolling your single ${AbilityChoice.powerString(choices)} die.",
           List(PowerChoice()))
         ),
-        PowerSource.uniquePowers(_)
+        abilities => true //PowerSource.uniquePowers(abilities)
       ),
       AbilityPool(
         1,
