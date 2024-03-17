@@ -18,33 +18,39 @@ object Accident:
             Status.Yellow,
             AbilityCategory.Action,
             choices => choices.flatMap(_.getAction.toList),
-            choices =>
-              s"${AbilityChoice.actionString(choices)} any number of nearby targets using ${AbilityChoice.powerString(choices)}. Use your Max die.",
             List(
               ActionChoice(actions =>
                 actions
                   .map(Set(Action.Boost, Action.Hinder).contains(_))
                   .foldLeft(true)(_ && _)
               ),
-              PowerChoice()
-            )
+              " any number of nearby targets using ",
+              PowerChoice(AbilityChoice.noDupes(_)),
+              ". Use your Max die."
+            ),
           ),
           AbilityTemplate(
             "Inflict",
             Status.Yellow,
             AbilityCategory.Action,
             _ => List(Action.Attack, Action.Hinder),
-            choices =>
-              s"Attack using ${AbilityChoice.powerString(choices)}. Hinder that same target using your Min die.",
-          List(PowerChoice())),
+            List(
+              "Attack using ",
+              PowerChoice(AbilityChoice.noDupes(_)),
+              ". Hinder that same target using your Min die.",
+            ),
+          ),
           AbilityTemplate(
             "Reflexive Burst",
             Status.Yellow,
             AbilityCategory.Reaction,
             _ => List(Action.Attack),
-            choices =>
-              s"When your personal zone changes, Attack all close enemy targets by rolling your single ${AbilityChoice.powerString(choices)} die.",
-          List(PowerChoice()))
+            List(
+              "When your personal zone changes, Attack all close enemy targets by rolling your single ",
+              PowerChoice(AbilityChoice.noDupes(_)),
+              " die.",
+            ),
+          ),
         ),
         abilities => true //PowerSource.uniquePowers(abilities)
       ),
@@ -56,25 +62,33 @@ object Accident:
             Status.Green,
             AbilityCategory.Reaction,
             _ => List(Action.Defend),
-            choices =>
-              s"If you haven't yet acted in an action scene, you may Defend against an Attack by rolling your single ${AbilityChoice.powerString(choices)} die.",
-          List(PowerChoice())),
+            List(
+              "If you haven't yet acted in an action scene, you may Defend against an Attack by rolling your single ",
+              PowerChoice(AbilityChoice.noDupes(_)),
+              " die.",
+            ),
+          ),
           AbilityTemplate(
             "Change in Circumstance",
             Status.Green,
             AbilityCategory.Reaction,
             _ => List(Action.Boost),
-            choices =>
-              s"When you change personal zones, you may Boost by rolling your single ${AbilityChoice.powerString(choices)} die.",
-          List(PowerChoice())),
+            List(
+              "When you change personal zones, you may Boost by rolling your single ",
+              PowerChoice(AbilityChoice.noDupes(_)),
+              " die.",
+            ),
+          ),
           AbilityTemplate(
             "Immunity",
             Status.Green,
             AbilityCategory.Inherent,
             _ => List(),
-            choices =>
-              s"You do not take damage from ${AbilityChoice.energyString(choices)}",
-          List(EnergyChoice()))
+            List(
+              "You do not take damage from ",
+              EnergyChoice(),
+            ),
+          )
         ),
         _ => true
       )

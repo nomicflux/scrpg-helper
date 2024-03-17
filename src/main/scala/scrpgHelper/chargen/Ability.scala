@@ -3,7 +3,7 @@ package scrpgHelper.chargen
 import scrpgHelper.rolls.EffectDieType
 import scrpgHelper.status.Status
 
-type Description = String
+type Description = List[String | AbilityChoice]
 
 enum AbilityCategory:
   case Action, Reaction, Inherent
@@ -19,9 +19,10 @@ case class AbilityTemplate(
     status: Status,
     category: AbilityCategory,
     actions: List[AbilityChoice] => List[Action],
-    description: List[AbilityChoice] => Description,
-    baseChoices: List[AbilityChoice]
+    description: Description
 ) extends Ability[AbilityTemplate]:
+  val baseChoices: List[AbilityChoice] = description.collect { case ac: AbilityChoice => ac }
+
   def changeName(s: String): AbilityTemplate = copy(name = s)
 
   def toChosenAbility(pool: AbilityPool): ChosenAbility =
@@ -43,7 +44,22 @@ case class ChosenAbility(
     copy(template = template.changeName(s))
 
   def actions: List[Action] = template.actions(currentChoices)
-  def description: Description = template.description(currentChoices)
+  def description: Description = template.description.map {
+    case s: String => s
+    case ac: AbilityChoice => currentChoices.find(_.id == ac.id).getOrElse(ac)
+  }
+
+  def applyChoice(choice: AbilityChoice): ChosenAbility =
+    copy(currentChoices = currentChoices.map(c => if c.id == choice.id then choice else c))
+  end applyChoice
+
+  def removeChoice(choice: AbilityChoice): ChosenAbility =
+    copy(currentChoices = currentChoices.map(c => if c.id == choice.id then choice.withoutChoice else c))
+  end removeChoice
+
+  override def equals(x: Any): Boolean = x match
+    case ca: ChosenAbility => ca.template == this.template
+    case _ => false
 end ChosenAbility
 
 trait Ability[A]:

@@ -4,10 +4,6 @@ import scrpgHelper.rolls.Die
 import scrpgHelper.rolls.EffectDieType
 import scrpgHelper.status.Status
 
-case class PowerSourceWithChoices(powerSource: PowerSource,
-                                  dicePool: List[Die],
-                                  choices: Map[AbilityTemplate, ChosenAbility])
-
 case class PowerSource(
     name: String,
     number: Int,

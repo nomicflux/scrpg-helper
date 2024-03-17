@@ -1057,18 +1057,30 @@ select.selector-with-prev-choice option:selected {
   line-height: normal;
 }
 
-.ability:hover {
+.ability.ability-hover {
   border: 2px groove grey;
   margin: 1px 0;
-  transform: scale(1.05, 1.05);
 }
 
 .ability.ability-unselected {
-  opacity: 0.8;
+  opacity: 0.7;
+}
+.ability.ability-unselected.ability-hover {
+  opacity: 1.0;
+}
+.ability.ability-unselected.status-green {
+  background: #448844;
+}
+.ability.ability-unselected.status-yellow {
+  background: #aaaa44;
+}
+.ability.ability-unselected.status-red {
+  background: #884444;
 }
 
 .ability.ability-selected {
   border: 3px ridge blue;
+  transform: scale(1.02, 1.02);
 }
 
 .ability-pool {

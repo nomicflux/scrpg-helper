@@ -16,29 +16,42 @@ object RenderPowerSource:
     div(
       className := "power-source-section choice-section",
       h2("Power Source"),
-      renderPowerSourceTable(character),
+      renderPowerSourceTable(character)
     )
   end renderPowerSources
 
   def renderPowerSourceTable(character: CharacterModel): Element =
-      table(
-        tr(
-          th(),
-          th("Power Source"),
-          th("Powers"),
-          th("Abilities"),
-          th("Archetype Dice")
-        ),
-        PowerSource.powerSources.map(ps => renderPowerSourceRow(character, ps))
-      )
+    table(
+      tr(
+        th(),
+        th("Power Source"),
+        th("Powers"),
+        th("Abilities"),
+        th("Archetype Dice")
+      ),
+      PowerSource.powerSources.map {
+        (
+            powerSource =>
+              renderPowerSourceRow(
+                character,
+                powerSource
+              )
+        )
+      }
+    )
   end renderPowerSourceTable
 
-  def renderPowerSourceRow(character: CharacterModel, powerSource: PowerSource): Element =
+  def renderPowerSourceRow(
+      character: CharacterModel,
+      powerSource: PowerSource
+  ): Element =
     tr(
       className := "power-source-row",
-      className <-- character.powerSourceSignal.map(mps => if mps.fold(false)(_ == powerSource) then "picked" else "unpicked"),
+      className <-- character.powerSourceSignal.map(mps =>
+        if mps.fold(false)(_ == powerSource) then "picked" else "unpicked"
+      ),
       td(
-          powerSource.number.toString
+        powerSource.number.toString
       ),
       td(
         h3(
@@ -47,91 +60,318 @@ object RenderPowerSource:
       ),
       td(
         renderPowers(
-          character.backgroundSignal.map(mbg => mbg.fold(List())(_.powerSourceDice)),
+          character.backgroundSignal.map(mbg =>
+            mbg.fold(List())(_.powerSourceDice)
+          ),
           powerSource.powerList,
-          character.powersSignal(character.powerSourceSignal).map{l =>
-            val powerSet: Set[Power] = l.map(_._1).toSet
-            (pd, _) => powerSet.contains(pd._1)
-          },
+          character
+            .powersSignal(Signal.fromValue(Some(powerSource)))
+            .map { l =>
+              val powerSet: Set[Power] = l.map(_._1).toSet
+              (pd, _) => powerSet.contains(pd._1)
+            },
           character.removePower(powerSource),
-          character.addPower(powerSource),
+          character.addPower(powerSource)
         )
       ),
       td(
         div(
-          powerSource.abilityPools.map(renderAbilityPool(character, powerSource, _))
+          powerSource.abilityPools.map(abilityPool =>
+            renderAbilityPool(character, powerSource, abilityPool)
+          )
         )
       ),
       td(
-        powerSource.archetypeDiePool.map(_.toString).reduceLeft(_ + " , " + _)
+        powerSource.archetypeDiePool
+          .map(_.toString)
+          .reduceLeft(_ + " , " + _)
       ),
-      onMouseDown --> { _ => character.changePowerSource.onNext(powerSource) },
-      onFocus --> { _ => character.changePowerSource.onNext(powerSource) },
-      onClick --> { _ => character.changePowerSource.onNext(powerSource) },
+      onMouseDown --> { _ =>
+        character.changePowerSource.onNext(powerSource)
+      },
+      onFocus --> { _ =>
+        character.changePowerSource.onNext(powerSource)
+      },
+      onClick --> { _ =>
+        character.changePowerSource.onNext(powerSource)
+      }
     )
   end renderPowerSourceRow
 
-  def renderAbilityPool(character: CharacterModel,
-                        powerSource: PowerSource,
-                        abilityPool: AbilityPool): Element =
+  def renderAbilityPool(
+      character: CharacterModel,
+      powerSource: PowerSource,
+      abilityPool: AbilityPool
+  ): Element =
     div(
       className := "ability-pool",
       span(s"Pick ${abilityPool.max}:"),
       div(
-        abilityPool.abilities.map(renderAbility(character, powerSource, abilityPool, _))
+        abilityPool.abilities.map(
+          renderAbility(
+            character,
+            powerSource,
+            abilityPool,
+            _,
+            character.abilityChoicesSignal(powerSource)
+          )
+        )
       )
     )
   end renderAbilityPool
 
-  def renderAbility(character: CharacterModel,
-                    powerSource: PowerSource,
-                    abilityPool: AbilityPool,
-                    template: AbilityTemplate): Element =
-    val chosenAbility: Var[ChosenAbility] = Var(template.toChosenAbility(abilityPool))
-    val chosenSignal = chosenAbility.signal
+  def renderAbility(
+      character: CharacterModel,
+      powerSource: PowerSource,
+      abilityPool: AbilityPool,
+      template: AbilityTemplate,
+      chosenSignal: Signal[Map[AbilityTemplate, ChosenAbility]]
+  ): Element =
+    val chosenAbility = chosenSignal.map(_.get(template).head)
+    val hovering: Var[Boolean] = Var(false)
 
     div(
       className := s"ability status-${template.status.toString.toLowerCase()}",
-      className <-- character.abilitiesSignal(Signal.fromValue(Some(powerSource))).map(l => if l.collect{ case ca: ChosenAbility => ca.template}.contains(template) then "ability-selected" else "ability-unselected"),
+      className <-- hovering.signal.map(b => if b then "ability-hover" else "ability-blur"),
+      className <-- character
+        .abilitiesSignal(Signal.fromValue(Some(powerSource)))
+        .map(l =>
+          if l.collect { case ca: ChosenAbility => ca.template }
+              .contains(template)
+          then "ability-selected"
+          else "ability-unselected"
+        ),
       span(
         className := "ability-actions",
-        child.text <-- chosenSignal.map(_.actions.map(_.toSymbol).foldLeft("")(_ + _))
+        child.text <-- chosenAbility.map(
+          _.actions.map(_.toSymbol).foldLeft("")(_ + _)
+        )
       ),
       span(
         className := "ability-name",
-        child.text <-- chosenSignal.map(_.name)
+        child.text <-- chosenAbility.map(_.name)
       ),
       span(
         className := "ability-category",
-        child.text <-- chosenSignal.map(_.category.toAbbreviation)
+        child.text <-- chosenAbility.map(_.category.toAbbreviation)
       ),
       span(
         className := "ability-description",
-        child.text <-- chosenSignal.map(_.description)
+        renderDescription(
+          character,
+          powerSource,
+          template,
+          chosenSignal.map(
+            _.values.toList.filter(_.inPool.id == abilityPool.id)
+          )
+        ),
+        onMouseOver --> { ev => ev.stopPropagation() },
+        onClick --> { ev => ev.stopPropagation() }
       ),
-      onClick.compose(_.withCurrentValueOf(chosenSignal)) --> { (_, chosen) => character.toggleAbility(powerSource).onNext(chosen) },
+      onMouseOver --> { _ => hovering.update { _ => true } },
+      onMouseOut --> { _ => hovering.update { _ => false } },
+      onBlur --> { _ => hovering.update { _ => false } },
+      onClick.compose(_.withCurrentValueOf(chosenAbility)) --> { (_, chosen) =>
+        character.toggleAbility(powerSource).onNext(chosen)
+      }
     )
   end renderAbility
 
-  def renderPowers(dicePool: Signal[List[Die]],
-                   powers: List[Power],
-                   powerAllowed: Signal[((Power, Die), Option[(Power, Die)]) => Boolean],
-                   removePower: Observer[(Power, Die)],
-                   addPower: Observer[(Power, Die)]
+  def renderDescription(
+      character: CharacterModel,
+      powerSource: PowerSource,
+      ability: AbilityTemplate,
+      chosen: Signal[List[ChosenAbility]]
+  ): Element =
+    span(
+      ability.description.map { l =>
+        l match
+          case s: String => span(s)
+          case ec: EnergyChoice =>
+            renderEnergyChoices(character, powerSource, chosen, ability, ec)
+          case ac: ActionChoice =>
+            renderActionChoices(character, powerSource, chosen, ability, ac)
+          case pc: PowerChoice =>
+            renderPowerChoices(
+              character,
+              powerSource,
+              character
+                .powersSignal(Signal.fromValue(Some(powerSource)))
+                .map(_.map(_._1)),
+              chosen,
+              ability,
+              pc
+            )
+          case qc: QualityChoice =>
+            renderQualityChoices(
+              character,
+              powerSource,
+              character
+                .qualitiesSignal(Signal.fromValue(Some(powerSource)))
+                .map(_.map(_._1)),
+              chosen,
+              ability,
+              qc
+            )
+          case _: AbilityChoice => span("Not valid")
+      }
+    )
+  end renderDescription
+
+  def renderEnergyChoices(
+      character: CharacterModel,
+      powerSource: PowerSource,
+      chosen: Signal[List[ChosenAbility]],
+      ability: AbilityTemplate,
+      ec: EnergyChoice
+  ): Element =
+    span(
+      SelectWithPrevChoice[Energy](
+        Energy.values.toList.filter(e => ec.validateFn(List(e))),
+        e => e.toString
+      )
+        .render(
+          chosen.map(cas =>
+            (e: Energy, ma: Option[Energy]) =>
+              !ec.validateFn(
+                cas.flatMap(ca =>
+                  (ca.currentChoices.flatMap(_.getEnergy.toList))
+                ) :+ e
+              )
+          ),
+          character
+            .removeAbilityChoice(powerSource, ability)
+            .contramap(e => ec.withChoice(e)),
+          character
+            .addAbilityChoice(powerSource, ability)
+            .contramap(e => ec.withChoice(e))
+        )
+    )
+  end renderEnergyChoices
+
+  def renderActionChoices(
+      character: CharacterModel,
+      powerSource: PowerSource,
+      chosen: Signal[List[ChosenAbility]],
+      ability: AbilityTemplate,
+      ac: ActionChoice
+  ): Element =
+    span(
+      SelectWithPrevChoice[Action](
+        Action.values.toList.filter(a => ac.validateFn(List(a))),
+        a => a.toString
+      )
+        .render(
+          chosen.map(cas =>
+            (a: Action, ma: Option[Action]) =>
+              !ac.validateFn(
+                cas.flatMap(ca =>
+                  (ca.currentChoices.flatMap(_.getAction.toList))
+                ) :+ a
+              )
+          ),
+          character
+            .removeAbilityChoice(powerSource, ability)
+            .contramap(a => ac.withChoice(a)),
+          character
+            .addAbilityChoice(powerSource, ability)
+            .contramap(a => ac.withChoice(a))
+        )
+    )
+  end renderActionChoices
+
+  def renderPowerChoices(
+      character: CharacterModel,
+      powerSource: PowerSource,
+      powers: Signal[List[Power]],
+      chosen: Signal[List[ChosenAbility]],
+      ability: AbilityTemplate,
+      pc: PowerChoice
+  ): Element =
+    span(
+      child <-- powers.map { ps =>
+        SelectWithPrevChoice[Power](
+          ps.filter(p => pc.validateFn(List(p))),
+          p => p.name
+        )
+          .render(
+            chosen.map(cas =>
+              (p: Power, mp: Option[Power]) =>
+                !pc.validateFn(
+                  cas.flatMap(ca =>
+                    (ca.currentChoices.flatMap(_.getPower.toList))
+                  ) :+ p
+                )
+            ),
+            character
+              .removeAbilityChoice(powerSource, ability)
+              .contramap(p => pc.withChoice(p)),
+            character
+              .addAbilityChoice(powerSource, ability)
+              .contramap(p => pc.withChoice(p))
+          )
+      }
+    )
+  end renderPowerChoices
+
+  def renderQualityChoices(
+      character: CharacterModel,
+      powerSource: PowerSource,
+      qualities: Signal[List[Quality]],
+      chosen: Signal[List[ChosenAbility]],
+      ability: AbilityTemplate,
+      qc: QualityChoice
+  ): Element =
+    span(
+      child <-- qualities.map { qs =>
+        SelectWithPrevChoice[Quality](
+          qs.filter(q => qc.validateFn(List(q))),
+          q => q.name
+        )
+          .render(
+            chosen.map(cas =>
+              (q: Quality, mq: Option[Quality]) =>
+                !qc.validateFn(
+                  cas.flatMap(ca =>
+                    (ca.currentChoices.flatMap(_.getQuality.toList))
+                  ) :+ q
+                )
+            ),
+            character
+              .removeAbilityChoice(powerSource, ability)
+              .contramap(q => qc.withChoice(q)),
+            character
+              .addAbilityChoice(powerSource, ability)
+              .contramap(q => qc.withChoice(q))
+          )
+
+      }
+    )
+  end renderQualityChoices
+
+  def renderPowers(
+      dicePool: Signal[List[Die]],
+      powers: List[Power],
+      powerAllowed: Signal[((Power, Die), Option[(Power, Die)]) => Boolean],
+      removePower: Observer[(Power, Die)],
+      addPower: Observer[(Power, Die)]
   ): Element =
     div(
       children <-- dicePool
-        .map(ds => ds.map {d =>
-                                  span(
-                                    className := "choice-die-box",
-                                    d.toString,
-                                    ":",
-                                    SelectWithPrevChoice(powers.map(p => (p, d)), pd => pd._1.name)
-                                      .render(powerAllowed,
-                                              removePower,
-                                              addPower)
-                                  )
-                                })
+        .map(ds =>
+          ds.map { d =>
+            span(
+              className := "choice-die-box",
+              d.toString,
+              ":",
+              SelectWithPrevChoice[(Power, Die)](
+                powers.map(p => (p, d)),
+                pd => pd._1.name
+              )
+                .render(powerAllowed, removePower, addPower)
+            )
+          }
+        )
     )
   end renderPowers
 end RenderPowerSource
