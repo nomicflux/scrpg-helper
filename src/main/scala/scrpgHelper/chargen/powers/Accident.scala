@@ -52,7 +52,6 @@ object Accident:
             ),
           ),
         ),
-        abilities => true //PowerSource.uniquePowers(abilities)
       ),
       AbilityPool(
         1,
@@ -90,7 +89,6 @@ object Accident:
             ),
           )
         ),
-        _ => true
       )
     ),
     Power.athleticPowers ++ Power.energyPowers ++ Power.intellectualPowers ++ Power.materialPowers ++ Power.psychicPowers ++ Power.selfControlPowers,

@@ -48,5 +48,16 @@ object PowerSource:
 
   def powerSources: List[PowerSource] = List(
     Accident.accident,
+    Genetic.genetic,
+    Experimentation.experimentation,
+    Nature.nature,
+    Relic.relic,
+    PoweredSuit.poweredSuit, // TODO: need to enforce PowerSuit power
+    Radiation.radiation,
+    TechUpgrades.techUpgrades,
+    ArtificialBeing.artificialBeing,
+    Cursed.cursed,
+    Extradimensional.extradimensional,
+    HigherPower.higherPower,
   )
 end PowerSource

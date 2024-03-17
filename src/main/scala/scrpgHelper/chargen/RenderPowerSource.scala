@@ -12,13 +12,41 @@ import scrpgHelper.rolls.Die
 object RenderPowerSource:
   import scrpgHelper.components.SelectWithPrevChoice
 
+  val model = new PowerSourceModel()
+
   def renderPowerSources(character: CharacterModel): Element =
     div(
       className := "power-source-section choice-section",
       h2("Power Source"),
+      renderRollButton(model.rollTrigger),
+      renderShownToggle(model.showUnchosenSignal, model.shownToggle),
       renderPowerSourceTable(character)
     )
   end renderPowerSources
+
+  def renderRollButton(rollTrigger: Observer[Unit]): Element =
+    div(
+      button(
+        tpe := "button",
+        "Roll",
+        onClick --> { _ => rollTrigger.onNext(()) }
+      )
+    )
+  end renderRollButton
+
+  def renderShownToggle(
+      shown: Signal[Boolean],
+      shownToggle: Observer[Unit]
+  ): Element =
+    div(
+      button(
+        tpe := "button",
+        child.text <-- shown.map(b => if b then "Hide" else "Show"),
+        " Power Sources",
+        onClick --> { _ => shownToggle.onNext(()) }
+      )
+    )
+  end renderShownToggle
 
   def renderPowerSourceTable(character: CharacterModel): Element =
     table(
@@ -47,6 +75,16 @@ object RenderPowerSource:
   ): Element =
     tr(
       className := "power-source-row",
+      className <-- model.rollsSignal.combineWith(model.showUnchosenSignal).map {
+        (mrolls, shown) =>
+          mrolls.fold("undecided") { rolls =>
+            if (rolls.contains(powerSource.number)) {
+              "chosen"
+            } else {
+              if shown then "unchosen" else "hidden"
+            }
+          }
+      },
       className <-- character.powerSourceSignal.map(mps =>
         if mps.fold(false)(_ == powerSource) then "picked" else "unpicked"
       ),
@@ -207,7 +245,7 @@ object RenderPowerSource:
               character,
               powerSource,
               character
-                .qualitiesSignal(Signal.fromValue(Some(powerSource)))
+                .qualitiesSignal(character.backgroundSignal)
                 .map(_.map(_._1)),
               chosen,
               ability,
@@ -375,3 +413,20 @@ object RenderPowerSource:
     )
   end renderPowers
 end RenderPowerSource
+
+final class PowerSourceModel:
+  import scrpgHelper.rolls.Die
+  import scrpgHelper.rolls.Die.d
+
+  val rolls: Var[Option[Set[Int]]] = Var(None)
+  val rollsSignal = rolls.signal
+  val showUnchosen: Var[Boolean] = Var(false)
+  val showUnchosenSignal = showUnchosen.signal
+
+  val rollTrigger: Observer[Unit] = rolls.updater { (_, _) =>
+    Some(Die.rollForCharGen(List(d(10), d(10))))
+  }
+
+  val shownToggle: Observer[Unit] = showUnchosen.updater { (b, _) => !b }
+
+end PowerSourceModel

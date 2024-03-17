@@ -6,11 +6,10 @@ case class AbilityPool(
     id: AbilityPoolId,
     max: Int,
     abilities: List[AbilityTemplate],
-    validation: List[ChosenAbility] => Boolean
 ):
   def runValidation(abilities: List[ChosenAbility]): Boolean =
     val sharePool = abilities.filter(_.inPool.id == id)
-    sharePool.size <= max && validation(sharePool)
+    sharePool.size <= max
   end runValidation
 end AbilityPool
 
@@ -18,7 +17,6 @@ object AbilityPool:
   def apply(
       max: Int,
       abilities: List[AbilityTemplate],
-      validation: List[ChosenAbility] => Boolean
   ): AbilityPool =
-    new AbilityPool(new AbilityPoolId(), max, abilities, validation)
+    new AbilityPool(new AbilityPoolId(), max, abilities)
 end AbilityPool
