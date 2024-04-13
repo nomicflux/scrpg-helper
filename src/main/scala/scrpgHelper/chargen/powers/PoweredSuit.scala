@@ -76,6 +76,7 @@ object PoweredSuit:
         ),
       )
     ),
+    List(powerSuit),
     List(powerSuit, Power.awareness, Power.cold, Power.elasticity, Power.fire, Power.lightningCalculator, Power.nuclear, Power.partDetachment, Power.signatureVehicle, Power.signatureWeapon) ++ Power.athleticPowers ++ Power.mobilityPowers,
     List(d(10), d(6), d(6))
   )

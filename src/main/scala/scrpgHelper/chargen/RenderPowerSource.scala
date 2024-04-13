@@ -69,6 +69,12 @@ object RenderPowerSource:
     )
   end renderPowerSourceTable
 
+  def mandatoryPowerCheck(dicePool: List[Die], powerSource: PowerSource)(pds: List[(Power, Die)])(pd: (Power, Die), prevChoice: Option[(Power, Die)]): Boolean =
+    val baseSet = pds.map(_._1).toSet
+    val newSet = prevChoice.fold(baseSet)(pc => baseSet - pc._1) + pd._1
+    powerSource.mandatoryPowers.toSet.diff(newSet).isEmpty || newSet.size < dicePool.size
+  end mandatoryPowerCheck
+
   def renderPowerSourceRow(
       character: CharacterModel,
       powerSource: PowerSource
@@ -105,9 +111,10 @@ object RenderPowerSource:
           powerSource.powerList,
           character
             .powersSignal(Signal.fromValue(Some(powerSource)))
-            .map { l =>
+            .combineWith(character.backgroundSignal.map(mbg => mbg.fold(List())(_.powerSourceDice)))
+            .map { (l, dicePool) =>
               val powerSet: Set[Power] = l.map(_._1).toSet
-              (pd, _) => powerSet.contains(pd._1)
+              (pd, mpc) => powerSet.contains(pd._1) || !mandatoryPowerCheck(dicePool, powerSource)(l)(pd, mpc)
             },
           character.removePower(powerSource),
           character.addPower(powerSource)
