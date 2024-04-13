@@ -68,13 +68,14 @@ object PowerSource:
     powers.distinct == powers
   end uniquePowers
 
+  // TODO: There is another powersource here with mandatory powers
   def powerSources: List[PowerSource] = List(
     Accident.accident,
     Genetic.genetic,
     Experimentation.experimentation,
     Nature.nature,
     Relic.relic,
-    PoweredSuit.poweredSuit, // TODO: need to enforce PowerSuit power
+    PoweredSuit.poweredSuit,
     Radiation.radiation,
     TechUpgrades.techUpgrades,
     ArtificialBeing.artificialBeing,

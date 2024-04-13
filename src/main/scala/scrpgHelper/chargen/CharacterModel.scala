@@ -135,12 +135,14 @@ final class CharacterModel:
   val validPowerSource: Signal[Boolean] = powerSourceSignal
     .combineWith(backgroundSignal.map((mb: Option[Background]) => mb.toList.flatMap((b: Background) => b.powerSourceDice)),
                  powerStaging.signal,
+                 abilityStaging.signal,
                  abilityChoice.signal)
-    .map { (mp, dice, pm, am) =>
+    .map { (mp, dice, pm, asm, am) =>
       mp.fold(false){ p =>
         val powers: List[Power] = pm.getOrElse(p, List()).map(_._1)
+        val selectedAbilities: Set[String] = asm.getOrElse(p, List()).collect { case ca: ChosenAbility => ca }.map(_.name).toSet
         val abilityMap: Map[AbilityTemplate, ChosenAbility] = am.getOrElse(p, Map())
-        val abilities: List[ChosenAbility] = abilityMap.values.toList
+        val abilities: List[ChosenAbility] = abilityMap.values.toList.filter(a => selectedAbilities.contains(a.name))
         p.valid(dice, powers, abilities)
       }
     }
