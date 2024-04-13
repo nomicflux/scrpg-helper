@@ -22,8 +22,12 @@ final class CharacterModel:
   val powerSourceSignal = powerSource.signal
   val changePowerSource: Observer[PowerSource] =
     powerSource.updater { (_, ps) => Some(ps) }
+  val archetype: Var[Option[Archetype]] = Var(None)
+  val archetypeSignal = archetype.signal
+  val changeArchetype: Observer[Archetype] =
+    archetype.updater { (_, at) => Some(at) }
 
-  type StagingKey = Background | PowerSource
+  type StagingKey = Background | PowerSource | Archetype
 
   val qualityStaging: Var[Map[StagingKey, List[(Quality, Die)]]] = Var(Map())
   def qualitiesSignal(
@@ -95,7 +99,7 @@ final class CharacterModel:
       else m
     }
 
-  val abilityChoice: Var[Map[PowerSource, Map[AbilityTemplate, ChosenAbility]]] =
+  val abilityChoice: Var[Map[PowerSource | Archetype, Map[AbilityTemplate, ChosenAbility]]] =
     Var(
       PowerSource.powerSources
         .map(ps =>
@@ -106,22 +110,22 @@ final class CharacterModel:
         ).toMap
     )
   def abilityChoicesSignal(
-    powerSource: PowerSource
+    psOrAt: PowerSource | Archetype
   ): Signal[Map[AbilityTemplate, ChosenAbility]] =
     abilityChoice.signal.map(acs =>
-      acs.get(powerSource).head
+      acs.get(psOrAt).head
     )
-  def addAbilityChoice(powerSource: PowerSource, ability: AbilityTemplate): Observer[AbilityChoice] =
+  def addAbilityChoice(psOrAt: PowerSource | Archetype, ability: AbilityTemplate): Observer[AbilityChoice] =
     abilityChoice.updater { (acs, choice) =>
-      val choices: Map[AbilityTemplate, ChosenAbility] = acs.get(powerSource).head
+      val choices: Map[AbilityTemplate, ChosenAbility] = acs.get(psOrAt).head
       val currChoice: ChosenAbility = choices.get(ability).head
-      acs + (powerSource -> (choices + (ability -> currChoice.applyChoice(choice))))
+      acs + (psOrAt -> (choices + (ability -> currChoice.applyChoice(choice))))
     }
-  def removeAbilityChoice(powerSource: PowerSource, ability: AbilityTemplate): Observer[AbilityChoice] =
+  def removeAbilityChoice(psOrAt: PowerSource | Archetype, ability: AbilityTemplate): Observer[AbilityChoice] =
     abilityChoice.updater { (acs, choice) =>
-      val choices: Map[AbilityTemplate, ChosenAbility] = acs.get(powerSource).head
+      val choices: Map[AbilityTemplate, ChosenAbility] = acs.get(psOrAt).head
       val currChoice: ChosenAbility = choices.get(ability).head
-      acs + (powerSource -> (choices + (ability -> currChoice.removeChoice(choice))))
+      acs + (psOrAt -> (choices + (ability -> currChoice.removeChoice(choice))))
     }
 
   val validBackground: Signal[Boolean] = backgroundSignal
@@ -142,9 +146,9 @@ final class CharacterModel:
       mp.fold(false){ p =>
         val powers: List[Power] = pm.getOrElse(p, List()).map(_._1)
         val qualities: List[Quality] = qm.getOrElse(p, List()).map(_._1)
-        val selectedAbilities: Set[String] = asm.getOrElse(p, List()).collect { case ca: ChosenAbility => ca }.map(_.name).toSet
+        val selectedAbilities: Set[AbilityId] = asm.getOrElse(p, List()).collect { case ca: ChosenAbility => ca }.map(_.id).toSet
         val abilityMap: Map[AbilityTemplate, ChosenAbility] = am.getOrElse(p, Map())
-        val abilities: List[ChosenAbility] = abilityMap.values.toList.filter(a => selectedAbilities.contains(a.name))
+        val abilities: List[ChosenAbility] = abilityMap.values.toList.filter(a => selectedAbilities.contains(a.id))
         p.valid(dice, powers, qualities, abilities)
       }
     }

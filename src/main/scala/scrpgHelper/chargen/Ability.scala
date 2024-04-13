@@ -15,6 +15,7 @@ enum AbilityCategory:
 end AbilityCategory
 
 case class AbilityTemplate(
+  id: AbilityId,
     name: String,
     status: Status,
     category: AbilityCategory,
@@ -32,14 +33,33 @@ case class AbilityTemplate(
     ChosenAbility(this, pool, as)
 end AbilityTemplate
 
+object AbilityTemplate:
+    def apply(
+    name: String,
+    status: Status,
+    category: AbilityCategory,
+    actions: List[AbilityChoice] => List[Action],
+    description: Description
+    ): AbilityTemplate =
+      new AbilityTemplate(
+        new AbilityId(),
+        name,
+        status,
+        category,
+        actions,
+        description
+      )
+end AbilityTemplate
+
 case class ChosenAbility(
   template: AbilityTemplate,
   inPool: AbilityPool,
   currentChoices: List[AbilityChoice]
 ) extends Ability[ChosenAbility]:
-  def status: Status = template.status
-  def name: String = template.name
-  def category: AbilityCategory = template.category
+  val id: AbilityId = template.id
+  val status: Status = template.status
+  val name: String = template.name
+  val category: AbilityCategory = template.category
   def changeName(s: String): ChosenAbility =
     copy(template = template.changeName(s))
 
@@ -69,10 +89,13 @@ case class ChosenAbility(
     case _ => false
 end ChosenAbility
 
+class AbilityId
+
 trait Ability[A]:
-  def status: Status
-  def name: String
-  def category: AbilityCategory
+  val id: AbilityId
+  val status: Status
+  val name: String
+  val category: AbilityCategory
   def changeName(s: String): A
 
   def inPrincipleCategory(category: PrincipleCategory): Boolean = false

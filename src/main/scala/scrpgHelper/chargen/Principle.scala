@@ -8,6 +8,7 @@ enum PrincipleCategory:
 end PrincipleCategory
 
 case class Principle(
+  id: AbilityId,
   name: String,
   category: AbilityCategory,
   diePool: Set[EffectDieType],
@@ -28,6 +29,7 @@ object Principle:
 
     def of(name: String, principleCategory: PrincipleCategory): Principle =
       new Principle(
+        new AbilityId(),
         name,
         AbilityCategory.Action,
         Set(EffectDieType.Max),
@@ -40,6 +42,7 @@ object Principle:
       effectDieType: EffectDieType,
       principleCategory: PrincipleCategory): Principle =
       new Principle(
+        new AbilityId(),
         name,
         abilityCategory,
         Set(effectDieType),

@@ -18,18 +18,28 @@ object RenderPowerSource:
     div(
       className := "power-source-section choice-section",
       h2("Power Source"),
-      renderRollButton(model.rollTrigger),
+      renderRollButton(model.rollTrigger, character),
       renderShownToggle(model.showUnchosenSignal, model.shownToggle),
       renderPowerSourceTable(character)
     )
   end renderPowerSources
 
-  def renderRollButton(rollTrigger: Observer[Unit]): Element =
+  def renderRollButton(
+      rollTrigger: Observer[List[Die]],
+      character: CharacterModel
+  ): Element =
     div(
       button(
         tpe := "button",
         "Roll",
-        onClick --> { _ => rollTrigger.onNext(()) }
+        onClick
+          .compose(
+            _.withCurrentValueOf(
+              character.backgroundSignal.map(_.toList.flatMap(_.powerSourceDice))
+            )
+          ) --> { (_, dice) =>
+          rollTrigger.onNext(dice)
+        }
       )
     )
   end renderRollButton
@@ -69,10 +79,14 @@ object RenderPowerSource:
     )
   end renderPowerSourceTable
 
-  def mandatoryPowerCheck(dicePool: List[Die], powerSource: PowerSource)(pds: List[(Power, Die)])(pd: (Power, Die), prevChoice: Option[(Power, Die)]): Boolean =
+  def mandatoryPowerCheck(dicePool: List[Die], powerSource: PowerSource)(
+      pds: List[(Power, Die)]
+  )(pd: (Power, Die), prevChoice: Option[(Power, Die)]): Boolean =
     val baseSet = pds.map(_._1).toSet
     val newSet = prevChoice.fold(baseSet)(pc => baseSet - pc._1) + pd._1
-    powerSource.mandatoryPowers.toSet.diff(newSet).isEmpty || newSet.size < dicePool.size
+    powerSource.mandatoryPowers.toSet
+      .diff(newSet)
+      .isEmpty || newSet.size < dicePool.size
   end mandatoryPowerCheck
 
   def renderPowerSourceRow(
@@ -112,10 +126,18 @@ object RenderPowerSource:
           powerSource.extraPower,
           character
             .powersSignal(Signal.fromValue(Some(powerSource)))
-            .combineWith(character.backgroundSignal.map(mbg => mbg.fold(List())(_.powerSourceDice)))
+            .combineWith(
+              character.backgroundSignal.map(mbg =>
+                mbg.fold(List())(_.powerSourceDice)
+              )
+            )
             .map { (l, dicePool) =>
               val powerSet: Set[Power] = l.map(_._1).toSet
-              (pd, mpc) => powerSet.contains(pd._1) || !mandatoryPowerCheck(dicePool, powerSource)(l)(pd, mpc)
+              (pd, mpc) =>
+                powerSet.contains(pd._1) || !mandatoryPowerCheck(
+                  dicePool,
+                  powerSource
+                )(l)(pd, mpc)
             },
           character.removePower(powerSource),
           character.addPower(powerSource)
@@ -126,7 +148,8 @@ object RenderPowerSource:
             .qualitiesSignal(Signal.fromValue(Some(powerSource)))
             .combineWith(character.qualitiesSignal(character.backgroundSignal))
             .map { (l, bqs) =>
-              val qualitySet: Set[Quality] = l.map(_._1).toSet.union(bqs.map(_._1).toSet)
+              val qualitySet: Set[Quality] =
+                l.map(_._1).toSet.union(bqs.map(_._1).toSet)
               (qd, _) => qualitySet.contains(qd._1)
             },
           character.removeQuality(powerSource),
@@ -389,26 +412,27 @@ object RenderPowerSource:
     span(
       onMouseOver --> { ev => ev.stopPropagation() },
       onClick --> { ev => ev.stopPropagation() },
-        SelectWithPrevChoice.forSignal[Quality](
+      SelectWithPrevChoice
+        .forSignal[Quality](
           qualities.map(_.filter(q => qc.validateFn(List(q)))),
           q => q.name
         )
-          .render(
-            chosen.map(cas =>
-              (q: Quality, mq: Option[Quality]) =>
-                !qc.validateFn(
-                  cas.flatMap(ca =>
-                    (ca.currentChoices.flatMap(_.getQuality.toList))
-                  ) :+ q
-                )
-            ),
-            character
-              .removeAbilityChoice(powerSource, ability)
-              .contramap(q => qc.withChoice(q)),
-            character
-              .addAbilityChoice(powerSource, ability)
-              .contramap(q => qc.withChoice(q))
-          )
+        .render(
+          chosen.map(cas =>
+            (q: Quality, mq: Option[Quality]) =>
+              !qc.validateFn(
+                cas.flatMap(ca =>
+                  (ca.currentChoices.flatMap(_.getQuality.toList))
+                ) :+ q
+              )
+          ),
+          character
+            .removeAbilityChoice(powerSource, ability)
+            .contramap(q => qc.withChoice(q)),
+          character
+            .addAbilityChoice(powerSource, ability)
+            .contramap(q => qc.withChoice(q))
+        )
     )
   end renderQualityChoices
 
@@ -437,39 +461,41 @@ object RenderPowerSource:
           }
         ),
       extraPower.toList.map { case (d, ps) =>
-            span(
-              className := "choice-die-box",
-              d.toString,
-              ":",
-              SelectWithPrevChoice[(Power, Die)](
-                ps.map(p => (p, d)),
-                pd => pd._1.name
-              )
-                .render(powerAllowed, removePower, addPower)
-            )
+        span(
+          className := "choice-die-box",
+          d.toString,
+          ":",
+          SelectWithPrevChoice[(Power, Die)](
+            ps.map(p => (p, d)),
+            pd => pd._1.name
+          )
+            .render(powerAllowed, removePower, addPower)
+        )
       }
     )
   end renderPowers
 
   def renderQuality(
       extraQuality: Option[(Die, List[Quality])],
-      qualityAllowed: Signal[((Quality, Die), Option[(Quality, Die)]) => Boolean],
+      qualityAllowed: Signal[
+        ((Quality, Die), Option[(Quality, Die)]) => Boolean
+      ],
       removeQuality: Observer[(Quality, Die)],
       addQuality: Observer[(Quality, Die)]
   ): Element =
     div(
       extraQuality.toList
-        .map{ case (d, q) =>
-            span(
-              className := "choice-die-box",
-              d.toString,
-              ":",
-              SelectWithPrevChoice[(Quality, Die)](
-                extraQuality.toList.flatMap(_._2).map(q => (q, d)),
-                qd => qd._1.name
-              )
-                .render(qualityAllowed, removeQuality, addQuality)
+        .map { case (d, q) =>
+          span(
+            className := "choice-die-box",
+            d.toString,
+            ":",
+            SelectWithPrevChoice[(Quality, Die)](
+              extraQuality.toList.flatMap(_._2).map(q => (q, d)),
+              qd => qd._1.name
             )
+              .render(qualityAllowed, removeQuality, addQuality)
+          )
         }
     )
   end renderQuality
@@ -477,7 +503,6 @@ object RenderPowerSource:
 end RenderPowerSource
 
 final class PowerSourceModel:
-  import scrpgHelper.rolls.Die
   import scrpgHelper.rolls.Die.d
 
   val rolls: Var[Option[Set[Int]]] = Var(None)
@@ -485,8 +510,8 @@ final class PowerSourceModel:
   val showUnchosen: Var[Boolean] = Var(false)
   val showUnchosenSignal = showUnchosen.signal
 
-  val rollTrigger: Observer[Unit] = rolls.updater { (_, _) =>
-    Some(Die.rollForCharGen(List(d(10), d(10))))
+  val rollTrigger: Observer[List[Die]] = rolls.updater { (_, ds) =>
+    Some(Die.rollForCharGen(ds))
   }
 
   val shownToggle: Observer[Unit] = showUnchosen.updater { (b, _) => !b }
