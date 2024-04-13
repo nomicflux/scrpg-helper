@@ -131,4 +131,17 @@ final class CharacterModel:
         b.valid(qm.getOrElse(b, List()), am.getOrElse(b, List()))
       )
     }
+
+  val validPowerSource: Signal[Boolean] = powerSourceSignal
+    .combineWith(backgroundSignal.map((mb: Option[Background]) => mb.toList.flatMap((b: Background) => b.powerSourceDice)),
+                 powerStaging.signal,
+                 abilityChoice.signal)
+    .map { (mp, dice, pm, am) =>
+      mp.fold(false){ p =>
+        val powers: List[Power] = pm.getOrElse(p, List()).map(_._1)
+        val abilityMap: Map[AbilityTemplate, ChosenAbility] = am.getOrElse(p, Map())
+        val abilities: List[ChosenAbility] = abilityMap.values.toList
+        p.valid(dice, powers, abilities)
+      }
+    }
 end CharacterModel

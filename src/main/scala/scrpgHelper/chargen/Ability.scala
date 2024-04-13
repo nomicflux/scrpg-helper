@@ -43,6 +43,13 @@ case class ChosenAbility(
   def changeName(s: String): ChosenAbility =
     copy(template = template.changeName(s))
 
+  override def toString(): String =
+    s"ChosenAbility(${template.name}, ${template.status}, ${template.category}, ${inPool.max}/${inPool.abilities.size}, ${currentChoices.map(_.toString)} Valid: ${valid}})"
+
+  def valid: Boolean =
+    AbilityChoice.numChosen(currentChoices) == template.baseChoices.size
+  end valid
+
   def actions: List[Action] = template.actions(currentChoices)
   def description: Description = template.description.map {
     case s: String => s

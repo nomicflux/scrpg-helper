@@ -75,8 +75,9 @@ object RenderPowerSource:
   ): Element =
     tr(
       className := "power-source-row",
-      className <-- model.rollsSignal.combineWith(model.showUnchosenSignal).map {
-        (mrolls, shown) =>
+      className <-- model.rollsSignal
+        .combineWith(model.showUnchosenSignal)
+        .map { (mrolls, shown) =>
           mrolls.fold("undecided") { rolls =>
             if (rolls.contains(powerSource.number)) {
               "chosen"
@@ -84,7 +85,7 @@ object RenderPowerSource:
               if shown then "unchosen" else "hidden"
             }
           }
-      },
+        },
       className <-- character.powerSourceSignal.map(mps =>
         if mps.fold(false)(_ == powerSource) then "picked" else "unpicked"
       ),
@@ -170,7 +171,9 @@ object RenderPowerSource:
 
     div(
       className := s"ability status-${template.status.toString.toLowerCase()}",
-      className <-- hovering.signal.map(b => if b then "ability-hover" else "ability-blur"),
+      className <-- hovering.signal.map(b =>
+        if b then "ability-hover" else "ability-blur"
+      ),
       className <-- character
         .abilitiesSignal(Signal.fromValue(Some(powerSource)))
         .map(l =>
@@ -202,9 +205,7 @@ object RenderPowerSource:
           chosenSignal.map(
             _.values.toList.filter(_.inPool.id == abilityPool.id)
           )
-        ),
-        onMouseOver --> { ev => ev.stopPropagation() },
-        onClick --> { ev => ev.stopPropagation() }
+        )
       ),
       onMouseOver --> { _ => hovering.update { _ => true } },
       onMouseOut --> { _ => hovering.update { _ => false } },
@@ -264,6 +265,8 @@ object RenderPowerSource:
       ec: EnergyChoice
   ): Element =
     span(
+      onMouseOver --> { ev => ev.stopPropagation() },
+      onClick --> { ev => ev.stopPropagation() },
       SelectWithPrevChoice[Energy](
         Energy.values.toList.filter(e => ec.validateFn(List(e))),
         e => e.toString
@@ -295,6 +298,8 @@ object RenderPowerSource:
       ac: ActionChoice
   ): Element =
     span(
+      onMouseOver --> { ev => ev.stopPropagation() },
+      onClick --> { ev => ev.stopPropagation() },
       SelectWithPrevChoice[Action](
         Action.values.toList.filter(a => ac.validateFn(List(a))),
         a => a.toString
@@ -327,28 +332,29 @@ object RenderPowerSource:
       pc: PowerChoice
   ): Element =
     span(
-      child <-- powers.map { ps =>
-        SelectWithPrevChoice[Power](
-          ps.filter(p => pc.validateFn(List(p))),
+      onMouseOver --> { ev => ev.stopPropagation() },
+      onClick --> { ev => ev.stopPropagation() },
+      SelectWithPrevChoice
+        .forSignal[Power](
+          powers.map(_.filter(p => pc.validateFn(List(p)))),
           p => p.name
         )
-          .render(
-            chosen.map(cas =>
-              (p: Power, mp: Option[Power]) =>
-                !pc.validateFn(
-                  cas.flatMap(ca =>
-                    (ca.currentChoices.flatMap(_.getPower.toList))
-                  ) :+ p
-                )
-            ),
-            character
-              .removeAbilityChoice(powerSource, ability)
-              .contramap(p => pc.withChoice(p)),
-            character
-              .addAbilityChoice(powerSource, ability)
-              .contramap(p => pc.withChoice(p))
-          )
-      }
+        .render(
+          chosen.map(cas =>
+            (p: Power, mp: Option[Power]) =>
+              !pc.validateFn(
+                cas.flatMap(ca =>
+                  (ca.currentChoices.flatMap(_.getPower.toList))
+                ) :+ p
+              )
+          ),
+          character
+            .removeAbilityChoice(powerSource, ability)
+            .contramap(p => pc.withChoice(p)),
+          character
+            .addAbilityChoice(powerSource, ability)
+            .contramap(p => pc.withChoice(p))
+        )
     )
   end renderPowerChoices
 
@@ -361,9 +367,10 @@ object RenderPowerSource:
       qc: QualityChoice
   ): Element =
     span(
-      child <-- qualities.map { qs =>
-        SelectWithPrevChoice[Quality](
-          qs.filter(q => qc.validateFn(List(q))),
+      onMouseOver --> { ev => ev.stopPropagation() },
+      onClick --> { ev => ev.stopPropagation() },
+        SelectWithPrevChoice.forSignal[Quality](
+          qualities.map(_.filter(q => qc.validateFn(List(q)))),
           q => q.name
         )
           .render(
@@ -382,8 +389,6 @@ object RenderPowerSource:
               .addAbilityChoice(powerSource, ability)
               .contramap(q => qc.withChoice(q))
           )
-
-      }
     )
   end renderQualityChoices
 

@@ -1053,13 +1053,13 @@ select.selector-with-prev-choice option:selected {
 }
 
 .ability {
+  border: 1px groove grey;
   margin: 5px 0;
   line-height: normal;
 }
 
 .ability.ability-hover {
-  border: 1px groove grey;
-  margin: 3px 0;
+  border: 1px ridge blue;
 }
 
 .ability.ability-unselected {

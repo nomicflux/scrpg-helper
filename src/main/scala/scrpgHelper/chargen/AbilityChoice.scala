@@ -19,6 +19,9 @@ object AbilityChoice:
   def noDupes[A](l: List[A]): Boolean =
       l.distinct.size == l.size
 
+  def numChosen(l: List[AbilityChoice]): Int =
+    l.map(ac => ac.getPower.orElse(ac.getQuality).orElse(ac.getAction).orElse(ac.getEnergy)).collect { case Some(_) => 1 }.sum
+
   def powerChoices(l: List[AbilityChoice]): List[PowerChoice] =
     l.collect { case pc: PowerChoice => pc }
 
@@ -61,6 +64,9 @@ case class PowerChoice(id: AbilityChoiceId, power: Option[Power], validateFn: Li
   def withChoice(p: Power): PowerChoice = copy(power = Some(p))
   def withoutChoice: PowerChoice = copy(power = None)
 
+  override def toString(): String =
+    s"PowerChoice($power)"
+
   def validate(l: List[AbilityChoice]): Boolean =
     validateFn(l.collect { case pc: PowerChoice => pc.power }.collect {
       case Some(p) => p
@@ -87,6 +93,9 @@ case class QualityChoice(
 
   def withChoice(q: Quality): QualityChoice = copy(quality = Some(q))
   def withoutChoice: QualityChoice = copy(quality = None)
+
+  override def toString(): String =
+    s"QualityChoice($quality)"
 
   def validate(l: List[AbilityChoice]): Boolean =
     validateFn(l.collect { case qc: QualityChoice => qc.quality }.collect {
@@ -115,6 +124,9 @@ case class ActionChoice(
   def withChoice(a: Action): ActionChoice = copy(action = Some(a))
   def withoutChoice: ActionChoice = copy(action = None)
 
+  override def toString(): String =
+    s"ActionChoice($action)"
+
   def validate(l: List[AbilityChoice]): Boolean =
     validateFn(l.collect { case ac: ActionChoice => ac.action }.collect {
       case Some(a) => a
@@ -141,6 +153,9 @@ case class EnergyChoice(
 
   def withChoice(e: Energy): EnergyChoice = copy(energy = Some(e))
   def withoutChoice: EnergyChoice = copy(energy = None)
+
+  override def toString(): String =
+    s"EnergyChoice($energy)"
 
   def validate(l: List[AbilityChoice]): Boolean =
     validateFn(l.collect { case ec: EnergyChoice => ec.energy }.collect {
