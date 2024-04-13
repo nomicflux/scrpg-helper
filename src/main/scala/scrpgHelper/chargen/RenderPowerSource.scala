@@ -109,6 +109,7 @@ object RenderPowerSource:
             mbg.fold(List())(_.powerSourceDice)
           ),
           powerSource.powerList,
+          powerSource.extraPower,
           character
             .powersSignal(Signal.fromValue(Some(powerSource)))
             .combineWith(character.backgroundSignal.map(mbg => mbg.fold(List())(_.powerSourceDice)))
@@ -118,6 +119,18 @@ object RenderPowerSource:
             },
           character.removePower(powerSource),
           character.addPower(powerSource)
+        ),
+        renderQuality(
+          powerSource.extraQuality,
+          character
+            .qualitiesSignal(Signal.fromValue(Some(powerSource)))
+            .combineWith(character.qualitiesSignal(character.backgroundSignal))
+            .map { (l, bqs) =>
+              val qualitySet: Set[Quality] = l.map(_._1).toSet.union(bqs.map(_._1).toSet)
+              (qd, _) => qualitySet.contains(qd._1)
+            },
+          character.removeQuality(powerSource),
+          character.addQuality(powerSource)
         )
       ),
       td(
@@ -402,6 +415,7 @@ object RenderPowerSource:
   def renderPowers(
       dicePool: Signal[List[Die]],
       powers: List[Power],
+      extraPower: Option[(Die, List[Power])],
       powerAllowed: Signal[((Power, Die), Option[(Power, Die)]) => Boolean],
       removePower: Observer[(Power, Die)],
       addPower: Observer[(Power, Die)]
@@ -421,9 +435,45 @@ object RenderPowerSource:
                 .render(powerAllowed, removePower, addPower)
             )
           }
-        )
+        ),
+      extraPower.toList.map { case (d, ps) =>
+            span(
+              className := "choice-die-box",
+              d.toString,
+              ":",
+              SelectWithPrevChoice[(Power, Die)](
+                ps.map(p => (p, d)),
+                pd => pd._1.name
+              )
+                .render(powerAllowed, removePower, addPower)
+            )
+      }
     )
   end renderPowers
+
+  def renderQuality(
+      extraQuality: Option[(Die, List[Quality])],
+      qualityAllowed: Signal[((Quality, Die), Option[(Quality, Die)]) => Boolean],
+      removeQuality: Observer[(Quality, Die)],
+      addQuality: Observer[(Quality, Die)]
+  ): Element =
+    div(
+      extraQuality.toList
+        .map{ case (d, q) =>
+            span(
+              className := "choice-die-box",
+              d.toString,
+              ":",
+              SelectWithPrevChoice[(Quality, Die)](
+                extraQuality.toList.flatMap(_._2).map(q => (q, d)),
+                qd => qd._1.name
+              )
+                .render(qualityAllowed, removeQuality, addQuality)
+            )
+        }
+    )
+  end renderQuality
+
 end RenderPowerSource
 
 final class PowerSourceModel:

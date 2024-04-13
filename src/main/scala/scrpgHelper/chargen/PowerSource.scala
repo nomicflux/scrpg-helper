@@ -10,15 +10,19 @@ case class PowerSource(
     abilityPools: List[AbilityPool],
     mandatoryPowers: List[Power],
     powerList: List[Power],
-    archetypeDiePool: List[Die]
+    archetypeDiePool: List[Die],
+    extraQuality: Option[(Die, List[Quality])],
+    extraPower: Option[(Die, List[Power])]
 ):
   def valid(
       diePool: List[Die],
       powers: List[Power],
+      qualities: List[Quality],
       abilities: List[ChosenAbility]
   ): Boolean =
     abilities.filter(_.valid).size == abilityPools.map(_.max).sum &&
-      powers.size == diePool.size
+      powers.size == (diePool.size + extraPower.fold(0)(_ => 1)) &&
+      qualities.size == extraQuality.fold(0)(_ => 1)
   end valid
 end PowerSource
 
@@ -43,7 +47,9 @@ object PowerSource:
     abilityPools,
     List(),
     powerList,
-    archetypeDiePool
+    archetypeDiePool,
+    None,
+    None
   )
 
   def apply(
@@ -59,7 +65,28 @@ object PowerSource:
     abilityPools,
     mandatoryPowers,
     powerList,
-    archetypeDiePool
+    archetypeDiePool,
+    None,
+    None
+  )
+
+  def apply(
+      name: String,
+      number: Int,
+      abilityPools: List[AbilityPool],
+      powerList: List[Power],
+      archetypeDiePool: List[Die],
+      extraQuality: Option[(Die, List[Quality])],
+      extraPower: Option[(Die, List[Power])]
+  ): PowerSource = new PowerSource(
+    name,
+    number,
+    abilityPools,
+    List(),
+    powerList,
+    archetypeDiePool,
+    extraQuality,
+    extraPower
   )
 
   def uniquePowers(abilities: List[ChosenAbility]): Boolean =
@@ -68,19 +95,26 @@ object PowerSource:
     powers.distinct == powers
   end uniquePowers
 
-  // TODO: There is another powersource here with mandatory powers
   def powerSources: List[PowerSource] = List(
     Accident.accident,
+    // Training.training, // TODO: Implement adding quality from archetype in next step
     Genetic.genetic,
     Experimentation.experimentation,
+    Mystical.mystical,
     Nature.nature,
     Relic.relic,
     PoweredSuit.poweredSuit,
     Radiation.radiation,
     TechUpgrades.techUpgrades,
+    Supernatural.supernatural,
     ArtificialBeing.artificialBeing,
     Cursed.cursed,
+    // Alien.alien, // TODO: Implement upgrade or add
+    Genius.genius,
+    // Cosmos.cosmos, // TODO: Implement downgrade and upgrade
     Extradimensional.extradimensional,
-    HigherPower.higherPower
+    Unknown.unknown,
+    HigherPower.higherPower,
+    Multiverse.multiverse,
   )
 end PowerSource

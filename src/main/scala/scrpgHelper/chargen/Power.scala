@@ -130,4 +130,7 @@ object Power:
   val robotics = Power("Robotics", Technological)
   val technologicalPowers: List[Power] =
     List(gadgets, inventions, powerSuit, robotics)
+
+  val allPowers: List[Power] =
+    athleticPowers ++ energyPowers ++ hallmarkPowers ++ intellectualPowers ++ materialPowers ++ selfControlPowers ++ psychicPowers ++ mobilityPowers ++ technologicalPowers
 end Power
