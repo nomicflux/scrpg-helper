@@ -129,11 +129,14 @@ object RenderArchetype:
             )
             .map { (qs, psqs, bgqs, ps, ds) =>
               val qualitySet: Set[Quality] = (qs ++ psqs ++ bgqs).map(_._1).toSet
-              (qd, mpc) =>
-                qualitySet.contains(qd._1) || !mandatoryQualityCheck(
+              { (mqd, mpd, mpc) =>
+                val alreadyHave = mqd.fold(false)(qd => qualitySet.contains(qd._1))
+                val wouldFail = !mandatoryQualityCheck(
                   ds,
                   archetype
-                )(qs, psqs ++ bgqs, ps)(qd, mpc)
+                )(qs, psqs ++ bgqs, ps)(mqd, mpd, mpc)
+                alreadyHave || wouldFail
+              }
             },
           character.removePower(archetype),
           character.addPower(archetype),
@@ -194,11 +197,11 @@ object RenderArchetype:
       qds: List[(Quality, Die)],
       prevQds: List[(Quality, Die)],
       pds: List[(Power, Die)]
-  )(qd: (Quality, Die), prevChoice: Option[(Quality, Die)]): Boolean =
+  )(qd: Option[(Quality, Die)], pd: Option[(Power, Die)], prevChoice: Option[(Quality, Die)]): Boolean =
     val baseSet = qds.map(_._1).toSet
-    val newSet = prevChoice.fold(baseSet)(baseSet - _._1) + qd._1
+    val newSet = prevChoice.fold(baseSet)(baseSet - _._1).union(qd.toSet.map(_._1))
     val newSetWithOld = newSet.union(prevQds.map(_._1).toSet)
-    (archetype.qualityValidation(newSetWithOld) && pds.size >= archetype.minPowers) || (newSet.size + pds.size) < dicePool.size
+    (archetype.qualityValidation(newSetWithOld) && pds.size >= archetype.minPowers) || (newSet.size + pds.size + pd.size) < dicePool.size
   end mandatoryQualityCheck
 
   def renderPowerQualities(
@@ -207,7 +210,7 @@ object RenderArchetype:
       qualities: List[Quality],
       powerDisallowed: Signal[(Option[(Power, Die)], Option[(Quality, Die)], Option[(Power, Die)]) => Boolean],
       qualityDisallowed: Signal[
-        ((Quality, Die), Option[(Quality, Die)]) => Boolean
+        (Option[(Quality, Die)], Option[(Power, Die)], Option[(Quality, Die)]) => Boolean
       ],
       removePower: Observer[(Power, Die)],
       addPower: Observer[(Power, Die)],
@@ -239,7 +242,7 @@ object RenderArchetype:
       qualities: List[Quality],
       powerDisallowed: Signal[(Option[(Power, Die)], Option[(Quality, Die)], Option[(Power, Die)]) => Boolean],
       qualityDisallowed: Signal[
-        ((Quality, Die), Option[(Quality, Die)]) => Boolean
+        (Option[(Quality, Die)], Option[(Power, Die)], Option[(Quality, Die)]) => Boolean
       ],
       removePower: Observer[(Power, Die)],
       addPower: Observer[(Power, Die)],
@@ -267,16 +270,20 @@ object RenderArchetype:
         chosen.update(_ => None)
         qd
       }
-    val powerDisallowedForSelect
+    val powerDisallowedWithQualities
         : Signal[((Power, Die), Option[(Power, Die)]) => Boolean] =
-      powerDisallowed.map { pa => (pq, mpc) => pa(Some(pq), None, mpc) }
+      powerDisallowed
+        .combineWith(qualityDisallowed)
+        .map { (pa, qa) =>
+          (pq, mpc) => pa(Some(pq), None, mpc) || qa(None, Some(pq), None)
+        }
     val qualityDisallowedWithPowers
         : Signal[((Quality, Die), Option[(Quality, Die)]) => Boolean] =
       qualityDisallowed
         .combineWith(powerDisallowed)
         .map { (qa, pa) =>
-          { (qd, mqd) =>
-            qa(qd, mqd) || pa(None, Some(qd), None)
+          { (qd, mpc) =>
+            qa(Some(qd), None, mpc) || pa(None, Some(qd), None)
           }
         }
 
@@ -293,7 +300,7 @@ object RenderArchetype:
           )
         },
         SelectWithPrevChoice(powers.map(p => (p, die)), pd => pd._1.name)
-          .render(powerDisallowedForSelect, removePowerWithChoice, addPowerWithChoice)
+          .render(powerDisallowedWithQualities, removePowerWithChoice, addPowerWithChoice)
       ),
       span(
         className <-- chosen.signal.map { spq =>

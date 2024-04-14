@@ -30,7 +30,7 @@ object Speedster:
             AbilityCategory.Action,
             _ => List(Action.Attack, Action.Defend),
             List(
-              "Attack using ",
+              "Attack using",
               PowerQualityChoice(AbilityChoice.noDupes(_)),
               ". Defend yourself using your Min die."
             )
@@ -41,7 +41,7 @@ object Speedster:
             AbilityCategory.Action,
             _ => List(Action.Boost, Action.Hinder, Action.Attack),
             List(
-              "Boost or Hinder using ",
+              "Boost or Hinder using",
               PowerChoice(AbilityChoice.noDupes(_)),
               ". Use your Max die. If you roll doubles, you may also Attack using your Mid die."
             )
@@ -52,7 +52,7 @@ object Speedster:
             AbilityCategory.Action,
             _ => List(Action.Attack, Action.Hinder),
             List(
-              "Attack multiple targets using ",
+              "Attack multiple targets using",
               QualityChoice(AbilityChoice.noDupes(_)),
               ". Use your Min die. Hinder each target equal to your Mid die."
             )
@@ -68,7 +68,7 @@ object Speedster:
             AbilityCategory.Action,
             _ => List(Action.Attack, Action.Hinder),
             List(
-              "Attack multiple targets using ",
+              "Attack multiple targets using",
               QualityChoice(),
               ". Hinder each target equal to your Min die."
             )
@@ -79,7 +79,7 @@ object Speedster:
             AbilityCategory.Action,
             _ => List(Action.Attack),
             List(
-              "Attack using ",
+              "Attack using",
               QualityChoice(),
               ". Use your Max die. If you roll doubles, use Max + Min instead."
             )
@@ -90,7 +90,7 @@ object Speedster:
             AbilityCategory.Action,
             _ => List(Action.Attack),
             List(
-              "Attack multiple targets using ",
+              "Attack multiple targets using",
               PowerChoice(),
               ". Use your Max die against one target, and your Mid die against each other target. If you roll doubles, take irreducibl damage equal to your Mid die."
             )
@@ -101,12 +101,11 @@ object Speedster:
             AbilityCategory.Action,
             _ => List(Action.Boost),
             List(
-              "Boost multiple targets using ",
+              "Boost multiple targets using",
               PowerChoice(),
               ". Use your Max die."
             )
           )
-
         )
       )
     ),
