@@ -62,8 +62,7 @@ object RenderArchetype:
       tr(
         th(),
         th("Archetype"),
-        th("Powers"),
-        th("Qualities"),
+        th("Powers/Qualities"),
         th(colSpan := 2, "Principle of"),
         th("Abilities")
       ),
@@ -97,35 +96,49 @@ object RenderArchetype:
         h3(archetype.name)
       ),
       td(
-        renderPowers(
+        renderPowerQualities(
           character.powerSourceSignal.map(mps =>
             mps.fold(List())(_.archetypeDiePool)
           ),
           archetype.powerList,
-          character.powersSignal(Signal.fromValue(Some(archetype)))
-            .combineWith(character.powerSourceSignal.map(mps => mps.toList.flatMap(_.archetypeDiePool)))
-            .map{ (l, ds) =>
-            val powerSet: Set[Power] = l.map(_._1).toSet
-            (pd, mpc) => powerSet.contains(pd._1) || !mandatoryPowerCheck(ds, archetype)(l)(pd, mpc)
-          },
+          archetype.qualityList,
+          character
+            .powersSignal(Signal.fromValue(Some(archetype)))
+            .combineWith(
+              character.powersSignal(character.powerSourceSignal),
+              character.qualitiesSignal(Signal.fromValue(Some(archetype))),
+              character.powerSourceSignal.map(_.toList.flatMap(_.archetypeDiePool))
+            )
+            .map { (ps, psps, qs, ds) =>
+              val powerSet: Set[Power] = (ps ++ psps).map(_._1).toSet
+              { (mpd, mqd, mpc) =>
+                val alreadyHave = mpd.fold(false)(pd => powerSet.contains(pd._1))
+                val wouldFail = !mandatoryPowerCheck(ds, archetype)(
+                  ps, psps, qs
+                )(mpd, mqd, mpc)
+                alreadyHave || wouldFail
+              }
+            },
+          character
+            .qualitiesSignal(Signal.fromValue(Some(archetype)))
+            .combineWith(
+              character.qualitiesSignal(character.powerSourceSignal),
+              character.qualitiesSignal(character.backgroundSignal),
+              character.powersSignal(Signal.fromValue(Some(archetype))),
+              character.powerSourceSignal.map(_.toList.flatMap(_.archetypeDiePool))
+            )
+            .map { (qs, psqs, bgqs, ps, ds) =>
+              val qualitySet: Set[Quality] = (qs ++ psqs ++ bgqs).map(_._1).toSet
+              (qd, mpc) =>
+                qualitySet.contains(qd._1) || !mandatoryQualityCheck(
+                  ds,
+                  archetype
+                )(qs, psqs ++ bgqs, ps)(qd, mpc)
+            },
           character.removePower(archetype),
           character.addPower(archetype),
-        )
-      ),
-      td(
-        renderQualities(
-          character.powerSourceSignal.map(mps =>
-            mps.fold(List())(_.archetypeDiePool)
-          ),
-          archetype.qualityList,
-          character.qualitiesSignal(Signal.fromValue(Some(archetype)))
-            .combineWith(character.powerSourceSignal.map(mps => mps.toList.flatMap(_.archetypeDiePool)))
-            .map{ (l, ds) =>
-            val qualitySet: Set[Quality] = l.map(_._1).toSet
-            (qd, mpc) => qualitySet.contains(qd._1) || !mandatoryQualityCheck(ds, archetype)(l)(qd, mpc)
-          },
           character.removeQuality(archetype),
-          character.addQuality(archetype),
+          character.addQuality(archetype)
         )
       ),
       td(s"(${archetype.principleCategory.toString})"),
@@ -136,10 +149,11 @@ object RenderArchetype:
             .abilitiesSignal(character.archetypeSignal)
             .combineWith(
               character.abilitiesSignal(character.powerSourceSignal),
-              character.abilitiesSignal(character.backgroundSignal),
+              character.abilitiesSignal(character.backgroundSignal)
             )
             .map { (ats, pss, bgs) =>
-              val abilitySet = (ats.map(_.id) ++ pss.map(_.id) ++ bgs.map(_.id)).toSet
+              val abilitySet =
+                (ats.map(_.id) ++ pss.map(_.id) ++ bgs.map(_.id)).toSet
               a => abilitySet.contains(a.id)
             },
           character.removeAbility(archetype),
@@ -163,72 +177,141 @@ object RenderArchetype:
     )
 
   def mandatoryPowerCheck(dicePool: List[Die], archetype: Archetype)(
-      pds: List[(Power, Die)]
-  )(pd: (Power, Die), prevChoice: Option[(Power, Die)]): Boolean =
+      pds: List[(Power, Die)],
+      pspds: List[(Power, Die)],
+      qds: List[(Quality, Die)]
+  )(pd: Option[(Power, Die)], qd: Option[(Quality, Die)], prevChoice: Option[(Power, Die)]): Boolean =
     val baseSet = pds.map(_._1).toSet
-    val newSet = prevChoice.fold(baseSet)(pc => baseSet - pc._1) + pd._1
-    archetype.powerValidation(newSet) || newSet.size < dicePool.size
+    val newSet = prevChoice.fold(baseSet)(baseSet - _._1).union(pd.toSet.map(_._1))
+    val newSetWithOld = newSet.union(pspds.map(_._1).toSet)
+    val allPowersCheckOut = archetype.powerValidation(newSetWithOld)
+    val haveEnough = newSet.size >= archetype.minPowers
+    val notFullYet = (newSet.size + qds.size + qd.size) < dicePool.size
+    notFullYet || (allPowersCheckOut && haveEnough)
   end mandatoryPowerCheck
 
   def mandatoryQualityCheck(dicePool: List[Die], archetype: Archetype)(
-      qds: List[(Quality, Die)]
-  )(pd: (Quality, Die), prevChoice: Option[(Quality, Die)]): Boolean =
+      qds: List[(Quality, Die)],
+      prevQds: List[(Quality, Die)],
+      pds: List[(Power, Die)]
+  )(qd: (Quality, Die), prevChoice: Option[(Quality, Die)]): Boolean =
     val baseSet = qds.map(_._1).toSet
-    val newSet = prevChoice.fold(baseSet)(pc => baseSet - pc._1) + pd._1
-    archetype.qualityValidation(newSet) || newSet.size < dicePool.size
+    val newSet = prevChoice.fold(baseSet)(baseSet - _._1) + qd._1
+    val newSetWithOld = newSet.union(prevQds.map(_._1).toSet)
+    (archetype.qualityValidation(newSetWithOld) && pds.size >= archetype.minPowers) || (newSet.size + pds.size) < dicePool.size
   end mandatoryQualityCheck
 
-  def renderQualities(
-    dicePool: Signal[List[Die]],
-    qualities: List[Quality],
-    qualityAllowed: Signal[((Quality, Die), Option[(Quality, Die)]) => Boolean],
-    removeQuality: Observer[(Quality, Die)],
-    addQuality: Observer[(Quality, Die)],
+  def renderPowerQualities(
+      dicePool: Signal[List[Die]],
+      powers: List[Power],
+      qualities: List[Quality],
+      powerDisallowed: Signal[(Option[(Power, Die)], Option[(Quality, Die)], Option[(Power, Die)]) => Boolean],
+      qualityDisallowed: Signal[
+        ((Quality, Die), Option[(Quality, Die)]) => Boolean
+      ],
+      removePower: Observer[(Power, Die)],
+      addPower: Observer[(Power, Die)],
+      removeQuality: Observer[(Quality, Die)],
+      addQuality: Observer[(Quality, Die)]
   ): Element =
     div(
       children <-- dicePool.map { ds =>
-
-      ds.map { d =>
-        span(
-          className := "choice-die-box",
-          d.toString,
-          ":",
-          SelectWithPrevChoice(qualities.map(q => (q, d)), qd => qd._1.name)
-            .render(qualityAllowed,
-                    removeQuality,
-                    addQuality)
-        )
-      }
+        ds.map { d =>
+          renderPowerQuality(
+            d,
+            powers,
+            qualities,
+            powerDisallowed,
+            qualityDisallowed,
+            removePower,
+            addPower,
+            removeQuality,
+            addQuality
+          )
+        }
       }
     )
-  end renderQualities
+  end renderPowerQualities
 
-  def renderPowers(
-      dicePool: Signal[List[Die]],
+  def renderPowerQuality(
+      die: Die,
       powers: List[Power],
-      powerAllowed: Signal[((Power, Die), Option[(Power, Die)]) => Boolean],
+      qualities: List[Quality],
+      powerDisallowed: Signal[(Option[(Power, Die)], Option[(Quality, Die)], Option[(Power, Die)]) => Boolean],
+      qualityDisallowed: Signal[
+        ((Quality, Die), Option[(Quality, Die)]) => Boolean
+      ],
       removePower: Observer[(Power, Die)],
-      addPower: Observer[(Power, Die)]
+      addPower: Observer[(Power, Die)],
+      removeQuality: Observer[(Quality, Die)],
+      addQuality: Observer[(Quality, Die)]
   ): Element =
-    div(
-      children <-- dicePool
-        .map(ds =>
-          ds.map { d =>
-            span(
-              className := "choice-die-box",
-              d.toString,
-              ":",
-              SelectWithPrevChoice[(Power, Die)](
-                powers.map(p => (p, d)),
-                pd => pd._1.name
-              )
-                .render(powerAllowed, removePower, addPower)
-            )
+    val chosen: Var[Option[Power | Quality]] = Var(None)
+    val addPowerWithChoice: Observer[(Power, Die)] =
+      addPower.contramap { pd =>
+        chosen.update(_ => Some(pd._1))
+        pd
+      }
+    val removePowerWithChoice: Observer[(Power, Die)] =
+      removePower.contramap { pd =>
+        chosen.update(_ => None)
+        pd
+      }
+    val addQualityWithChoice: Observer[(Quality, Die)] =
+      addQuality.contramap { qd =>
+        chosen.update(_ => Some(qd._1))
+        qd
+      }
+    val removeQualityWithChoice: Observer[(Quality, Die)] =
+      removeQuality.contramap { qd =>
+        chosen.update(_ => None)
+        qd
+      }
+    val powerDisallowedForSelect
+        : Signal[((Power, Die), Option[(Power, Die)]) => Boolean] =
+      powerDisallowed.map { pa => (pq, mpc) => pa(Some(pq), None, mpc) }
+    val qualityDisallowedWithPowers
+        : Signal[((Quality, Die), Option[(Quality, Die)]) => Boolean] =
+      qualityDisallowed
+        .combineWith(powerDisallowed)
+        .map { (qa, pa) =>
+          { (qd, mqd) =>
+            qa(qd, mqd) || pa(None, Some(qd), None)
           }
-        )
-    )
-  end renderPowers
+        }
 
+    div(
+      className := "choice-die-box",
+      die.toString,
+      ":",
+      span(
+        className <-- chosen.signal.map { spq =>
+          spq.fold("")(pq =>
+            pq match
+              case q: Quality => "hidden"
+              case _          => ""
+          )
+        },
+        SelectWithPrevChoice(powers.map(p => (p, die)), pd => pd._1.name)
+          .render(powerDisallowedForSelect, removePowerWithChoice, addPowerWithChoice)
+      ),
+      span(
+        className <-- chosen.signal.map { spq =>
+          spq.fold("")(pq =>
+            pq match
+              case p: Power => "hidden"
+              case _        => ""
+          )
+        },
+        SelectWithPrevChoice(qualities.map(q => (q, die)), qd => qd._1.name)
+          .render(
+            qualityDisallowedWithPowers,
+            removeQualityWithChoice,
+            addQualityWithChoice
+          )
+      )
+    )
+  end renderPowerQuality
 
   def renderPrinciples(
       principles: List[Principle],
