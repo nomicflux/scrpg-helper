@@ -17,35 +17,53 @@ end AbilityChoice
 
 object AbilityChoice:
   def noDupes[A](l: List[A]): Boolean =
-      l.distinct.size == l.size
+    l.distinct.size == l.size
 
   def numChosen(l: List[AbilityChoice]): Int =
-    l.map(ac => ac.getPower.orElse(ac.getQuality).orElse(ac.getAction).orElse(ac.getEnergy)).collect { case Some(_) => 1 }.sum
+    l.map(ac =>
+      ac.getPower
+        .orElse(ac.getQuality)
+        .orElse(ac.getAction)
+        .orElse(ac.getEnergy)
+    ).collect { case Some(_) => 1 }
+      .sum
 end AbilityChoice
 
-case class PowerQualityChoice(id: AbilityChoiceId, powerQuality: Option[Power | Quality], validateFn: List[Power | Quality] => Boolean)
-    extends AbilityChoice:
-  val getPower: Option[Power] = powerQuality.flatMap { pq => pq match
-    case p: Power => Some(p)
-    case _ => None
+case class PowerQualityChoice(
+    id: AbilityChoiceId,
+    powerQuality: Option[Power | Quality],
+    validateFn: List[Power | Quality] => Boolean
+) extends AbilityChoice:
+  val getPower: Option[Power] = powerQuality.flatMap { pq =>
+    pq match
+      case p: Power => Some(p)
+      case _        => None
   }
-  val getQuality: Option[Quality] = powerQuality.flatMap { pq => pq match
-    case q: Quality => Some(q)
-    case _ => None
+  val getQuality: Option[Quality] = powerQuality.flatMap { pq =>
+    pq match
+      case q: Quality => Some(q)
+      case _          => None
   }
   val getAction: Option[Action] = None
   val getEnergy: Option[Energy] = None
 
-  def withChoice(pq: Power | Quality): PowerQualityChoice = copy(powerQuality = Some(pq))
+  def withChoice(pq: Power | Quality): PowerQualityChoice =
+    copy(powerQuality = Some(pq))
   def withoutChoice: PowerQualityChoice = copy(powerQuality = None)
 
   override def toString(): String =
     s"PowerQualityChoice($powerQuality)"
 
   def validate(l: List[AbilityChoice]): Boolean =
-    validateFn(l.collect { case pqc: PowerQualityChoice => pqc.powerQuality }.collect {
-      case Some(pq) => pq
-    })
+    validateFn(
+      l.collect {
+        case pc: PowerChoice         => pc.power
+        case qc: QualityChoice       => qc.quality
+        case pqc: PowerQualityChoice => pqc.powerQuality
+      }.collect { case Some(pq) =>
+        pq
+      }
+    )
 end PowerQualityChoice
 
 object PowerQualityChoice:
@@ -56,8 +74,11 @@ object PowerQualityChoice:
     PowerQualityChoice(new AbilityChoiceId(), None, vfn)
 end PowerQualityChoice
 
-case class PowerChoice(id: AbilityChoiceId, power: Option[Power], validateFn: List[Power] => Boolean)
-    extends AbilityChoice:
+case class PowerChoice(
+    id: AbilityChoiceId,
+    power: Option[Power],
+    validateFn: List[Power] => Boolean
+) extends AbilityChoice:
   val getPower: Option[Power] = power
   val getQuality: Option[Quality] = None
   val getAction: Option[Action] = None

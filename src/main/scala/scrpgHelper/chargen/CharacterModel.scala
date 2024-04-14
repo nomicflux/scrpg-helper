@@ -101,31 +101,50 @@ final class CharacterModel:
 
   val abilityChoice: Var[Map[StagingKey, Map[AbilityTemplate, ChosenAbility]]] =
     Var(
-      PowerSource.powerSources
+      (PowerSource.powerSources
         .map(ps =>
           ps ->
             (ps.abilityPools
-               .flatMap(ap => ap.abilities.map(a => a -> a.toChosenAbility(ap)))
-               .toMap)
-        ).toMap
+              .flatMap(ap => ap.abilities.map(a => a -> a.toChosenAbility(ap)))
+              .toMap)
+        ) ++
+        Archetype.archetypes
+          .map(at =>
+            at ->
+              (at.abilityPools
+                .flatMap(ap =>
+                  ap.abilities.map(a => a -> a.toChosenAbility(ap))
+                )
+                .toMap)
+          )).toMap
     )
   def abilityChoicesSignal(
-    stagingKey: StagingKey
+      stagingKey: StagingKey
   ): Signal[Map[AbilityTemplate, ChosenAbility]] =
-    abilityChoice.signal.map(acs =>
-      acs.get(stagingKey).head
-    )
-  def addAbilityChoice(stagingKey: StagingKey, ability: AbilityTemplate): Observer[AbilityChoice] =
+    abilityChoice.signal.map(acs => acs.get(stagingKey).head)
+  def addAbilityChoice(
+      stagingKey: StagingKey,
+      ability: AbilityTemplate
+  ): Observer[AbilityChoice] =
     abilityChoice.updater { (acs, choice) =>
-      val choices: Map[AbilityTemplate, ChosenAbility] = acs.get(stagingKey).head
+      val choices: Map[AbilityTemplate, ChosenAbility] =
+        acs.get(stagingKey).head
       val currChoice: ChosenAbility = choices.get(ability).head
-      acs + (stagingKey -> (choices + (ability -> currChoice.applyChoice(choice))))
+      acs + (stagingKey -> (choices + (ability -> currChoice.applyChoice(
+        choice
+      ))))
     }
-  def removeAbilityChoice(stagingKey: StagingKey, ability: AbilityTemplate): Observer[AbilityChoice] =
+  def removeAbilityChoice(
+      stagingKey: StagingKey,
+      ability: AbilityTemplate
+  ): Observer[AbilityChoice] =
     abilityChoice.updater { (acs, choice) =>
-      val choices: Map[AbilityTemplate, ChosenAbility] = acs.get(stagingKey).head
+      val choices: Map[AbilityTemplate, ChosenAbility] =
+        acs.get(stagingKey).head
       val currChoice: ChosenAbility = choices.get(ability).head
-      acs + (stagingKey -> (choices + (ability -> currChoice.removeChoice(choice))))
+      acs + (stagingKey -> (choices + (ability -> currChoice.removeChoice(
+        choice
+      ))))
     }
 
   val validBackground: Signal[Boolean] = backgroundSignal
@@ -137,18 +156,28 @@ final class CharacterModel:
     }
 
   val validPowerSource: Signal[Boolean] = powerSourceSignal
-    .combineWith(backgroundSignal.map((mb: Option[Background]) => mb.toList.flatMap((b: Background) => b.powerSourceDice)),
-                 powerStaging.signal,
-                 qualityStaging.signal,
-                 abilityStaging.signal,
-                 abilityChoice.signal)
+    .combineWith(
+      backgroundSignal.map((mb: Option[Background]) =>
+        mb.toList.flatMap((b: Background) => b.powerSourceDice)
+      ),
+      powerStaging.signal,
+      qualityStaging.signal,
+      abilityStaging.signal,
+      abilityChoice.signal
+    )
     .map { (mp, dice, pm, qm, asm, am) =>
-      mp.fold(false){ p =>
+      mp.fold(false) { p =>
         val powers: List[Power] = pm.getOrElse(p, List()).map(_._1)
         val qualities: List[Quality] = qm.getOrElse(p, List()).map(_._1)
-        val selectedAbilities: Set[AbilityId] = asm.getOrElse(p, List()).collect { case ca: ChosenAbility => ca }.map(_.id).toSet
-        val abilityMap: Map[AbilityTemplate, ChosenAbility] = am.getOrElse(p, Map())
-        val abilities: List[ChosenAbility] = abilityMap.values.toList.filter(a => selectedAbilities.contains(a.id))
+        val selectedAbilities: Set[AbilityId] = asm
+          .getOrElse(p, List())
+          .collect { case ca: ChosenAbility => ca }
+          .map(_.id)
+          .toSet
+        val abilityMap: Map[AbilityTemplate, ChosenAbility] =
+          am.getOrElse(p, Map())
+        val abilities: List[ChosenAbility] =
+          abilityMap.values.toList.filter(a => selectedAbilities.contains(a.id))
         p.valid(dice, powers, qualities, abilities)
       }
     }

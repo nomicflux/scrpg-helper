@@ -134,16 +134,32 @@ object RenderArchetype:
           Principle.categoryToPrinciples(archetype.principleCategory),
           character
             .abilitiesSignal(character.archetypeSignal)
-            .combineWith(character.abilitiesSignal(character.backgroundSignal))
-            .map { (ats, bgs) =>
-              val abilitySet = (ats.map(_.id) ++ bgs.map(_.id)).toSet
+            .combineWith(
+              character.abilitiesSignal(character.powerSourceSignal),
+              character.abilitiesSignal(character.backgroundSignal),
+            )
+            .map { (ats, pss, bgs) =>
+              val abilitySet = (ats.map(_.id) ++ pss.map(_.id) ++ bgs.map(_.id)).toSet
               a => abilitySet.contains(a.id)
             },
           character.removeAbility(archetype),
           character.addAbility(archetype)
         )
       ),
-      td()
+      td(
+        archetype.abilityPools.map { ap =>
+          RenderAbility.renderAbilityPool(character, archetype, ap)
+        }
+      ),
+      onMouseDown --> { _ =>
+        character.changeArchetype.onNext(archetype)
+      },
+      onFocus --> { _ =>
+        character.changeArchetype.onNext(archetype)
+      },
+      onClick --> { _ =>
+        character.changeArchetype.onNext(archetype)
+      }
     )
 
   def mandatoryPowerCheck(dicePool: List[Die], archetype: Archetype)(

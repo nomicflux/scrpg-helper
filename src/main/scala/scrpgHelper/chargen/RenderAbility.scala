@@ -95,6 +95,25 @@ object RenderAbility:
       ability: AbilityTemplate,
       chosen: Signal[List[ChosenAbility]]
   ): Element =
+    val powerSignal: Signal[List[Power]] = stagingKey match
+        case bg: Background => Signal.fromValue(List.empty)
+        case ps: PowerSource => character.powersSignal(Signal.fromValue(Some(ps))).map(_.map(_._1))
+        case at: Archetype => character.powersSignal(character.powerSourceSignal)
+            .combineWith(character.powersSignal(Signal.fromValue(Some(at))))
+            .map(_.map(_._1) ++ _.map(_._1))
+
+    val qualitySignal: Signal[List[Quality]] = stagingKey match
+        case bg: Background => character.qualitiesSignal(Signal.fromValue(Some(bg))).map(_.map(_._1))
+        case ps: PowerSource => character.qualitiesSignal(character.backgroundSignal)
+            .combineWith(character.qualitiesSignal(Signal.fromValue(Some(ps))))
+            .map(_.map(_._1) ++ _.map(_._1))
+        case at: Archetype => character.qualitiesSignal(character.backgroundSignal)
+            .combineWith(
+              character.qualitiesSignal(character.powerSourceSignal),
+              character.qualitiesSignal(Signal.fromValue(Some(at))),
+            )
+            .map(_.map(_._1) ++ _.map(_._1) ++ _.map(_._1))
+
     span(
       ability.description.map { l =>
         l match
@@ -107,9 +126,7 @@ object RenderAbility:
             renderPowerChoices(
               character,
               stagingKey,
-              character
-                .powersSignal(Signal.fromValue(Some(stagingKey)))
-                .map(_.map(_._1)),
+              powerSignal,
               chosen,
               ability,
               pc
@@ -118,12 +135,20 @@ object RenderAbility:
             renderQualityChoices(
               character,
               stagingKey,
-              character
-                .qualitiesSignal(character.backgroundSignal)
-                .map(_.map(_._1)),
+              qualitySignal,
               chosen,
               ability,
               qc
+            )
+          case pqc: PowerQualityChoice =>
+            renderPowerQualityChoices(
+              character,
+              stagingKey,
+              powerSignal,
+              qualitySignal,
+              chosen,
+              ability,
+              pqc
             )
           case _: AbilityChoice => span("Not valid")
       }
@@ -265,4 +290,42 @@ object RenderAbility:
         )
     )
   end renderQualityChoices
+
+  def renderPowerQualityChoices(
+      character: CharacterModel,
+      stagingKey: character.StagingKey,
+      powers: Signal[List[Power]],
+      qualities: Signal[List[Quality]],
+      chosen: Signal[List[ChosenAbility]],
+      ability: AbilityTemplate,
+      pqc: PowerQualityChoice
+  ): Element =
+    span(
+      onMouseOver --> { ev => ev.stopPropagation() },
+      onClick --> { ev => ev.stopPropagation() },
+      SelectWithPrevChoice
+        .forSignal[Power | Quality](
+          powers.combineWith(qualities).map((ps, qs) => ps ++ qs).map(_.filter(pq => pqc.validateFn(List(pq)))),
+          pq => pq match
+            case p: Power => p.name
+            case q: Quality => q.name
+        )
+        .render(
+          chosen.map(cas =>
+            (pq: Power | Quality, mpq: Option[Power | Quality]) =>
+              !pqc.validateFn(
+                cas.flatMap(ca =>
+                  (ca.currentChoices.flatMap(_.getPower.toList))
+                ) :+ pq
+              )
+          ),
+          character
+            .removeAbilityChoice(stagingKey, ability)
+            .contramap(pq => pqc.withChoice(pq)),
+          character
+            .addAbilityChoice(stagingKey, ability)
+            .contramap(pq => pqc.withChoice(pq))
+        )
+    )
+  end renderPowerQualityChoices
 end RenderAbility
