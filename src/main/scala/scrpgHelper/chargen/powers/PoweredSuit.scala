@@ -44,7 +44,7 @@ object PoweredSuit:
             _ => List(Action.Boost),
             List(
               "Boost yourself using ",
-              PowerChoice(ps => ps == List(powerSuit) && AbilityChoice.noDupes(ps)),
+              PowerChoice(ps => AbilityChoice.onePower(powerSuit)(ps) && AbilityChoice.noDupes(ps)),
               ". Use your Min+Mid dice. That bonus is persistent and exclusive.",
             ),
           ),

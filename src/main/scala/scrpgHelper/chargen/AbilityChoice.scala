@@ -19,6 +19,15 @@ object AbilityChoice:
   def noDupes[A](l: List[A]): Boolean =
     l.distinct.size == l.size
 
+  def onePower(power: Power)(l: List[Power]): Boolean =
+    l.contains(power)
+
+  def powerCategory(powerCategory: PowerCategory)(l: List[Power]): Boolean =
+    l == l.filter(_.category == powerCategory)
+
+  def qualityCategory(qualityCategory: QualityCategory)(l: List[Quality]): Boolean =
+    l == l.filter(_.category == qualityCategory)
+
   def numChosen(l: List[AbilityChoice]): Int =
     l.map(ac =>
       ac.getPower

@@ -239,12 +239,12 @@ object RenderAbility:
         )
         .render(
           chosen.map(cas =>
-            (p: Power, mp: Option[Power]) =>
-              !pc.validateFn(
-                cas.flatMap(ca =>
-                  (ca.currentChoices.flatMap(_.getPower.toList))
-                ) :+ p
-              )
+            { (p: Power, mp: Option[Power]) =>
+              val chosenPowers = cas.flatMap(ca =>
+                (ca.currentChoices.flatMap(_.getPower.toList))
+              ) :+ p
+              !pc.validateFn(chosenPowers)
+            }
           ),
           character
             .removeAbilityChoice(stagingKey, ability)

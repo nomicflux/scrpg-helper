@@ -25,7 +25,7 @@ object Psychic:
             _ => List(Action.Attack, Action.Hinder),
             List(
               "Attack using",
-              PowerChoice(ps => ps == ps.filter(p => p.category == PowerCategory.Psychic)),
+              PowerChoice(AbilityChoice.powerCategory(PowerCategory.Psychic)),
               ". Hinder the target using your Min die."
             )
           ),
@@ -36,7 +36,7 @@ object Psychic:
             _ => List(Action.Boost),
             List(
               "Boost using",
-              PowerChoice(ps => ps == ps.filter(p => p.category == PowerCategory.Psychic)),
+              PowerChoice(AbilityChoice.powerCategory(PowerCategory.Psychic)),
               ". Apply that bonus to all hero Attack and Overcome actions until the start of your next turn."
             )
           ),
@@ -61,7 +61,7 @@ object Psychic:
             _ => List(Action.Overcome),
             List(
               "Overcome using",
-              PowerChoice(ps => ps == List(Power.remoteViewing)),
+              PowerChoice(AbilityChoice.onePower(Power.remoteViewing)),
               "and use your Max + Min dice. You do not have to be physically present in the area you are overcoming."
             )
           ),
@@ -72,7 +72,7 @@ object Psychic:
             _ => List(Action.Defend),
             List(
               "When you are Attacked, Defend by rolling your single",
-              PowerChoice(ps => ps == List(Power.illusions)),
+              PowerChoice(AbilityChoice.onePower(Power.illusions)),
               "die"
             )
           ),
@@ -83,7 +83,7 @@ object Psychic:
             _ => List(Action.Attack, Action.Hinder),
             List(
               "Attack a minion using",
-              PowerChoice(ps => ps == List(Power.suggestion)),
+              PowerChoice(AbilityChoice.onePower(Power.suggestion)),
               ". If that minion would be taken out, you control its next action, and then it is removed. Otherwise, Hinder it using your Min die."
             )
           ),
@@ -94,7 +94,7 @@ object Psychic:
             _ => List(Action.Hinder),
             List(
               "After an enemy rolls dice to take an action for their turn but before using the result, Hinder that enemy's roll using your single",
-              PowerChoice(ps => ps == List(Power.postcognition)),
+              PowerChoice(AbilityChoice.onePower(Power.postcognition)),
               "die."
             )
           ),
@@ -105,7 +105,7 @@ object Psychic:
             _ => List(Action.Boost),
             List(
               "After an ally rolls dice to take an action for their turn but before using the result, Boost that ally's roll using your single",
-              PowerChoice(ps => ps == List(Power.precognition)),
+              PowerChoice(AbilityChoice.onePower(Power.precognition)),
               "die."
             )
           ),
@@ -116,7 +116,7 @@ object Psychic:
             _ => List(Action.Boost),
             List(
               "Boost yourself using",
-              QualityChoice(qs => qs == qs.filter(_.category == QualityCategory.Mental)),
+              QualityChoice(AbilityChoice.qualityCategory(QualityCategory.Mental)),
               ". Either use your Max die, or use your Mid die and make it persistent and exclusive."
             )
           ),
@@ -127,7 +127,7 @@ object Psychic:
             _ => List(Action.Attack),
             List(
               "Attack multiple targets using",
-              PowerChoice(ps => ps == List(Power.animalControl)),
+              PowerChoice(AbilityChoice.onePower(Power.animalControl)),
               "and use your Min die."
             )
           ),
@@ -138,7 +138,7 @@ object Psychic:
             _ => List(Action.Attack),
             List(
               "Attack using",
-              PowerChoice(ps => ps == List(Power.telekinesis)),
+              PowerChoice(AbilityChoice.onePower(Power.telekinesis)),
               ". Either Attack one target and use your Max die, or two targets and use your Mid die against one and your Min die against another."
             )
           ),
@@ -149,7 +149,7 @@ object Psychic:
             _ => List(Action.Attack, Action.Hinder),
             List(
               "Attack using",
-              PowerChoice(ps => ps == List(Power.telepathy)),
+              PowerChoice(AbilityChoice.onePower(Power.telepathy)),
               "and use your Max die. Hinder the target with a persistent and exclusive penalty using your Min die."
             )
           ),
