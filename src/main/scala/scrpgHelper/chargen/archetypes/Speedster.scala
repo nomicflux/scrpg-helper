@@ -13,6 +13,7 @@ object Speedster:
     _ => true,
     1,
     List(
+      Power.speed,
       Power.agility,
       Power.intangibility,
       Power.lightningCalculator,

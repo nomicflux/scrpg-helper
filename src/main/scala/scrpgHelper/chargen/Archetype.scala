@@ -3,8 +3,8 @@ package scrpgHelper.chargen
 case class Archetype(
     name: String,
     number: Int,
-    powerValidation: List[Power] => Boolean,
-    qualityValidation: List[Quality] => Boolean,
+    powerValidation: Set[Power] => Boolean,
+    qualityValidation: Set[Quality] => Boolean,
     minPowers: Int,
     powerList: List[Power],
     qualityList: List[Quality],
@@ -17,10 +17,10 @@ end Archetype
 object Archetype:
   import scrpgHelper.chargen.archetypes.*
 
-  def signaturePower(p: Power): List[Power] => Boolean =
+  def signaturePower(p: Power): Set[Power] => Boolean =
     ps => ps.contains(p)
 
-  def signatureQuality(q: Quality): List[Quality] => Boolean =
+  def signatureQuality(q: Quality): Set[Quality] => Boolean =
     qs => qs.contains(q)
 
   val archetypes: List[Archetype] = List(

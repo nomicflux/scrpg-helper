@@ -105,8 +105,8 @@ object RenderBackground:
         renderPrinciples(
           Principle.categoryToPrinciples(background.principleCategory),
           character.abilitiesSignal(character.backgroundSignal).map{l =>
-            val abilitySet = l.map(_.name).toSet
-            a => abilitySet.contains(a.name)
+            val abilitySet = l.map(_.id).toSet
+            a => abilitySet.contains(a.id)
           },
           character.removeAbility(background),
           character.addAbility(background),
