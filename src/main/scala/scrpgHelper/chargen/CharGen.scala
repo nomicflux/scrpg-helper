@@ -31,12 +31,13 @@ object CharGen:
       tpe := "button",
       "Next Page",
       disabled <-- pageSignal
-        .combineWith(character.validBackground, character.validPowerSource)
-        .map((p, b, ps) =>
+        .combineWith(character.validBackground, character.validPowerSource, character.validArchetype)
+        .map((p, b, ps, at) =>
           p match {
             case CharGenPage.BackgroundPage  => !b
             case CharGenPage.PowerSourcePage => !ps
-            case CharGenPage.ArchetypePage   => true
+            case CharGenPage.ArchetypePage   => !at
+            case CharGenPage.PersonalityPage => false
           }
         ),
       onClick --> { _ => advancePage.onNext(()) }
@@ -84,12 +85,18 @@ object CharGen:
         ),
         RenderArchetype.renderArchetypes(character)
       ),
+      div(
+        className <-- pageSignal.map(p =>
+          if p == CharGenPage.PersonalityPage then "" else "hidden"
+        ),
+        RenderPersonality.renderPersonalities(character)
+      ),
     )
   end renderPage
 end CharGen
 
 enum CharGenPage:
-  case BackgroundPage, PowerSourcePage, ArchetypePage
+  case BackgroundPage, PowerSourcePage, ArchetypePage, PersonalityPage
 end CharGenPage
 
 final class CharGenModel:
@@ -100,10 +107,12 @@ final class CharGenModel:
     p match
       case CharGenPage.BackgroundPage  => CharGenPage.PowerSourcePage
       case CharGenPage.PowerSourcePage => CharGenPage.ArchetypePage
-      case _                           => CharGenPage.PowerSourcePage
+      case CharGenPage.ArchetypePage   => CharGenPage.PersonalityPage
+      case _                           => CharGenPage.PersonalityPage
   }
   val retreatPage: Observer[Unit] = page.updater { (p, _) =>
     p match
+      case CharGenPage.PersonalityPage => CharGenPage.ArchetypePage
       case CharGenPage.ArchetypePage   => CharGenPage.PowerSourcePage
       case CharGenPage.PowerSourcePage => CharGenPage.BackgroundPage
       case _                           => CharGenPage.BackgroundPage

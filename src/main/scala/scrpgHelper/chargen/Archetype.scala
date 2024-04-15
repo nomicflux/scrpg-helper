@@ -1,5 +1,7 @@
 package scrpgHelper.chargen
 
+import scrpgHelper.rolls.Die
+
 case class Archetype(
     name: String,
     number: Int,
@@ -11,7 +13,16 @@ case class Archetype(
     abilityPools: List[AbilityPool],
     principleCategory: PrincipleCategory
 ):
-  def valid(): Boolean = false
+  def valid(
+      diePool: List[Die],
+      powers: List[Power],
+      qualities: List[Quality],
+      abilities: List[ChosenAbility]
+  ): Boolean =
+    abilities.filter(_.valid).size == abilityPools.map(_.max).sum &&
+      (powers.size + qualities.size) == diePool.size &&
+      powerValidation(powers.toSet) && qualityValidation(qualities.toSet)
+  end valid
 end Archetype
 
 object Archetype:

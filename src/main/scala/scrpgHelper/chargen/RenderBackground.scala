@@ -179,5 +179,4 @@ final class BackgroundModel:
   }
 
   val shownToggle: Observer[Unit] = showUnchosen.updater { (b, _) => !b }
-
 end BackgroundModel

@@ -181,4 +181,28 @@ final class CharacterModel:
         p.valid(dice, powers, qualities, abilities)
       }
     }
+
+    val validArchetype: Signal[Boolean] = archetypeSignal
+      .combineWith(
+        powerSourceSignal.map(_.toList.flatMap(_.archetypeDiePool)),
+        powerStaging.signal,
+        qualityStaging.signal,
+        abilityStaging.signal,
+        abilityChoice.signal
+      ).map { (mat, dice, pm, qm, asm, am) =>
+        mat.fold(false) { at =>
+          val powers: List[Power] = pm.getOrElse(at, List()).map(_._1)
+          val qualities: List[Quality] = qm.getOrElse(at, List()).map(_._1)
+          val selectedAbilities: Set[AbilityId] = asm
+            .getOrElse(at, List())
+            .collect { case ca: ChosenAbility => ca }
+            .map(_.id)
+            .toSet
+          val abilityMap: Map[AbilityTemplate, ChosenAbility] =
+            am.getOrElse(at, Map())
+          val abilities: List[ChosenAbility] =
+            abilityMap.values.toList.filter(a => selectedAbilities.contains(a.id))
+          at.valid(dice, powers, qualities, abilities)
+        }
+      }
 end CharacterModel
