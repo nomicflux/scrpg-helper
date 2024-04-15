@@ -16,7 +16,8 @@ object RenderPersonality:
       className := "personality-section choice-section",
       h2("Personality"),
       renderRollButton(model.rollTrigger),
-      renderShownToggle(model.showUnchosenSignal, model.shownToggle)
+      renderShownToggle(model.showUnchosenSignal, model.shownToggle),
+      renderPersonalityTable(character)
     )
 
   def renderRollButton(rollTrigger: Observer[Unit]): Element =
@@ -42,6 +43,57 @@ object RenderPersonality:
       )
     )
   end renderShownToggle
+
+  def renderPersonalityTable(character: CharacterModel): Element =
+    table(
+      tr(
+        th(),
+        th("Personality"),
+        th("Quality"),
+        th("Out Ability")
+      ),
+      Personality.personalities.map(renderPersonality(character, _))
+    )
+
+  def renderPersonality(character: CharacterModel, personality: Personality): Element =
+    tr(
+      className := "personality-row",
+      className <-- model.rollsSignal
+        .combineWith(model.showUnchosenSignal)
+        .map { (mrolls, shown) =>
+          mrolls.fold("undecided") { rolls =>
+            if (rolls.contains(personality.number)) {
+              "chosen"
+            } else {
+              if shown then "unchosen" else "hidden"
+            }
+          }
+        },
+      className <-- character.personalitySignal.map(mp =>
+        if mp.fold(false)(_ == personality) then "picked" else "unpicked"
+      ),
+      td(personality.number.toString),
+      td(personality.name),
+      td(),
+      td(RenderAbility.renderAbility(character,
+                                     personality,
+                                     personality.outAbilityPool,
+                                     personality.outAbilityPool.abilities.head,
+                                     character.abilityChoicesSignal(personality))),
+      onMouseDown --> { _ =>
+        character.changePersonality.onNext(personality)
+        character.addAbility(personality).onNext(personality.outAbilityPool.abilities.head)
+      },
+      onFocus --> { _ =>
+        character.changePersonality.onNext(personality)
+        character.addAbility(personality).onNext(personality.outAbilityPool.abilities.head)
+      },
+      onClick --> { _ =>
+        character.changePersonality.onNext(personality)
+        character.addAbility(personality).onNext(personality.outAbilityPool.abilities.head)
+      }
+    )
+  end renderPersonality
 end RenderPersonality
 
 final class PersonalityModel:

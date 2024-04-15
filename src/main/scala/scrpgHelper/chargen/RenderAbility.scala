@@ -110,6 +110,9 @@ object RenderAbility:
         case at: Archetype => character.powersSignal(character.powerSourceSignal)
             .combineWith(character.powersSignal(Signal.fromValue(Some(at))))
             .map(_.map(_._1) ++ _.map(_._1))
+        case p: Personality => character.powersSignal(character.powerSourceSignal)
+            .combineWith(character.powersSignal(character.archetypeSignal))
+            .map(_.map(_._1) ++ _.map(_._1))
 
     val qualitySignal: Signal[List[Quality]] = stagingKey match
         case bg: Background => character.qualitiesSignal(Signal.fromValue(Some(bg))).map(_.map(_._1))
@@ -122,6 +125,11 @@ object RenderAbility:
               character.qualitiesSignal(Signal.fromValue(Some(at))),
             )
             .map(_.map(_._1) ++ _.map(_._1) ++ _.map(_._1))
+        case p: Personality => character.qualitiesSignal(character.archetypeSignal)
+            .combineWith(character.qualitiesSignal(character.powerSourceSignal),
+                         character.qualitiesSignal(character.backgroundSignal),
+                         character.qualitiesSignal(Signal.fromValue(Some(p))))
+            .map(_.map(_._1) ++ _.map(_._1) ++ _.map(_._1) ++ _.map(_._1))
 
     span(
       ability.description.map { l =>

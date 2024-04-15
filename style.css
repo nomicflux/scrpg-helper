@@ -1048,6 +1048,11 @@ select.selector-with-prev-choice option:selected {
   background: red;
 }
 
+.ability.status-out {
+  color: white;
+  background: #444444;
+}
+
 .ability span {
   margin: 0 5px;
 }
@@ -1077,6 +1082,11 @@ select.selector-with-prev-choice option:selected {
 .ability.ability-unselected.status-red {
   background: #884444;
 }
+.ability.ability-unselected.status-out {
+  background: #222222;
+}
+
+
 
 .ability.ability-selected {
   border: 3px ridge blue;

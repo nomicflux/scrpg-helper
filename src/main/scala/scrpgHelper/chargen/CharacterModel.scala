@@ -26,8 +26,12 @@ final class CharacterModel:
   val archetypeSignal = archetype.signal
   val changeArchetype: Observer[Archetype] =
     archetype.updater { (_, at) => Some(at) }
+  val personality: Var[Option[Personality]] = Var(None)
+  val personalitySignal = personality.signal
+  val changePersonality: Observer[Personality] =
+    personality.updater { (_, p) => Some(p) }
 
-  type StagingKey = Background | PowerSource | Archetype
+  type StagingKey = Background | PowerSource | Archetype | Personality
 
   val qualityStaging: Var[Map[StagingKey, List[(Quality, Die)]]] = Var(Map())
   def qualitiesSignal(
@@ -205,4 +209,28 @@ final class CharacterModel:
           at.valid(dice, powers, qualities, abilities)
         }
       }
+
+    val validPersonality: Signal[Boolean] = personalitySignal
+      .combineWith(
+        powerStaging.signal,
+        qualityStaging.signal,
+        abilityStaging.signal,
+        abilityChoice.signal
+      ).map { (mp, pm, qm, asm, am) =>
+        mp.fold(false) { p =>
+          val powers: List[Power] = pm.getOrElse(p, List()).map(_._1)
+          val qualities: List[Quality] = qm.getOrElse(p, List()).map(_._1)
+          val selectedAbilities: Set[AbilityId] = asm
+            .getOrElse(p, List())
+            .collect { case ca: ChosenAbility => ca }
+            .map(_.id)
+            .toSet
+          val abilityMap: Map[AbilityTemplate, ChosenAbility] =
+            am.getOrElse(p, Map())
+          val abilities: List[ChosenAbility] =
+            abilityMap.values.toList.filter(a => selectedAbilities.contains(a.id))
+          p.valid(powers, qualities, abilities)
+        }
+      }
+
 end CharacterModel
