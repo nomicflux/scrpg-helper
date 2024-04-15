@@ -55,6 +55,15 @@ object RenderAbility:
           then "ability-selected"
           else "ability-unselected"
         ),
+      className <-- character
+        .abilitiesSignal(Signal.fromValue(Some(stagingKey)))
+        .map(l =>
+          if !l.collect { case ca: ChosenAbility => ca.template }
+            .filter(at => at.id == template.id && at.status != template.status)
+            .isEmpty
+          then "hidden"
+          else ""
+        ),
       span(
         className := "ability-actions",
         child.text <-- chosenAbility.map(

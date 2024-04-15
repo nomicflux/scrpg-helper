@@ -25,6 +25,9 @@ object AbilityChoice:
   def powerCategory(powerCategory: PowerCategory)(l: List[Power]): Boolean =
     l == l.filter(_.category == powerCategory)
 
+  def intersection[A](toIntersect: List[A])(l: List[A]): Boolean =
+    !l.filter(a => toIntersect.toSet.contains(a)).isEmpty
+
   def qualityCategory(qualityCategory: QualityCategory)(l: List[Quality]): Boolean =
     l == l.filter(_.category == qualityCategory)
 
