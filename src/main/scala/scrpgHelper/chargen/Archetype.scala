@@ -29,17 +29,17 @@ object Archetype:
   val archetypes: List[Archetype] = List(
     Speedster.speedster,
     Shadow.shadow, //TODO: Issues with quality & power restrictions together
-    PhysicalPowerhouse.physicalPowerhouse, //TODO: allow powers at different statuses
+    PhysicalPowerhouse.physicalPowerhouse,
     Marksman.marksman,
     Blaster.blaster, //TODO: restrict EnergyChoice to available energy powers? Or PowerChoice that doesn't affect dupes?
-    //CloseQuartersCombatant.closeQuartersCombatant, //TODO: allow powers at different statuses
+    CloseQuartersCombatant.closeQuartersCombatant, //TODO: mandate one power used with abilities; shared no-dupes between zones
     //Armored.armored, //TODO: change how health is calculated
-    //Flyer.flyer, //TODO: allow powers at different statuses
+    Flyer.flyer, //TODO: enforce abilities using flight & sig vehicle
     ElementalManipulator.elementalManipulator, //TODO: restrict EnergyChoice to available energy powers? Or PowerChoice that doesn't affect dupes?
-    //RobotCyborg.robotCyborg, //TODO: allow powers at different statuses
+    //RobotCyborg.robotCyborg, //TODO: change how health is calculated
     Sorcerer.sorcerer,
-    Psychic.psychic, //TODO: fix single-power selection bug
-    //Transporter.transporter, //TODO: allow powers at different statuses
+    Psychic.psychic,
+    Transporter.transporter,
     //MinionMaker.minionMaker,
     WildCard.wildCard,
     //FormChanger.formChanger,
