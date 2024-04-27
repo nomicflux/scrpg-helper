@@ -31,6 +31,11 @@ final class CharacterModel:
   val changePersonality: Observer[Personality] =
     personality.updater { (_, p) => Some(p) }
 
+  val health: Var[Option[Int]] = Var(None)
+  val healthSignal = health.signal
+  val changeHealth: Observer[Int] =
+    health.updater { (_, n) => Some(n) }
+
   type StagingKey = Background | PowerSource | Archetype | Personality |
     RedAbility.RedAbilityPhase
 
@@ -302,4 +307,14 @@ final class CharacterModel:
       }
     }
 
+  val validRedAbilities: Signal[Boolean] =
+    abilityStaging.signal.map{ as =>
+      val redAbilities: List[ChosenAbility] = as
+        .getOrElse(RedAbility.redAbilityPhase, List())
+        .collect { case ca: ChosenAbility => ca }
+      redAbilities.size == RedAbility.baseRedAbilityPool.max &&
+      redAbilities.map(_.valid).foldLeft(true)(_ && _)
+    }
+
+  val validHealth: Signal[Boolean] = healthSignal.map(_.isDefined)
 end CharacterModel

@@ -30,15 +30,20 @@ object CharGen:
     button(
       tpe := "button",
       "Next Page",
+      className <-- pageSignal.map(p => if (p == CharGenPage.HealthPage) then "hidden" else ""),
       disabled <-- pageSignal
-        .combineWith(character.validBackground, character.validPowerSource, character.validArchetype, character.validPersonality)
-        .map((p, b, ps, at, pt) =>
+        .combineWith(character.validBackground, character.validPowerSource,
+                     character.validArchetype, character.validPersonality,
+                     character.validRedAbilities, character.validHealth)
+        .map((p, b, ps, at, pt, ra, h) =>
           p match {
             case CharGenPage.BackgroundPage  => !b
             case CharGenPage.PowerSourcePage => !ps
             case CharGenPage.ArchetypePage   => !at
             case CharGenPage.PersonalityPage => !pt
-            case CharGenPage.RedAbilityPage  => true
+            case CharGenPage.RedAbilityPage  => !ra
+            case CharGenPage.RetconPage      => false
+            case CharGenPage.HealthPage      => true
           }
         ),
       onClick --> { _ => advancePage.onNext(()) }
@@ -53,6 +58,7 @@ object CharGen:
     button(
       tpe := "button",
       "Previous Page",
+      className <-- pageSignal.map(p => if (p == CharGenPage.BackgroundPage) then "hidden" else ""),
       disabled <-- pageSignal.map(p =>
         p match {
           case CharGenPage.BackgroundPage => true
@@ -98,12 +104,24 @@ object CharGen:
         ),
         RenderRedAbilities.renderRedAbilities(character)
       ),
+      div(
+        className <-- pageSignal.map(p =>
+          if p == CharGenPage.RetconPage then "" else "hidden"
+        ),
+        RenderRetcon.renderRetcon(character)
+      ),
+      div(
+        className <-- pageSignal.map(p =>
+          if p == CharGenPage.HealthPage then "" else "hidden"
+        ),
+        RenderHealth.renderHealth(character)
+      ),
     )
   end renderPage
 end CharGen
 
 enum CharGenPage:
-  case BackgroundPage, PowerSourcePage, ArchetypePage, PersonalityPage, RedAbilityPage
+  case BackgroundPage, PowerSourcePage, ArchetypePage, PersonalityPage, RedAbilityPage, RetconPage, HealthPage
 end CharGenPage
 
 final class CharGenModel:
@@ -116,10 +134,14 @@ final class CharGenModel:
       case CharGenPage.PowerSourcePage => CharGenPage.ArchetypePage
       case CharGenPage.ArchetypePage   => CharGenPage.PersonalityPage
       case CharGenPage.PersonalityPage => CharGenPage.RedAbilityPage
+      case CharGenPage.RedAbilityPage  => CharGenPage.RetconPage
+      case CharGenPage.RetconPage      => CharGenPage.HealthPage
       case _                           => CharGenPage.BackgroundPage
   }
   val retreatPage: Observer[Unit] = page.updater { (p, _) =>
     p match
+      case CharGenPage.HealthPage      => CharGenPage.RetconPage
+      case CharGenPage.RetconPage      => CharGenPage.RedAbilityPage
       case CharGenPage.RedAbilityPage  => CharGenPage.PersonalityPage
       case CharGenPage.PersonalityPage => CharGenPage.ArchetypePage
       case CharGenPage.ArchetypePage   => CharGenPage.PowerSourcePage
