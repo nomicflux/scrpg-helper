@@ -7,7 +7,6 @@ object PhysicalPowerhouse:
   import scrpgHelper.rolls.Die.d
 
   val powers = List(
-    Power.strength,
     Power.densityControl,
     Power.leaping,
     Power.signatureWeapon,

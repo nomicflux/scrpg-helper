@@ -7,7 +7,7 @@ enum EffectDieType:
 
     def getEffect(n: Int, m: Int, l: Int): Int = this match
         case Min => Seq(n, m, l).min
-        case Mid => Seq(n, m, l).sortWith(_ < _).drop(1).head
+        case Mid => Seq(n, m, l).sortWith(_ < _).drop(1).headOption.getOrElse(0)
         case Max => Seq(n, m, l).max
     end getEffect
 end EffectDieType

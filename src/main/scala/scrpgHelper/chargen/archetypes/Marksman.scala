@@ -13,6 +13,7 @@ object Marksman:
     _ => true,
     1,
     List(
+      Power.signatureWeapon,
       Power.signatureVehicle,
       Power.swinging,
     ) ++ Power.athleticPowers ++ Power.intellectualPowers ++ Power.technologicalPowers,

@@ -46,7 +46,7 @@ object PowerSource:
     number,
     abilityPools,
     List(),
-    powerList,
+    powerList.distinct,
     archetypeDiePool,
     None,
     None
@@ -64,7 +64,7 @@ object PowerSource:
     number,
     abilityPools,
     mandatoryPowers,
-    powerList,
+    (mandatoryPowers ++ powerList).distinct,
     archetypeDiePool,
     None,
     None
@@ -83,7 +83,7 @@ object PowerSource:
     number,
     abilityPools,
     List(),
-    powerList,
+    powerList.distinct,
     archetypeDiePool,
     extraQuality,
     extraPower

@@ -6,6 +6,7 @@ lazy val scrpgHelper = project.in(file("."))
     .settings(
       scalaVersion := "3.3.1",
       scalaJSUseMainModuleInitializer := true,
+      scalaJSLinkerConfig ~= { _.withSourceMap(true) },
       scalaJSLinkerConfig ~= {
         _.withModuleKind(ModuleKind.ESModule)
             .withModuleSplitStyle(ModuleSplitStyle.SmallModulesFor(List("scprgHelper")))

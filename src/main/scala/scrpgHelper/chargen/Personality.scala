@@ -10,10 +10,11 @@ case class Personality(
     statusDice: Map[Status, Die]
 ):
   def valid(
-      powers: List[Power],
       qualities: List[Quality],
       abilities: List[ChosenAbility]
-  ): Boolean = false
+  ): Boolean =
+    qualities.map(_.name != "").foldLeft(true)(_ && _) &&
+        abilities.map(_.valid).foldLeft(true)(_ && _)
 end Personality
 
 object Personality:

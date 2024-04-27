@@ -5,13 +5,18 @@ import scala.reflect.TypeTest
 final class AbilityChoiceId
 
 trait AbilityChoice:
+  type Item
+
   val id: AbilityChoiceId
   val getPower: Option[Power]
   val getQuality: Option[Quality]
   val getAction: Option[Action]
   val getEnergy: Option[Energy]
 
+  def itemName(i: Item): String
+  def withChoice(i: Item): AbilityChoice
   def withoutChoice: AbilityChoice
+  def validateFn: List[Item] => Boolean
   def validate(l: List[AbilityChoice]): Boolean
 end AbilityChoice
 
@@ -23,13 +28,13 @@ object AbilityChoice:
     l.contains(power)
 
   def powerCategory(powerCategory: PowerCategory)(l: List[Power]): Boolean =
-    l == l.filter(_.category == powerCategory)
+    !l.filter(_.category == powerCategory).isEmpty
 
   def intersection[A](toIntersect: List[A])(l: List[A]): Boolean =
     !l.filter(a => toIntersect.toSet.contains(a)).isEmpty
 
   def qualityCategory(qualityCategory: QualityCategory)(l: List[Quality]): Boolean =
-    l == l.filter(_.category == qualityCategory)
+    !l.filter(_.category == qualityCategory).isEmpty
 
   def numChosen(l: List[AbilityChoice]): Int =
     l.map(ac =>
@@ -46,6 +51,7 @@ case class PowerQualityChoice(
     powerQuality: Option[Power | Quality],
     validateFn: List[Power | Quality] => Boolean
 ) extends AbilityChoice:
+  type Item = Power | Quality
   val getPower: Option[Power] = powerQuality.flatMap { pq =>
     pq match
       case p: Power => Some(p)
@@ -62,6 +68,10 @@ case class PowerQualityChoice(
   def withChoice(pq: Power | Quality): PowerQualityChoice =
     copy(powerQuality = Some(pq))
   def withoutChoice: PowerQualityChoice = copy(powerQuality = None)
+
+  def itemName(pq: Item): String = pq match
+    case p: Power => p.name
+    case q: Quality => q.name
 
   override def toString(): String =
     s"PowerQualityChoice($powerQuality)"
@@ -91,6 +101,7 @@ case class PowerChoice(
     power: Option[Power],
     validateFn: List[Power] => Boolean
 ) extends AbilityChoice:
+  type Item = Power
   val getPower: Option[Power] = power
   val getQuality: Option[Quality] = None
   val getAction: Option[Action] = None
@@ -98,6 +109,8 @@ case class PowerChoice(
 
   def withChoice(p: Power): PowerChoice = copy(power = Some(p))
   def withoutChoice: PowerChoice = copy(power = None)
+
+  def itemName(p: Power): String = p.name
 
   override def toString(): String =
     s"PowerChoice($power)"
@@ -121,6 +134,7 @@ case class QualityChoice(
     quality: Option[Quality],
     validateFn: List[Quality] => Boolean
 ) extends AbilityChoice:
+  type Item = Quality
   val getPower: Option[Power] = None
   val getQuality: Option[Quality] = quality
   val getAction: Option[Action] = None
@@ -128,6 +142,8 @@ case class QualityChoice(
 
   def withChoice(q: Quality): QualityChoice = copy(quality = Some(q))
   def withoutChoice: QualityChoice = copy(quality = None)
+
+  def itemName(q: Quality): String = q.name
 
   override def toString(): String =
     s"QualityChoice($quality)"
@@ -151,6 +167,8 @@ case class ActionChoice(
     action: Option[Action],
     validateFn: List[Action] => Boolean
 ) extends AbilityChoice:
+  type Item = Action
+
   val getPower: Option[Power] = None
   val getQuality: Option[Quality] = None
   val getAction: Option[Action] = action
@@ -158,6 +176,8 @@ case class ActionChoice(
 
   def withChoice(a: Action): ActionChoice = copy(action = Some(a))
   def withoutChoice: ActionChoice = copy(action = None)
+
+  def itemName(a: Item): String = a.toString
 
   override def toString(): String =
     s"ActionChoice($action)"
@@ -181,6 +201,8 @@ case class EnergyChoice(
     energy: Option[Energy],
     validateFn: List[Energy] => Boolean
 ) extends AbilityChoice:
+  type Item = Energy
+
   val getPower: Option[Power] = None
   val getQuality: Option[Quality] = None
   val getAction: Option[Action] = None
@@ -188,6 +210,8 @@ case class EnergyChoice(
 
   def withChoice(e: Energy): EnergyChoice = copy(energy = Some(e))
   def withoutChoice: EnergyChoice = copy(energy = None)
+
+  def itemName(e: Item): String = e.toString
 
   override def toString(): String =
     s"EnergyChoice($energy)"

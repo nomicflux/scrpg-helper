@@ -55,7 +55,10 @@ object RenderPersonality:
       Personality.personalities.map(renderPersonality(character, _))
     )
 
-  def renderPersonality(character: CharacterModel, personality: Personality): Element =
+  def renderPersonality(
+      character: CharacterModel,
+      personality: Personality
+  ): Element =
     tr(
       className := "personality-row",
       className <-- model.rollsSignal
@@ -74,26 +77,69 @@ object RenderPersonality:
       ),
       td(personality.number.toString),
       td(personality.name),
-      td(),
-      td(RenderAbility.renderAbility(character,
-                                     personality,
-                                     personality.outAbilityPool,
-                                     personality.outAbilityPool.abilities.head,
-                                     character.abilityChoicesSignal(personality))),
+      td(renderPersonalityQuality(character, personality)),
+      td(personality.outAbilityPool.abilities.headOption.map { template =>
+        RenderAbility.renderAbility(
+          character,
+          personality,
+          personality.outAbilityPool,
+          template,
+          character.abilityChoicesSignal(personality)
+        )
+      }),
       onMouseDown --> { _ =>
         character.changePersonality.onNext(personality)
-        character.addAbility(personality).onNext(personality.outAbilityPool.abilities.head)
+        personality.outAbilityPool.abilities.headOption.foreach { template =>
+          character
+            .addAbility(personality)
+            .onNext(template)
+        }
       },
       onFocus --> { _ =>
         character.changePersonality.onNext(personality)
-        character.addAbility(personality).onNext(personality.outAbilityPool.abilities.head)
+        personality.outAbilityPool.abilities.headOption.foreach { template =>
+          character
+            .addAbility(personality)
+            .onNext(template)
+        }
       },
       onClick --> { _ =>
         character.changePersonality.onNext(personality)
-        character.addAbility(personality).onNext(personality.outAbilityPool.abilities.head)
+        personality.outAbilityPool.abilities.headOption.foreach { template =>
+          character
+            .addAbility(personality)
+            .onNext(template)
+        }
       }
     )
   end renderPersonality
+
+  def renderPersonalityQuality(
+      character: CharacterModel,
+      personality: Personality
+  ): Element =
+    val quality: Var[Quality] = Var(
+      Quality.personalityQuality(
+        s"${personality.name} Personal Quality",
+        personality
+      )
+    )
+    val nameUpdater: Observer[String] = quality.updater { (q, n) =>
+      character.removeQuality(personality).onNext((q, Die.d(8)))
+      val newQ = q.changeName(n)
+      character.addQuality(personality).onNext((newQ, Die.d(8)))
+      newQ
+    }
+    div(
+      Die.d(8).toString,
+      ":",
+      input(
+        tpe := "text",
+        value <-- quality.signal.map(_.name),
+        onInput.mapToValue --> nameUpdater
+      )
+    )
+  end renderPersonalityQuality
 end RenderPersonality
 
 final class PersonalityModel:

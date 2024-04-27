@@ -31,13 +31,14 @@ object CharGen:
       tpe := "button",
       "Next Page",
       disabled <-- pageSignal
-        .combineWith(character.validBackground, character.validPowerSource, character.validArchetype)
-        .map((p, b, ps, at) =>
+        .combineWith(character.validBackground, character.validPowerSource, character.validArchetype, character.validPersonality)
+        .map((p, b, ps, at, pt) =>
           p match {
             case CharGenPage.BackgroundPage  => !b
             case CharGenPage.PowerSourcePage => !ps
             case CharGenPage.ArchetypePage   => !at
-            case CharGenPage.PersonalityPage => false
+            case CharGenPage.PersonalityPage => !pt
+            case CharGenPage.RedAbilityPage  => true
           }
         ),
       onClick --> { _ => advancePage.onNext(()) }
@@ -91,12 +92,18 @@ object CharGen:
         ),
         RenderPersonality.renderPersonalities(character)
       ),
+      div(
+        className <-- pageSignal.map(p =>
+          if p == CharGenPage.RedAbilityPage then "" else "hidden"
+        ),
+        RenderRedAbilities.renderRedAbilities(character)
+      ),
     )
   end renderPage
 end CharGen
 
 enum CharGenPage:
-  case BackgroundPage, PowerSourcePage, ArchetypePage, PersonalityPage
+  case BackgroundPage, PowerSourcePage, ArchetypePage, PersonalityPage, RedAbilityPage
 end CharGenPage
 
 final class CharGenModel:
@@ -108,10 +115,12 @@ final class CharGenModel:
       case CharGenPage.BackgroundPage  => CharGenPage.PowerSourcePage
       case CharGenPage.PowerSourcePage => CharGenPage.ArchetypePage
       case CharGenPage.ArchetypePage   => CharGenPage.PersonalityPage
-      case _                           => CharGenPage.PersonalityPage
+      case CharGenPage.PersonalityPage => CharGenPage.RedAbilityPage
+      case _                           => CharGenPage.BackgroundPage
   }
   val retreatPage: Observer[Unit] = page.updater { (p, _) =>
     p match
+      case CharGenPage.RedAbilityPage  => CharGenPage.PersonalityPage
       case CharGenPage.PersonalityPage => CharGenPage.ArchetypePage
       case CharGenPage.ArchetypePage   => CharGenPage.PowerSourcePage
       case CharGenPage.PowerSourcePage => CharGenPage.BackgroundPage

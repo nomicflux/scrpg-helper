@@ -205,7 +205,7 @@ object ChallengeBox:
       ns: List[(Option[String], Int)]
   ): ChallengeBox =
     if (ns.size == 1) {
-      createSimpleChallengeBox(boxName, ns.head._1, ns.head._2)
+      createSimpleChallengeBox(boxName, ns.headOption.flatMap(_._1), ns.headOption.fold(0)(_._2))
     } else {
       ChallengeBox(
         new ChallengeBoxId(),

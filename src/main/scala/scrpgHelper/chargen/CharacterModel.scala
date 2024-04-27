@@ -10,36 +10,37 @@ import com.raquo.laminar.api.L.{*, given}
 import scrpgHelper.rolls.Die
 
 final class CharacterModel:
-  val qualities: Var[List[(Quality, Die)]] = Var(List())
-  val powers: Var[List[(Power, Die)]] = Var(List())
-  val abilities: Var[List[Ability[_]]] = Var(List())
   val background: Var[Option[Background]] = Var(None)
   val backgroundSignal = background.signal
   val changeBackground: Observer[Background] = background.updater { (_, b) =>
     Some(b)
   }
+
   val powerSource: Var[Option[PowerSource]] = Var(None)
   val powerSourceSignal = powerSource.signal
   val changePowerSource: Observer[PowerSource] =
     powerSource.updater { (_, ps) => Some(ps) }
+
   val archetype: Var[Option[Archetype]] = Var(None)
   val archetypeSignal = archetype.signal
   val changeArchetype: Observer[Archetype] =
     archetype.updater { (_, at) => Some(at) }
+
   val personality: Var[Option[Personality]] = Var(None)
   val personalitySignal = personality.signal
   val changePersonality: Observer[Personality] =
     personality.updater { (_, p) => Some(p) }
 
-  type StagingKey = Background | PowerSource | Archetype | Personality
+  type StagingKey = Background | PowerSource | Archetype | Personality |
+    RedAbility.RedAbilityPhase
 
   val qualityStaging: Var[Map[StagingKey, List[(Quality, Die)]]] = Var(Map())
   def qualitiesSignal(
       stagingKey: Signal[Option[StagingKey]]
   ): Signal[List[(Quality, Die)]] =
-    qualities.signal
-      .combineWith(qualityStaging.signal, stagingKey)
-      .map((qs, m, mb) => qs ++ mb.flatMap(b => m.get(b)).getOrElse(List()))
+    qualityStaging.signal
+      .combineWith(stagingKey)
+      .map((m, mb) => mb.flatMap(b => m.get(b)).getOrElse(List()))
 
   def addQuality(stagingKey: StagingKey): Observer[(Quality, Die)] =
     qualityStaging.updater { case (m, (q, d)) =>
@@ -56,9 +57,9 @@ final class CharacterModel:
   def powersSignal(
       stagingKey: Signal[Option[StagingKey]]
   ): Signal[List[(Power, Die)]] =
-    powers.signal
-      .combineWith(powerStaging.signal, stagingKey)
-      .map((ps, m, mps) => ps ++ mps.flatMap(ps => m.get(ps)).getOrElse(List()))
+    powerStaging.signal
+      .combineWith(stagingKey)
+      .map((m, mps) => mps.flatMap(ps => m.get(ps)).getOrElse(List()))
 
   def addPower(stagingKey: StagingKey): Observer[(Power, Die)] =
     powerStaging.updater { case (m, (p, d)) =>
@@ -75,9 +76,9 @@ final class CharacterModel:
   def abilitiesSignal(
       stagingKey: Signal[Option[StagingKey]]
   ): Signal[List[Ability[_]]] =
-    abilities.signal
-      .combineWith(abilityStaging.signal, stagingKey)
-      .map((as, m, mb) => as ++ mb.flatMap(b => m.get(b)).getOrElse(List()))
+    abilityStaging.signal
+      .combineWith(stagingKey)
+      .map((m, mb) => mb.flatMap(b => m.get(b)).getOrElse(List()))
 
   def addAbility(stagingKey: StagingKey): Observer[Ability[_]] =
     abilityStaging.updater { (m, a) =>
@@ -103,40 +104,62 @@ final class CharacterModel:
       else m
     }
 
-  val abilityChoice: Var[Map[StagingKey, Map[AbilityTemplate, ChosenAbility]]] =
-    Var(
-      (PowerSource.powerSources
-        .map(ps =>
-          ps ->
-            (ps.abilityPools
+  val powerSourceAbilities: List[(PowerSource, Map[AbilityTemplate, ChosenAbility])] =
+    PowerSource.powerSources
+      .map(ps =>
+        ps ->
+          (ps.abilityPools
+            .flatMap(ap => ap.abilities.map(a => a -> a.toChosenAbility(ap)))
+            .toMap)
+      )
+
+  val archetypeAbilities: List[(Archetype, Map[AbilityTemplate, ChosenAbility])] =
+   Archetype.archetypes
+        .map(at =>
+          at ->
+            (at.abilityPools
               .flatMap(ap => ap.abilities.map(a => a -> a.toChosenAbility(ap)))
               .toMap)
-        ) ++
-        Archetype.archetypes
-          .map(at =>
-            at ->
-              (at.abilityPools
-                .flatMap(ap =>
-                  ap.abilities.map(a => a -> a.toChosenAbility(ap))
-                )
-                .toMap)
-          )).toMap
-    )
+        )
+
+  val personalityAbilities: List[(Personality, Map[AbilityTemplate, ChosenAbility])] =
+    Personality.personalities
+        .map(pt =>
+          pt -> (pt.outAbilityPool.abilities.map(a =>
+            a -> a.toChosenAbility(pt.outAbilityPool)
+          ).toMap)
+        )
+
+  val redAbilities: List[(RedAbility.RedAbilityPhase, Map[AbilityTemplate, ChosenAbility])] =
+    List(
+        RedAbility.redAbilityPhase -> RedAbility.baseRedAbilityPool.abilities
+          .map(a => a -> a.toChosenAbility(RedAbility.baseRedAbilityPool)).toMap
+      )
+
+  val baseAbilities: Map[StagingKey, Map[AbilityTemplate, ChosenAbility]] =
+    (powerSourceAbilities ++ archetypeAbilities ++ personalityAbilities ++ redAbilities).toMap
+
+  val abilityChoice: Var[Map[StagingKey, Map[AbilityTemplate, ChosenAbility]]] =
+    Var(baseAbilities)
   def abilityChoicesSignal(
       stagingKey: StagingKey
   ): Signal[Map[AbilityTemplate, ChosenAbility]] =
-    abilityChoice.signal.map(acs => acs.get(stagingKey).head)
+    abilityChoice.signal.map(acs =>
+      acs.get(stagingKey).headOption.getOrElse(Map())
+    )
   def addAbilityChoice(
       stagingKey: StagingKey,
       ability: AbilityTemplate
   ): Observer[AbilityChoice] =
     abilityChoice.updater { (acs, choice) =>
       val choices: Map[AbilityTemplate, ChosenAbility] =
-        acs.get(stagingKey).head
-      val currChoice: ChosenAbility = choices.get(ability).head
-      acs + (stagingKey -> (choices + (ability -> currChoice.applyChoice(
-        choice
-      ))))
+        acs.getOrElse(stagingKey, Map())
+      val mCurrChoice: Option[ChosenAbility] = choices.get(ability).headOption
+      mCurrChoice.fold(acs) { currChoice =>
+        acs + (stagingKey -> (choices + (ability -> currChoice.applyChoice(
+          choice
+        ))))
+      }
     }
   def removeAbilityChoice(
       stagingKey: StagingKey,
@@ -144,12 +167,57 @@ final class CharacterModel:
   ): Observer[AbilityChoice] =
     abilityChoice.updater { (acs, choice) =>
       val choices: Map[AbilityTemplate, ChosenAbility] =
-        acs.get(stagingKey).head
-      val currChoice: ChosenAbility = choices.get(ability).head
-      acs + (stagingKey -> (choices + (ability -> currChoice.removeChoice(
-        choice
-      ))))
+        acs.getOrElse(stagingKey, Map())
+      val mCurrChoice: Option[ChosenAbility] = choices.get(ability)
+      mCurrChoice.fold(acs) { currChoice =>
+        acs + (stagingKey -> (choices + (ability -> currChoice.removeChoice(
+          choice
+        ))))
+      }
     }
+
+  val allQualities: Signal[List[(Quality, Die)]] = qualityStaging.signal
+    .combineWith(
+      backgroundSignal,
+      powerSourceSignal,
+      archetypeSignal,
+      personalitySignal
+    )
+    .map((quals, mbg, mps, mat, mpt) =>
+      mbg.fold(List())(bg => quals.getOrElse(bg, List())) ++
+        mps.fold(List())(ps => quals.getOrElse(ps, List())) ++
+        mat.fold(List())(at => quals.getOrElse(at, List())) ++
+        mpt.fold(List())(pt => quals.getOrElse(pt, List()))
+    )
+
+  val allPowers: Signal[List[(Power, Die)]] = powerStaging.signal
+    .combineWith(
+      backgroundSignal,
+      powerSourceSignal,
+      archetypeSignal,
+      personalitySignal
+    )
+    .map((pows, mbg, mps, mat, mpt) =>
+      mbg.fold(List())(bg => pows.getOrElse(bg, List())) ++
+        mps.fold(List())(ps => pows.getOrElse(ps, List())) ++
+        mat.fold(List())(at => pows.getOrElse(at, List())) ++
+        mpt.fold(List())(pt => pows.getOrElse(pt, List()))
+    )
+
+  val allAbilities: Signal[List[ChosenAbility]] = abilityStaging.signal
+    .combineWith(
+      backgroundSignal,
+      powerSourceSignal,
+      archetypeSignal,
+      personalitySignal
+    )
+    .map((abils, mbg, mps, mat, mpt) =>
+      mbg.fold(List())(bg => abils.getOrElse(bg, List())) ++
+        mps.fold(List())(ps => abils.getOrElse(ps, List())) ++
+        mat.fold(List())(at => abils.getOrElse(at, List())) ++
+        mpt.fold(List())(pt => abils.getOrElse(pt, List()))
+    )
+    .map(_.collect { case ca: ChosenAbility => ca })
 
   val validBackground: Signal[Boolean] = backgroundSignal
     .combineWith(qualityStaging.signal, abilityStaging.signal)
@@ -186,51 +254,52 @@ final class CharacterModel:
       }
     }
 
-    val validArchetype: Signal[Boolean] = archetypeSignal
-      .combineWith(
-        powerSourceSignal.map(_.toList.flatMap(_.archetypeDiePool)),
-        powerStaging.signal,
-        qualityStaging.signal,
-        abilityStaging.signal,
-        abilityChoice.signal
-      ).map { (mat, dice, pm, qm, asm, am) =>
-        mat.fold(false) { at =>
-          val powers: List[Power] = pm.getOrElse(at, List()).map(_._1)
-          val qualities: List[Quality] = qm.getOrElse(at, List()).map(_._1)
-          val selectedAbilities: Set[AbilityId] = asm
-            .getOrElse(at, List())
-            .collect { case ca: ChosenAbility => ca }
-            .map(_.id)
-            .toSet
-          val abilityMap: Map[AbilityTemplate, ChosenAbility] =
-            am.getOrElse(at, Map())
-          val abilities: List[ChosenAbility] =
-            abilityMap.values.toList.filter(a => selectedAbilities.contains(a.id))
-          at.valid(dice, powers, qualities, abilities)
-        }
+  val validArchetype: Signal[Boolean] = archetypeSignal
+    .combineWith(
+      powerSourceSignal.map(_.toList.flatMap(_.archetypeDiePool)),
+      powerStaging.signal,
+      qualityStaging.signal,
+      abilityStaging.signal,
+      abilityChoice.signal
+    )
+    .map { (mat, dice, pm, qm, asm, am) =>
+      mat.fold(false) { at =>
+        val powers: List[Power] = pm.getOrElse(at, List()).map(_._1)
+        val qualities: List[Quality] = qm.getOrElse(at, List()).map(_._1)
+        val selectedAbilities: Set[AbilityId] = asm
+          .getOrElse(at, List())
+          .collect { case ca: ChosenAbility => ca }
+          .map(_.id)
+          .toSet
+        val abilityMap: Map[AbilityTemplate, ChosenAbility] =
+          am.getOrElse(at, Map())
+        val abilities: List[ChosenAbility] =
+          abilityMap.values.toList.filter(a => selectedAbilities.contains(a.id))
+        at.valid(dice, powers, qualities, abilities)
       }
+    }
 
-    val validPersonality: Signal[Boolean] = personalitySignal
-      .combineWith(
-        powerStaging.signal,
-        qualityStaging.signal,
-        abilityStaging.signal,
-        abilityChoice.signal
-      ).map { (mp, pm, qm, asm, am) =>
-        mp.fold(false) { p =>
-          val powers: List[Power] = pm.getOrElse(p, List()).map(_._1)
-          val qualities: List[Quality] = qm.getOrElse(p, List()).map(_._1)
-          val selectedAbilities: Set[AbilityId] = asm
-            .getOrElse(p, List())
-            .collect { case ca: ChosenAbility => ca }
-            .map(_.id)
-            .toSet
-          val abilityMap: Map[AbilityTemplate, ChosenAbility] =
-            am.getOrElse(p, Map())
-          val abilities: List[ChosenAbility] =
-            abilityMap.values.toList.filter(a => selectedAbilities.contains(a.id))
-          p.valid(powers, qualities, abilities)
-        }
+  val validPersonality: Signal[Boolean] = personalitySignal
+    .combineWith(
+      powerStaging.signal,
+      qualityStaging.signal,
+      abilityStaging.signal,
+      abilityChoice.signal
+    )
+    .map { (mp, pm, qm, asm, am) =>
+      mp.fold(false) { p =>
+        val qualities: List[Quality] = qm.getOrElse(p, List()).map(_._1)
+        val selectedAbilities: Set[AbilityId] = asm
+          .getOrElse(p, List())
+          .collect { case ca: ChosenAbility => ca }
+          .map(_.id)
+          .toSet
+        val abilityMap: Map[AbilityTemplate, ChosenAbility] =
+          am.getOrElse(p, Map())
+        val abilities: List[ChosenAbility] =
+          abilityMap.values.toList.filter(a => selectedAbilities.contains(a.id))
+        p.valid(qualities, abilities)
       }
+    }
 
 end CharacterModel

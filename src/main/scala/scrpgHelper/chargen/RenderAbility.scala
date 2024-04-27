@@ -39,7 +39,7 @@ object RenderAbility:
       template: AbilityTemplate,
       chosenSignal: Signal[Map[AbilityTemplate, ChosenAbility]]
   ): Element =
-    val chosenAbility = chosenSignal.map(_.get(template).head)
+    val chosenAbility: Signal[Option[ChosenAbility]] = chosenSignal.map(_.get(template))
     val hovering: Var[Boolean] = Var(false)
 
     div(
@@ -67,16 +67,16 @@ object RenderAbility:
       span(
         className := "ability-actions",
         child.text <-- chosenAbility.map(
-          _.actions.map(_.toSymbol).foldLeft("")(_ + _)
+          _.fold("???")(_.actions.map(_.toSymbol).foldLeft("")(_ + _))
         )
       ),
       span(
         className := "ability-name",
-        child.text <-- chosenAbility.map(_.name)
+        template.name ,
       ),
       span(
         className := "ability-category",
-        child.text <-- chosenAbility.map(_.category.toAbbreviation)
+        template.category.toAbbreviation,
       ),
       span(
         className := "ability-description",
@@ -92,8 +92,10 @@ object RenderAbility:
       onMouseOver --> { _ => hovering.update { _ => true } },
       onMouseOut --> { _ => hovering.update { _ => false } },
       onBlur --> { _ => hovering.update { _ => false } },
-      onClick.compose(_.withCurrentValueOf(chosenAbility)) --> { (_, chosen) =>
-        character.toggleAbility(stagingKey).onNext(chosen)
+      onClick.compose(_.withCurrentValueOf(chosenAbility)) --> { (_, mChosen) =>
+        mChosen.foreach { chosen =>
+          character.toggleAbility(stagingKey).onNext(chosen)
+        }
       }
     )
   end renderAbility
@@ -113,6 +115,11 @@ object RenderAbility:
         case p: Personality => character.powersSignal(character.powerSourceSignal)
             .combineWith(character.powersSignal(character.archetypeSignal))
             .map(_.map(_._1) ++ _.map(_._1))
+        case ra: RedAbility.RedAbilityPhase => character.powersSignal(Signal.fromValue(Some(ra)))
+            .combineWith(
+              character.powersSignal(character.powerSourceSignal),
+              character.powersSignal(character.archetypeSignal),
+            ).map(_.map(_._1) ++ _.map(_._1) ++ _.map(_._1))
 
     val qualitySignal: Signal[List[Quality]] = stagingKey match
         case bg: Background => character.qualitiesSignal(Signal.fromValue(Some(bg))).map(_.map(_._1))
@@ -130,219 +137,90 @@ object RenderAbility:
                          character.qualitiesSignal(character.backgroundSignal),
                          character.qualitiesSignal(Signal.fromValue(Some(p))))
             .map(_.map(_._1) ++ _.map(_._1) ++ _.map(_._1) ++ _.map(_._1))
+        case ra: RedAbility.RedAbilityPhase => character.qualitiesSignal(Signal.fromValue(Some(ra)))
+            .combineWith(
+              character.qualitiesSignal(character.backgroundSignal),
+              character.qualitiesSignal(character.powerSourceSignal),
+              character.qualitiesSignal(character.archetypeSignal),
+              character.qualitiesSignal(character.personalitySignal),
+            ).map(_.map(_._1) ++ _.map(_._1) ++ _.map(_._1) ++ _.map(_._1) ++ _.map(_._1))
 
     span(
       ability.description.map { l =>
         l match
           case s: String => span(s)
           case ec: EnergyChoice =>
-            renderEnergyChoices(character, stagingKey, chosen, ability, ec)
+            renderChoices(character, stagingKey, ec, Signal.fromValue(Energy.values.toList), chosen, ability, _.getEnergy)
           case ac: ActionChoice =>
-            renderActionChoices(character, stagingKey, chosen, ability, ac)
+            renderChoices(character, stagingKey, ac, Signal.fromValue(Action.values.toList), chosen, ability, _.getAction)
           case pc: PowerChoice =>
-            renderPowerChoices(
+            renderChoices(
               character,
               stagingKey,
+              pc,
               powerSignal,
               chosen,
               ability,
-              pc
+              _.getPower,
             )
           case qc: QualityChoice =>
-            renderQualityChoices(
+            renderChoices(
               character,
               stagingKey,
+              qc,
               qualitySignal,
               chosen,
               ability,
-              qc
+              _.getQuality,
             )
           case pqc: PowerQualityChoice =>
-            renderPowerQualityChoices(
+            renderChoices(
               character,
               stagingKey,
-              powerSignal,
-              qualitySignal,
+              pqc,
+              powerSignal.combineWith(qualitySignal).map { (ps, qs) => ps ++ qs},
               chosen,
               ability,
-              pqc
+              c => c.getPower.orElse(c.getQuality),
             )
           case _: AbilityChoice => span("Not valid")
       }
     )
   end renderDescription
 
-  def renderEnergyChoices(
+  def renderChoices[Choice <: AbilityChoice](
       character: CharacterModel,
       stagingKey: character.StagingKey,
+      choice: Choice,
+      items: Signal[List[choice.Item]],
       chosen: Signal[List[ChosenAbility]],
       ability: AbilityTemplate,
-      ec: EnergyChoice
-  ): Element =
-    span(
-      onMouseOver --> { ev => ev.stopPropagation() },
-      onClick --> { ev => ev.stopPropagation() },
-      SelectWithPrevChoice[Energy](
-        Energy.values.toList.filter(e => ec.validateFn(List(e))),
-        e => e.toString
-      )
-        .render(
-          chosen.map(cas =>
-            (e: Energy, ma: Option[Energy]) =>
-              !ec.validateFn(
-                cas.flatMap(ca =>
-                  (ca.currentChoices.flatMap(_.getEnergy.toList))
-                ) :+ e
-              )
-          ),
-          character
-            .removeAbilityChoice(stagingKey, ability)
-            .contramap(e => ec.withChoice(e)),
-          character
-            .addAbilityChoice(stagingKey, ability)
-            .contramap(e => ec.withChoice(e))
-        )
-    )
-  end renderEnergyChoices
-
-  def renderActionChoices(
-      character: CharacterModel,
-      stagingKey: character.StagingKey,
-      chosen: Signal[List[ChosenAbility]],
-      ability: AbilityTemplate,
-      ac: ActionChoice
-  ): Element =
-    span(
-      onMouseOver --> { ev => ev.stopPropagation() },
-      onClick --> { ev => ev.stopPropagation() },
-      SelectWithPrevChoice[Action](
-        Action.values.toList.filter(a => ac.validateFn(List(a))),
-        a => a.toString
-      )
-        .render(
-          chosen.map(cas =>
-            (a: Action, ma: Option[Action]) =>
-              !ac.validateFn(
-                cas.flatMap(ca =>
-                  (ca.currentChoices.flatMap(_.getAction.toList))
-                ) :+ a
-              )
-          ),
-          character
-            .removeAbilityChoice(stagingKey, ability)
-            .contramap(a => ac.withChoice(a)),
-          character
-            .addAbilityChoice(stagingKey, ability)
-            .contramap(a => ac.withChoice(a))
-        )
-    )
-  end renderActionChoices
-
-  def renderPowerChoices(
-      character: CharacterModel,
-      stagingKey: character.StagingKey,
-      powers: Signal[List[Power]],
-      chosen: Signal[List[ChosenAbility]],
-      ability: AbilityTemplate,
-      pc: PowerChoice
+      retriever: AbilityChoice => Option[choice.Item]
   ): Element =
     span(
       onMouseOver --> { ev => ev.stopPropagation() },
       onClick --> { ev => ev.stopPropagation() },
       SelectWithPrevChoice
-        .forSignal[Power](
-          powers.map(_.filter(p => pc.validateFn(List(p)))),
-          p => p.name
+        .forSignal[choice.Item](
+          items.map(_.filter(i => choice.validateFn(List(i)))),
+          i => choice.itemName(i)
         )
         .render(
           chosen.map(cas =>
-            { (p: Power, mp: Option[Power]) =>
-              val chosenPowers = cas.flatMap(ca =>
-                (ca.currentChoices.flatMap(_.getPower.toList))
+            { (p: choice.Item, mp: Option[choice.Item]) =>
+              val chosenItems = cas.flatMap(ca =>
+                (ca.currentChoices.flatMap(retriever(_).toList))
               ) :+ p
-              !pc.validateFn(chosenPowers)
+              !choice.validateFn(chosenItems)
             }
           ),
           character
             .removeAbilityChoice(stagingKey, ability)
-            .contramap(p => pc.withChoice(p)),
+            .contramap(p => choice.withChoice(p)),
           character
             .addAbilityChoice(stagingKey, ability)
-            .contramap(p => pc.withChoice(p))
+            .contramap(p => choice.withChoice(p))
         )
     )
-  end renderPowerChoices
-
-  def renderQualityChoices(
-      character: CharacterModel,
-      stagingKey: character.StagingKey,
-      qualities: Signal[List[Quality]],
-      chosen: Signal[List[ChosenAbility]],
-      ability: AbilityTemplate,
-      qc: QualityChoice
-  ): Element =
-    span(
-      onMouseOver --> { ev => ev.stopPropagation() },
-      onClick --> { ev => ev.stopPropagation() },
-      SelectWithPrevChoice
-        .forSignal[Quality](
-          qualities.map(_.filter(q => qc.validateFn(List(q)))),
-          q => q.name
-        )
-        .render(
-          chosen.map(cas =>
-            (q: Quality, mq: Option[Quality]) =>
-              !qc.validateFn(
-                cas.flatMap(ca =>
-                  (ca.currentChoices.flatMap(_.getQuality.toList))
-                ) :+ q
-              )
-          ),
-          character
-            .removeAbilityChoice(stagingKey, ability)
-            .contramap(q => qc.withChoice(q)),
-          character
-            .addAbilityChoice(stagingKey, ability)
-            .contramap(q => qc.withChoice(q))
-        )
-    )
-  end renderQualityChoices
-
-  def renderPowerQualityChoices(
-      character: CharacterModel,
-      stagingKey: character.StagingKey,
-      powers: Signal[List[Power]],
-      qualities: Signal[List[Quality]],
-      chosen: Signal[List[ChosenAbility]],
-      ability: AbilityTemplate,
-      pqc: PowerQualityChoice
-  ): Element =
-    span(
-      onMouseOver --> { ev => ev.stopPropagation() },
-      onClick --> { ev => ev.stopPropagation() },
-      SelectWithPrevChoice
-        .forSignal[Power | Quality](
-          powers.combineWith(qualities).map((ps, qs) => ps ++ qs).map(_.filter(pq => pqc.validateFn(List(pq)))),
-          pq => pq match
-            case p: Power => p.name
-            case q: Quality => q.name
-        )
-        .render(
-          chosen.map(cas =>
-            (pq: Power | Quality, mpq: Option[Power | Quality]) =>
-              !pqc.validateFn(
-                cas.flatMap(ca =>
-                  (ca.currentChoices.flatMap(_.getPower.toList))
-                ) :+ pq
-              )
-          ),
-          character
-            .removeAbilityChoice(stagingKey, ability)
-            .contramap(pq => pqc.withChoice(pq)),
-          character
-            .addAbilityChoice(stagingKey, ability)
-            .contramap(pq => pqc.withChoice(pq))
-        )
-    )
-  end renderPowerQualityChoices
+  end renderChoices
 end RenderAbility
