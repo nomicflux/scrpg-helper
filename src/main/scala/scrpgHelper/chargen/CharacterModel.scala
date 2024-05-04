@@ -9,6 +9,8 @@ import com.raquo.laminar.api.L.{*, given}
 
 import scrpgHelper.rolls.Die
 
+import scrpgHelper.status.Status
+
 final class CharacterModel:
   val background: Var[Option[Background]] = Var(None)
   val backgroundSignal = background.signal
@@ -29,7 +31,10 @@ final class CharacterModel:
   val personality: Var[Option[Personality]] = Var(None)
   val personalitySignal = personality.signal
   val changePersonality: Observer[Personality] =
-    personality.updater { (_, p) => Some(p) }
+    personality.updater { (_, p) =>
+      toggleAbility(p).onNext(p.ability)
+      Some(p)
+    }
 
   val health: Var[Option[Int]] = Var(None)
   val healthSignal = health.signal
@@ -39,7 +44,10 @@ final class CharacterModel:
   type StagingKey = Background | PowerSource | Archetype | Personality |
     RedAbility.RedAbilityPhase
 
-  val qualityStaging: Var[Map[StagingKey, List[(Quality, Die)]]] = Var(Map())
+  val basePersonalityQualities: Map[StagingKey, List[(Quality, Die)]] =
+    Personality.personalities.map(p => p -> List((p.baseQuality, Die.d(8)))).toMap
+
+  val qualityStaging: Var[Map[StagingKey, List[(Quality, Die)]]] = Var(basePersonalityQualities)
   def qualitiesSignal(
       stagingKey: Signal[Option[StagingKey]]
   ): Signal[List[(Quality, Die)]] =
@@ -50,7 +58,11 @@ final class CharacterModel:
   def addQuality(stagingKey: StagingKey): Observer[(Quality, Die)] =
     qualityStaging.updater { case (m, (q, d)) =>
       val newList = m.getOrElse(stagingKey, List()) :+ (q, d)
-      m + (stagingKey -> newList)
+      if (newList == newList.distinct) {
+        m + (stagingKey -> newList)
+      } else {
+        m
+      }
     }
   def removeQuality(stagingKey: StagingKey): Observer[(Quality, Die)] =
     qualityStaging.updater { case (m, (q, d)) =>
@@ -100,7 +112,7 @@ final class CharacterModel:
     abilityStaging.updater { (m, a) =>
       val currList = m.getOrElse(stagingKey, List())
       val newList =
-        if currList.contains(a) then currList.filter(_ != a)
+        if (currList.contains(a) && a.status != Status.Out) then currList.filter(_ != a)
         else (currList :+ a)
       if a.inPool.runValidation(newList.collect { case ca: ChosenAbility =>
           ca

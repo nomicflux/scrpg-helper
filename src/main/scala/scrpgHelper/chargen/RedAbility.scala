@@ -34,21 +34,9 @@ object RedAbility:
       ),
       allowedCategory match
         case pc: PowerCategory =>
-          { (_qs, ps) =>
-              //println(s"Powers: ${ps}")
-              //println(s"Power Categories: ${ps.map(_.category).toSet}")
-              //println(s"Needed Power Category: ${pc}")
-              //println(s"Has Power Category: ${ps.map(_.category).toSet.contains(pc)}")
-              ps.map(_.category).toSet.contains(pc)
-          }
+          (_qs, ps) => ps.map(_.category).toSet.contains(pc)
         case qc: QualityCategory =>
-          { (qs, _ps) =>
-              //println(s"Qualities: ${qs}")
-              //println(s"Quality Categories: ${qs.map(_.category).toSet}")
-              //println(s"Needed Quality Category: ${qc}")
-              //println(s"Has Quality Category: ${qs.map(_.category).toSet.contains(qc)}")
-              qs.map(_.category).toSet.contains(qc)
-          }
+          (qs, _ps) => qs.map(_.category).toSet.contains(qc)
     )
 
   def allowedRedAbilities(

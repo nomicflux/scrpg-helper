@@ -3,12 +3,18 @@ package scrpgHelper.chargen
 import scrpgHelper.rolls.Die
 import scrpgHelper.status.Status
 
+type PersonalityId = Int
+
 case class Personality(
-    number: Int,
+    number: PersonalityId,
     name: String,
     outAbilityPool: AbilityPool,
-    statusDice: Map[Status, Die]
+    statusDice: Map[Status, Die],
+    baseQuality: Quality
 ):
+  def ability: ChosenAbility = outAbilityPool.abilities.head.toChosenAbility(outAbilityPool)
+  def changeQualityName(qname: String) = copy(baseQuality = baseQuality.copy(name = qname))
+
   def valid(
       qualities: List[Quality],
       abilities: List[ChosenAbility]
@@ -21,7 +27,7 @@ object Personality:
   import scrpgHelper.rolls.Die.d
 
   def apply(
-      number: Int,
+      number: PersonalityId,
       name: String,
       outAbilityText: Description,
       statusDice: List[Die]
@@ -42,7 +48,8 @@ object Personality:
       statusDice
         .zip(List(Status.Green, Status.Yellow, Status.Red))
         .map { case (a, b) => (b, a) }
-        .toMap
+        .toMap,
+      Quality.personalityQuality(s"${name} Personal Quality", number)
     )
   val loneWolf = Personality(
     1,

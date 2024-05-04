@@ -89,27 +89,12 @@ object RenderPersonality:
       }),
       onMouseDown --> { _ =>
         character.changePersonality.onNext(personality)
-        personality.outAbilityPool.abilities.headOption.foreach { template =>
-          character
-            .addAbility(personality)
-            .onNext(template)
-        }
       },
       onFocus --> { _ =>
         character.changePersonality.onNext(personality)
-        personality.outAbilityPool.abilities.headOption.foreach { template =>
-          character
-            .addAbility(personality)
-            .onNext(template)
-        }
       },
       onClick --> { _ =>
         character.changePersonality.onNext(personality)
-        personality.outAbilityPool.abilities.headOption.foreach { template =>
-          character
-            .addAbility(personality)
-            .onNext(template)
-        }
       }
     )
   end renderPersonality
@@ -118,12 +103,7 @@ object RenderPersonality:
       character: CharacterModel,
       personality: Personality
   ): Element =
-    val quality: Var[Quality] = Var(
-      Quality.personalityQuality(
-        s"${personality.name} Personal Quality",
-        personality
-      )
-    )
+    val quality: Var[Quality] = Var(personality.baseQuality)
     val nameUpdater: Observer[String] = quality.updater { (q, n) =>
       character.removeQuality(personality).onNext((q, Die.d(8)))
       val newQ = q.changeName(n)

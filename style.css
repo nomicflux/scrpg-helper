@@ -1219,3 +1219,14 @@ select.selector-with-prev-choice option:selected {
   font-weight: bold;
   color: #fefefe;
 }
+
+.ability-choice-chosen {
+  font-size: 1.1em;
+  font-weight: bold;
+  border: 1px solid grey;
+  border-radius: 10%;
+  margin: 0;
+  padding-left: 0.1em;
+  padding-right: 0.1em;
+  background-color: rgba(255, 255, 255, 0.3);
+}

@@ -10,6 +10,8 @@ import com.raquo.laminar.api.L.{*, given}
 import scrpgHelper.components.SelectWithPrevChoice
 
 object RenderAbility:
+  import scrpgHelper.status.Status
+
   def renderChosenAbility(
     ability: ChosenAbility
   ): Element =
@@ -57,6 +59,7 @@ object RenderAbility:
       choice: Choice,
   ): Element =
     span(
+      className := "ability-choice-chosen",
       choice.choiceName("<none>")
     )
   end renderChosenChoice
@@ -154,10 +157,10 @@ object RenderAbility:
       onMouseOver --> { _ => hovering.update { _ => true } },
       onMouseOut --> { _ => hovering.update { _ => false } },
       onBlur --> { _ => hovering.update { _ => false } },
-      onClick.compose(_.withCurrentValueOf(chosenAbility)) --> { (_, mChosen) =>
-        mChosen.foreach { chosen =>
-          character.toggleAbility(stagingKey).onNext(chosen)
-        }
+      onClick.compose(_.withCurrentValueOf(chosenAbility)) --> { (ev, mChosen) =>
+          mChosen.foreach { chosen =>
+            character.toggleAbility(stagingKey).onNext(chosen)
+          }
       }
     )
   end renderAbility

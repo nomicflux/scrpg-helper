@@ -32,14 +32,10 @@ object RenderRedAbilities:
         character,
         RedAbility.redAbilityPhase,
         RedAbility.baseRedAbilityPool,
-        { ability =>
-          //println(s"Ability: ${ability}")
-          //println(s"Red Ability Map: ${RedAbility.redAbilityLookup}")
-          //println(s"Ability Lookup: ${RedAbility.redAbilityLookup.get(ability.id)}")
+        ability =>
           RedAbility.redAbilityLookup
           .get(ability.id)
           .fold(false)(ra => ra.allowed(qualities, powers))
-        }
       )
     )
 end RenderRedAbilities
