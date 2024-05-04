@@ -13,11 +13,14 @@ trait AbilityChoice:
   val getAction: Option[Action]
   val getEnergy: Option[Energy]
 
+  def getItem: Option[Item]
   def itemName(i: Item): String
   def withChoice(i: Item): AbilityChoice
   def withoutChoice: AbilityChoice
   def validateFn: List[Item] => Boolean
   def validate(l: List[AbilityChoice]): Boolean
+
+  def choiceName(default: String): String = getItem.fold(default)(itemName(_))
 end AbilityChoice
 
 object AbilityChoice:
@@ -69,6 +72,7 @@ case class PowerQualityChoice(
     copy(powerQuality = Some(pq))
   def withoutChoice: PowerQualityChoice = copy(powerQuality = None)
 
+  def getItem: Option[Item] = powerQuality
   def itemName(pq: Item): String = pq match
     case p: Power => p.name
     case q: Quality => q.name
@@ -110,6 +114,7 @@ case class PowerChoice(
   def withChoice(p: Power): PowerChoice = copy(power = Some(p))
   def withoutChoice: PowerChoice = copy(power = None)
 
+  def getItem: Option[Item] = power
   def itemName(p: Power): String = p.name
 
   override def toString(): String =
@@ -143,6 +148,7 @@ case class QualityChoice(
   def withChoice(q: Quality): QualityChoice = copy(quality = Some(q))
   def withoutChoice: QualityChoice = copy(quality = None)
 
+  def getItem: Option[Item] = quality
   def itemName(q: Quality): String = q.name
 
   override def toString(): String =
@@ -177,6 +183,7 @@ case class ActionChoice(
   def withChoice(a: Action): ActionChoice = copy(action = Some(a))
   def withoutChoice: ActionChoice = copy(action = None)
 
+  def getItem: Option[Item] = action
   def itemName(a: Item): String = a.toString
 
   override def toString(): String =
@@ -211,6 +218,7 @@ case class EnergyChoice(
   def withChoice(e: Energy): EnergyChoice = copy(energy = Some(e))
   def withoutChoice: EnergyChoice = copy(energy = None)
 
+  def getItem: Option[Item] = energy
   def itemName(e: Item): String = e.toString
 
   override def toString(): String =

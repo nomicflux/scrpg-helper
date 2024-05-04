@@ -1,21 +1,8 @@
 package scrpgHelper.status
 
-enum Status:
+enum Status extends Ordered[Status]:
     case Green, Yellow, Red, Out
 
-    def >(status: Status): Boolean =
-      this.ordinal > status.ordinal
-    end >
-
-    def >=(status: Status): Boolean =
-      this.ordinal >= status.ordinal
-    end >=
-
-    def <(status: Status): Boolean =
-      this.ordinal < status.ordinal
-    end <
-
-    def <=(status: Status): Boolean =
-      this.ordinal <= status.ordinal
-    end <=
+    def compare(that: Status): Int =
+      this.ordinal - that.ordinal
 end Status

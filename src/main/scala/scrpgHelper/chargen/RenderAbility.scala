@@ -10,16 +10,71 @@ import com.raquo.laminar.api.L.{*, given}
 import scrpgHelper.components.SelectWithPrevChoice
 
 object RenderAbility:
+  def renderChosenAbility(
+    ability: ChosenAbility
+  ): Element =
+    div(
+      className := s"ability status-${ability.status.toString.toLowerCase()}",
+      span(
+        className := "ability-actions",
+        ability.actions.map(_.toSymbol).foldLeft("")(_ + _)
+      ),
+      span(
+        className := "ability-name",
+        ability.name,
+      ),
+      span(
+        className := "ability-category",
+        ability.category.toAbbreviation,
+      ),
+      span(
+        className := "ability-description",
+        renderChosenDescription(
+          ability,
+        )
+      ),
+    )
+  end renderChosenAbility
+
+  def renderChosenDescription(
+      ability: ChosenAbility,
+  ): Element =
+    span(
+      ability.description.map { l =>
+        l match
+          case s: String => span(s)
+          case ac: AbilityChoice =>
+            renderChosenChoice(
+              ability,
+              ac,
+            )
+      }
+    )
+  end renderChosenDescription
+
+  def renderChosenChoice[Choice <: AbilityChoice](
+      ability: ChosenAbility,
+      choice: Choice,
+  ): Element =
+    span(
+      choice.choiceName("<none>")
+    )
+  end renderChosenChoice
+
   def renderAbilityPool(
       character: CharacterModel,
       stagingKey: character.StagingKey,
-      abilityPool: AbilityPool
+      abilityPool: AbilityPool,
+      showAbility: AbilityTemplate => Boolean
   ): Element =
     div(
       className := "ability-pool",
       span(s"Pick ${abilityPool.max}:"),
       div(
-        abilityPool.abilities.map(
+        abilityPool
+          .abilities
+          .filter(showAbility)
+          .map(
           renderAbility(
             character,
             stagingKey,
@@ -32,14 +87,21 @@ object RenderAbility:
     )
   end renderAbilityPool
 
+  def renderAbilityPool(
+      character: CharacterModel,
+      stagingKey: character.StagingKey,
+      abilityPool: AbilityPool
+  ): Element =
+    renderAbilityPool(character, stagingKey, abilityPool, _ => true)
+
   def renderAbility(
       character: CharacterModel,
       stagingKey: character.StagingKey,
       abilityPool: AbilityPool,
       template: AbilityTemplate,
-      chosenSignal: Signal[Map[AbilityTemplate, ChosenAbility]]
+      chosenSignal: Signal[Map[AbilityId, ChosenAbility]]
   ): Element =
-    val chosenAbility: Signal[Option[ChosenAbility]] = chosenSignal.map(_.get(template))
+    val chosenAbility: Signal[Option[ChosenAbility]] = chosenSignal.map(_.get(template.id))
     val hovering: Var[Boolean] = Var(false)
 
     div(

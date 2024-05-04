@@ -1086,8 +1086,6 @@ select.selector-with-prev-choice option:selected {
   background: #222222;
 }
 
-
-
 .ability.ability-selected {
   border: 3px ridge blue;
   transform: scale(1.02, 1.02);
@@ -1116,4 +1114,108 @@ select.selector-with-prev-choice option:selected {
   display: inline-block;
   font-size: 0.8em;
   width: 45%;
+}
+
+.char-sheet {
+  position: fixed;
+  display: block;
+  z-index: 1000;
+  top: 2em;
+  left: 2em;
+  background: black;
+}
+
+.close-char-sheet {
+  position: absolute;
+  top: 0.5em;
+  right: 0;
+  text: white;
+}
+
+.close-char-sheet button {
+  border: 0 solid grey;
+  border-radius: 10px;
+  background: #444444;
+}
+
+.close-char-sheet button:hover {
+  border: 0 solid grey;
+  border-radius: 10px;
+  background: #888888;
+}
+
+.character-sheet {
+  margin: 1em;
+}
+
+.character-sheet .qualities-and-powers div {
+  display: inline-block;
+  margin: 1em;
+}
+
+.pqs {
+  margin: auto;
+}
+
+.pqs ul {
+  margin: 0;
+  padding: 0;
+}
+
+.pqs span {
+  margin: 0;
+  padding: 0;
+}
+
+.pqs li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.abilities li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pq {
+  background: #eeeeee;
+  color: black;
+  margin: 0;
+  padding: 0;
+}
+
+.pq .pq-name {
+  text-align: left;
+  margin-left: 0.5em;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.pq .pq-die-size {
+  text-align: right;
+  margin-right: 0.25em;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.chosen-ability {
+  margin: 0;
+  padding: 0;
+}
+
+.char-description {
+  padding: 0.2em;
+  font-size: 1.1em;
+  color: #dddddd;
+}
+
+.char-description-missing .char-description-field {
+  opacity: 0.7;
+}
+
+.char-description-present .char-description-field {
+  font-weight: bold;
+  color: #fefefe;
 }

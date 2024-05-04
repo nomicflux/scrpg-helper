@@ -109,59 +109,61 @@ final class CharacterModel:
       else m
     }
 
-  val powerSourceAbilities: List[(PowerSource, Map[AbilityTemplate, ChosenAbility])] =
+  val powerSourceAbilities: List[(PowerSource, Map[AbilityId, ChosenAbility])] =
     PowerSource.powerSources
       .map(ps =>
         ps ->
           (ps.abilityPools
-            .flatMap(ap => ap.abilities.map(a => a -> a.toChosenAbility(ap)))
+            .flatMap(ap => ap.abilities.map(a => a.id -> a.toChosenAbility(ap)))
             .toMap)
       )
 
-  val archetypeAbilities: List[(Archetype, Map[AbilityTemplate, ChosenAbility])] =
-   Archetype.archetypes
-        .map(at =>
-          at ->
-            (at.abilityPools
-              .flatMap(ap => ap.abilities.map(a => a -> a.toChosenAbility(ap)))
-              .toMap)
-        )
-
-  val personalityAbilities: List[(Personality, Map[AbilityTemplate, ChosenAbility])] =
-    Personality.personalities
-        .map(pt =>
-          pt -> (pt.outAbilityPool.abilities.map(a =>
-            a -> a.toChosenAbility(pt.outAbilityPool)
-          ).toMap)
-        )
-
-  val redAbilities: List[(RedAbility.RedAbilityPhase, Map[AbilityTemplate, ChosenAbility])] =
-    List(
-        RedAbility.redAbilityPhase -> RedAbility.baseRedAbilityPool.abilities
-          .map(a => a -> a.toChosenAbility(RedAbility.baseRedAbilityPool)).toMap
+  val archetypeAbilities: List[(Archetype, Map[AbilityId, ChosenAbility])] =
+    Archetype.archetypes
+      .map(at =>
+        at ->
+          (at.abilityPools
+            .flatMap(ap => ap.abilities.map(a => a.id -> a.toChosenAbility(ap)))
+            .toMap)
       )
 
-  val baseAbilities: Map[StagingKey, Map[AbilityTemplate, ChosenAbility]] =
+  val personalityAbilities: List[(Personality, Map[AbilityId, ChosenAbility])] =
+    Personality.personalities
+      .map(pt =>
+        pt -> (pt.outAbilityPool.abilities
+          .map(a => a.id -> a.toChosenAbility(pt.outAbilityPool))
+          .toMap)
+      )
+
+  val redAbilities: List[
+    (RedAbility.RedAbilityPhase, Map[AbilityId, ChosenAbility])
+  ] =
+    List(
+      RedAbility.redAbilityPhase -> RedAbility.baseRedAbilityPool.abilities
+        .map(a => a.id -> a.toChosenAbility(RedAbility.baseRedAbilityPool))
+        .toMap
+    )
+
+  val baseAbilities: Map[StagingKey, Map[AbilityId, ChosenAbility]] =
     (powerSourceAbilities ++ archetypeAbilities ++ personalityAbilities ++ redAbilities).toMap
 
-  val abilityChoice: Var[Map[StagingKey, Map[AbilityTemplate, ChosenAbility]]] =
+  val abilityChoice: Var[Map[StagingKey, Map[AbilityId, ChosenAbility]]] =
     Var(baseAbilities)
   def abilityChoicesSignal(
       stagingKey: StagingKey
-  ): Signal[Map[AbilityTemplate, ChosenAbility]] =
-    abilityChoice.signal.map(acs =>
-      acs.get(stagingKey).headOption.getOrElse(Map())
-    )
+  ): Signal[Map[AbilityId, ChosenAbility]] =
+    abilityChoice.signal.map(acs => acs.getOrElse(stagingKey, Map()))
   def addAbilityChoice(
       stagingKey: StagingKey,
       ability: AbilityTemplate
   ): Observer[AbilityChoice] =
     abilityChoice.updater { (acs, choice) =>
-      val choices: Map[AbilityTemplate, ChosenAbility] =
+      val choices: Map[AbilityId, ChosenAbility] =
         acs.getOrElse(stagingKey, Map())
-      val mCurrChoice: Option[ChosenAbility] = choices.get(ability).headOption
+      val mCurrChoice: Option[ChosenAbility] =
+        choices.get(ability.id).headOption
       mCurrChoice.fold(acs) { currChoice =>
-        acs + (stagingKey -> (choices + (ability -> currChoice.applyChoice(
+        acs + (stagingKey -> (choices + (ability.id -> currChoice.applyChoice(
           choice
         ))))
       }
@@ -171,11 +173,11 @@ final class CharacterModel:
       ability: AbilityTemplate
   ): Observer[AbilityChoice] =
     abilityChoice.updater { (acs, choice) =>
-      val choices: Map[AbilityTemplate, ChosenAbility] =
+      val choices: Map[AbilityId, ChosenAbility] =
         acs.getOrElse(stagingKey, Map())
-      val mCurrChoice: Option[ChosenAbility] = choices.get(ability)
+      val mCurrChoice: Option[ChosenAbility] = choices.get(ability.id)
       mCurrChoice.fold(acs) { currChoice =>
-        acs + (stagingKey -> (choices + (ability -> currChoice.removeChoice(
+        acs + (stagingKey -> (choices + (ability.id -> currChoice.removeChoice(
           choice
         ))))
       }
@@ -209,7 +211,7 @@ final class CharacterModel:
         mpt.fold(List())(pt => pows.getOrElse(pt, List()))
     )
 
-  val allAbilities: Signal[List[ChosenAbility]] = abilityStaging.signal
+  val allStagedAbilities: Signal[List[ChosenAbility]] = abilityStaging.signal
     .combineWith(
       backgroundSignal,
       powerSourceSignal,
@@ -220,9 +222,34 @@ final class CharacterModel:
       mbg.fold(List())(bg => abils.getOrElse(bg, List())) ++
         mps.fold(List())(ps => abils.getOrElse(ps, List())) ++
         mat.fold(List())(at => abils.getOrElse(at, List())) ++
-        mpt.fold(List())(pt => abils.getOrElse(pt, List()))
+        mpt.fold(List())(pt => abils.getOrElse(pt, List())) ++
+        abils.getOrElse(RedAbility.redAbilityPhase, List())
     )
     .map(_.collect { case ca: ChosenAbility => ca })
+
+  val allChosenAbilities: Signal[List[ChosenAbility]] = abilityChoice.signal
+    .combineWith(
+      backgroundSignal,
+      powerSourceSignal,
+      archetypeSignal,
+      personalitySignal
+    )
+    .map((abils, mbg, mps, mat, mpt) =>
+      mbg.fold(List())(bg => abils.getOrElse(bg, List())) ++
+        mps.fold(List())(ps => abils.getOrElse(ps, List())) ++
+        mat.fold(List())(at => abils.getOrElse(at, List())) ++
+        mpt.fold(List())(pt => abils.getOrElse(pt, List())) ++
+        abils.getOrElse(RedAbility.redAbilityPhase, List())
+    )
+    .map(_.map(_._2).filter(_.descriptionFilledOut).toList)
+
+  val allAbilities: Signal[List[ChosenAbility]] =
+    allStagedAbilities
+      .combineWith(allChosenAbilities)
+      .map { (asa, aca) =>
+        val abilityIds = asa.map(_.id).toSet
+        aca.filter(a => abilityIds.contains(a.id))
+      }
 
   val validBackground: Signal[Boolean] = backgroundSignal
     .combineWith(qualityStaging.signal, abilityStaging.signal)
@@ -251,7 +278,7 @@ final class CharacterModel:
           .collect { case ca: ChosenAbility => ca }
           .map(_.id)
           .toSet
-        val abilityMap: Map[AbilityTemplate, ChosenAbility] =
+        val abilityMap: Map[AbilityId, ChosenAbility] =
           am.getOrElse(p, Map())
         val abilities: List[ChosenAbility] =
           abilityMap.values.toList.filter(a => selectedAbilities.contains(a.id))
@@ -276,7 +303,7 @@ final class CharacterModel:
           .collect { case ca: ChosenAbility => ca }
           .map(_.id)
           .toSet
-        val abilityMap: Map[AbilityTemplate, ChosenAbility] =
+        val abilityMap: Map[AbilityId, ChosenAbility] =
           am.getOrElse(at, Map())
         val abilities: List[ChosenAbility] =
           abilityMap.values.toList.filter(a => selectedAbilities.contains(a.id))
@@ -299,7 +326,7 @@ final class CharacterModel:
           .collect { case ca: ChosenAbility => ca }
           .map(_.id)
           .toSet
-        val abilityMap: Map[AbilityTemplate, ChosenAbility] =
+        val abilityMap: Map[AbilityId, ChosenAbility] =
           am.getOrElse(p, Map())
         val abilities: List[ChosenAbility] =
           abilityMap.values.toList.filter(a => selectedAbilities.contains(a.id))
@@ -308,10 +335,14 @@ final class CharacterModel:
     }
 
   val validRedAbilities: Signal[Boolean] =
-    abilityStaging.signal.map{ as =>
-      val redAbilities: List[ChosenAbility] = as
+    abilityStaging.signal.combineWith(abilityChoice.signal).map { (as, am) =>
+      val selectedAbilities: Set[AbilityId] = as
         .getOrElse(RedAbility.redAbilityPhase, List())
-        .collect { case ca: ChosenAbility => ca }
+        .collect { case ca: ChosenAbility => ca }.map(_.id).toSet
+      val abilityMap: Map[AbilityId, ChosenAbility] =
+        am.getOrElse(RedAbility.redAbilityPhase, Map())
+      val redAbilities: List[ChosenAbility] =
+        abilityMap.values.toList.filter(a => selectedAbilities.contains(a.id))
       redAbilities.size == RedAbility.baseRedAbilityPool.max &&
       redAbilities.map(_.valid).foldLeft(true)(_ && _)
     }

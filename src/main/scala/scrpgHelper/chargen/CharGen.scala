@@ -15,12 +15,28 @@ object CharGen:
     div(
       h1("Character Generation"),
       div(
+        toggleCharSheet(model.showCharSheetSignal, model.toggleCharSheet),
+      ),
+      div(
         prevPageButton(character, model.pageSignal, model.retreatPage),
         nextPageButton(character, model.pageSignal, model.advancePage)
       ),
-      renderPage(model.pageSignal, character)
+      renderPage(model.pageSignal, model.showCharSheetSignal, model.toggleCharSheet, character)
     )
   end charGen
+
+  def toggleCharSheet(
+    showCharSheetSignal: Signal[Boolean],
+    toggleCharSheet: Observer[Unit]
+  ): Element =
+    button(
+      className := "toggle-char-sheet",
+      className <-- showCharSheetSignal.map(b => if b then "char-sheet-shown" else "char-sheet-hidden"),
+      tpe := "button",
+      child.text <-- showCharSheetSignal.map(b => if b then "Hide" else "Show"),
+      " Character Sheet",
+      onClick --> { _ev => toggleCharSheet.onNext(()) },
+    )
 
   def nextPageButton(
       character: CharacterModel,
@@ -71,9 +87,15 @@ object CharGen:
 
   def renderPage(
       pageSignal: Signal[CharGenPage],
+      charSheetSignal: Signal[Boolean],
+      toggleCharSheet: Observer[Unit],
       character: CharacterModel
   ): Element =
     div(
+      div(
+        className <-- charSheetSignal.map(b => if b then "char-sheet" else "hidden"),
+        RenderCharacter.renderCharacter(character, toggleCharSheet)
+      ),
       div(
         className <-- pageSignal.map(p =>
           if p == CharGenPage.BackgroundPage then "" else "hidden"
@@ -128,6 +150,9 @@ final class CharGenModel:
   val page: Var[CharGenPage] = Var(CharGenPage.BackgroundPage)
   val pageSignal = page.signal
 
+  val showCharSheet: Var[Boolean] = Var(false)
+  val showCharSheetSignal = showCharSheet.signal
+
   val advancePage: Observer[Unit] = page.updater { (p, _) =>
     p match
       case CharGenPage.BackgroundPage  => CharGenPage.PowerSourcePage
@@ -148,4 +173,6 @@ final class CharGenModel:
       case CharGenPage.PowerSourcePage => CharGenPage.BackgroundPage
       case _                           => CharGenPage.BackgroundPage
   }
+
+  val toggleCharSheet: Observer[Unit] = showCharSheet.updater { (b, _) => !b }
 end CharGenModel

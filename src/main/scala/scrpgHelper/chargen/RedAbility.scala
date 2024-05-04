@@ -11,10 +11,11 @@ object RedAbility:
   type RedAbilityPhase = Unit
   val redAbilityPhase: RedAbilityPhase = ()
 
-  val baseRedAbilityPool: AbilityPool = AbilityPool(
-    2,
-    allRedAbilities.map(_.abilityTemplate)
-  )
+  def allowedAbilityPool(qs: List[Quality], ps: List[Power]): AbilityPool =
+      baseRedAbilityPool.copy(id = baseRedAbilityPool.id,
+                              abilities = allRedAbilities
+                                  .filter(_.allowed(qs, ps))
+                                  .map(_.abilityTemplate))
 
   def apply(
       name: String,
@@ -33,9 +34,21 @@ object RedAbility:
       ),
       allowedCategory match
         case pc: PowerCategory =>
-          (_qs, ps) => ps.map(_.category).toSet.contains(pc)
+          { (_qs, ps) =>
+              //println(s"Powers: ${ps}")
+              //println(s"Power Categories: ${ps.map(_.category).toSet}")
+              //println(s"Needed Power Category: ${pc}")
+              //println(s"Has Power Category: ${ps.map(_.category).toSet.contains(pc)}")
+              ps.map(_.category).toSet.contains(pc)
+          }
         case qc: QualityCategory =>
-          (qs, _ps) => qs.map(_.category).toSet.contains(qc)
+          { (qs, _ps) =>
+              //println(s"Qualities: ${qs}")
+              //println(s"Quality Categories: ${qs.map(_.category).toSet}")
+              //println(s"Needed Quality Category: ${qc}")
+              //println(s"Has Quality Category: ${qs.map(_.category).toSet.contains(qc)}")
+              qs.map(_.category).toSet.contains(qc)
+          }
     )
 
   def allowedRedAbilities(
@@ -44,7 +57,7 @@ object RedAbility:
   ): List[AbilityTemplate] =
     allRedAbilities.filter(_.allowed(qualities, powers)).map(_.abilityTemplate)
 
-  def athleticAbility: RedAbility = RedAbility(
+  val athleticAbility: RedAbility = RedAbility(
     "Athletic",
     AbilityCategory.Action,
     List(Action.Boost),
@@ -56,7 +69,7 @@ object RedAbility:
     PowerCategory.Athletic
   )
 
-  def energyAbility: RedAbility = RedAbility(
+  val energyAbility: RedAbility = RedAbility(
     "Energy",
     AbilityCategory.Action,
     List(Action.Boost),
@@ -68,7 +81,7 @@ object RedAbility:
     PowerCategory.Energy
   )
 
-  def hallmarkAbility: RedAbility = RedAbility(
+  val hallmarkAbility: RedAbility = RedAbility(
     "Hallmark",
     AbilityCategory.Action,
     List(Action.Boost),
@@ -80,7 +93,7 @@ object RedAbility:
     PowerCategory.Hallmark
   )
 
-  def intellectualAbility: RedAbility = RedAbility(
+  val intellectualAbility: RedAbility = RedAbility(
     "Intellectual",
     AbilityCategory.Action,
     List(Action.Boost),
@@ -92,7 +105,7 @@ object RedAbility:
     PowerCategory.Intellectual
   )
 
-  def materialAbility: RedAbility = RedAbility(
+  val materialAbility: RedAbility = RedAbility(
     "Material",
     AbilityCategory.Action,
     List(Action.Boost),
@@ -104,7 +117,7 @@ object RedAbility:
     PowerCategory.Material
   )
 
-  def selfControlAbility: RedAbility = RedAbility(
+  val selfControlAbility: RedAbility = RedAbility(
     "SelfControl",
     AbilityCategory.Action,
     List(Action.Boost),
@@ -116,7 +129,7 @@ object RedAbility:
     PowerCategory.SelfControl
   )
 
-  def psychicAbility: RedAbility = RedAbility(
+  val psychicAbility: RedAbility = RedAbility(
     "Psychic",
     AbilityCategory.Action,
     List(Action.Boost),
@@ -128,7 +141,7 @@ object RedAbility:
     PowerCategory.Psychic
   )
 
-  def mobilityAbility: RedAbility = RedAbility(
+  val mobilityAbility: RedAbility = RedAbility(
     "Mobility",
     AbilityCategory.Action,
     List(Action.Boost),
@@ -140,7 +153,7 @@ object RedAbility:
     PowerCategory.Mobility
   )
 
-  def technologicalAbility: RedAbility = RedAbility(
+  val technologicalAbility: RedAbility = RedAbility(
     "Technological",
     AbilityCategory.Action,
     List(Action.Boost),
@@ -152,7 +165,7 @@ object RedAbility:
     PowerCategory.Technological
   )
 
-  def informationAbility: RedAbility = RedAbility(
+  val informationAbility: RedAbility = RedAbility(
     "Information",
     AbilityCategory.Action,
     List(Action.Boost),
@@ -164,7 +177,7 @@ object RedAbility:
     QualityCategory.Information
   )
 
-  def mentalAbility: RedAbility = RedAbility(
+  val mentalAbility: RedAbility = RedAbility(
     "Mental",
     AbilityCategory.Action,
     List(Action.Boost),
@@ -176,7 +189,7 @@ object RedAbility:
     QualityCategory.Mental
   )
 
-  def physicalAbility: RedAbility = RedAbility(
+  val physicalAbility: RedAbility = RedAbility(
     "Physical",
     AbilityCategory.Action,
     List(Action.Boost),
@@ -188,7 +201,7 @@ object RedAbility:
     QualityCategory.Physical
   )
 
-  def socialAbility: RedAbility = RedAbility(
+  val socialAbility: RedAbility = RedAbility(
     "Social",
     AbilityCategory.Action,
     List(Action.Boost),
@@ -200,7 +213,7 @@ object RedAbility:
     QualityCategory.Social
   )
 
-  def allRedAbilities: List[RedAbility] = List(
+  val allRedAbilities: List[RedAbility] = List(
     athleticAbility,
     energyAbility,
     hallmarkAbility,
@@ -214,5 +227,13 @@ object RedAbility:
     mentalAbility,
     physicalAbility,
     socialAbility
+  )
+
+  val redAbilityLookup: Map[AbilityId, RedAbility] =
+      allRedAbilities.map(a => a.abilityTemplate.id -> a).toMap
+
+  val baseRedAbilityPool: AbilityPool = AbilityPool(
+    2,
+    allRedAbilities.map(_.abilityTemplate)
   )
 end RedAbility
