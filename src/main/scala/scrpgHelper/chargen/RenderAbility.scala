@@ -102,9 +102,9 @@ object RenderAbility:
       stagingKey: character.StagingKey,
       abilityPool: AbilityPool,
       template: AbilityTemplate,
-      chosenSignal: Signal[Map[AbilityId, ChosenAbility]]
+      chosenSignal: Signal[Map[AbilityKey, ChosenAbility]]
   ): Element =
-    val chosenAbility: Signal[Option[ChosenAbility]] = chosenSignal.map(_.get(template.id))
+    val chosenAbility: Signal[Option[ChosenAbility]] = chosenSignal.map(_.get(template.key))
     val hovering: Var[Boolean] = Var(false)
 
     div(

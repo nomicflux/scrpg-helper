@@ -3,7 +3,10 @@ package scrpgHelper.chargen
 import scrpgHelper.rolls.EffectDieType
 import scrpgHelper.status.Status
 
+class AbilityId
+
 type Description = List[String | AbilityChoice]
+type AbilityKey = (AbilityId, Status)
 
 enum AbilityCategory:
   case Action, Reaction, Inherent
@@ -103,8 +106,6 @@ case class ChosenAbility(
     case _                 => false
 end ChosenAbility
 
-class AbilityId
-
 trait Ability[A]:
   val id: AbilityId
   val status: Status
@@ -112,5 +113,6 @@ trait Ability[A]:
   val category: AbilityCategory
   def changeName(s: String): A
 
+  def key: AbilityKey = (id, status)
   def inPrincipleCategory(category: PrincipleCategory): Boolean = false
 end Ability

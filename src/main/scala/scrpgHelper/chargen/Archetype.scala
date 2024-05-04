@@ -17,11 +17,13 @@ case class Archetype(
       diePool: List[Die],
       powers: List[Power],
       qualities: List[Quality],
-      abilities: List[ChosenAbility]
+      abilities: List[ChosenAbility],
+      allPowers: List[Power],
+      allQualities: List[Quality],
   ): Boolean =
     abilities.filter(_.valid).size == abilityPools.map(_.max).sum &&
-      (powers.size + qualities.size) == diePool.size &&
-      powerValidation(powers.toSet) && qualityValidation(qualities.toSet)
+    (powers.size + qualities.size) == diePool.size &&
+    powerValidation(allPowers.toSet) && qualityValidation(allQualities.toSet)
   end valid
 end Archetype
 
@@ -39,24 +41,24 @@ object Archetype:
 
   val archetypes: List[Archetype] = List(
     Speedster.speedster,
-    Shadow.shadow, //TODO: Issues with quality & power restrictions together
+    Shadow.shadow, // TODO: Issues with quality & power restrictions together
     PhysicalPowerhouse.physicalPowerhouse,
     Marksman.marksman,
-    Blaster.blaster, //TODO: restrict EnergyChoice to available energy powers? Or PowerChoice that doesn't affect dupes?
-    CloseQuartersCombatant.closeQuartersCombatant, //TODO: mandate one power used with abilities; shared no-dupes between zones
-    //Armored.armored, //TODO: change how health is calculated
-    Flyer.flyer, //TODO: enforce abilities using flight & sig vehicle
-    ElementalManipulator.elementalManipulator, //TODO: restrict EnergyChoice to available energy powers? Or PowerChoice that doesn't affect dupes?
-    //RobotCyborg.robotCyborg, //TODO: change how health is calculated
+    Blaster.blaster, // TODO: restrict EnergyChoice to available energy powers? Or PowerChoice that doesn't affect dupes?
+    CloseQuartersCombatant.closeQuartersCombatant, // TODO: mandate one power used with abilities; shared no-dupes between zones
+    // Armored.armored, //TODO: change how health is calculated
+    Flyer.flyer, // TODO: enforce abilities using flight & sig vehicle
+    ElementalManipulator.elementalManipulator, // TODO: restrict EnergyChoice to available energy powers? Or PowerChoice that doesn't affect dupes?
+    // RobotCyborg.robotCyborg, //TODO: change how health is calculated
     Sorcerer.sorcerer,
     Psychic.psychic,
     Transporter.transporter,
-    //MinionMaker.minionMaker,
+    // MinionMaker.minionMaker,
     WildCard.wildCard,
-    //FormChanger.formChanger,
+    // FormChanger.formChanger,
     Gadgeteer.gadgeteer,
-    RealityShaper.realityShaper,
-    //Divided.divided,
-    //Modular.modular,
+    RealityShaper.realityShaper
+    // Divided.divided,
+    // Modular.modular,
   )
 end Archetype

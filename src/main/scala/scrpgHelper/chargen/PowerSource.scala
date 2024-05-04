@@ -95,7 +95,7 @@ object PowerSource:
     powers.distinct == powers
   end uniquePowers
 
-  def powerSources: List[PowerSource] = List(
+  val powerSources: List[PowerSource] = List(
     Accident.accident,
     // Training.training, // TODO: Implement adding quality from archetype in next step
     Genetic.genetic,

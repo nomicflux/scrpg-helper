@@ -156,8 +156,8 @@ object RenderArchetype:
             )
             .map { (ats, pss, bgs) =>
               val abilitySet =
-                (ats.map(_.id) ++ pss.map(_.id) ++ bgs.map(_.id)).toSet
-              a => abilitySet.contains(a.id)
+                (ats.map(_.key) ++ pss.map(_.key) ++ bgs.map(_.key)).toSet
+              a => abilitySet.contains(a.key)
             },
           character.removeAbility(archetype),
           character.addAbility(archetype)
