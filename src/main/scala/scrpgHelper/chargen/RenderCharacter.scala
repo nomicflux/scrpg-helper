@@ -11,6 +11,8 @@ import scrpgHelper.rolls.Die
 import scrpgHelper.status.Status
 
 object RenderCharacter:
+  val model = new RenderCharacterModel()
+
   def renderCharacter(
       character: CharacterModel,
       closeCharSheet: Observer[Unit]
@@ -19,7 +21,15 @@ object RenderCharacter:
       className := "character-sheet",
       h2("Character Sheet"),
       div(
+        className := "export-section",
+        className <-- model.showExport.signal.map(b => if b then "" else "hidden"),
+        pre(
+          child.text <-- character.forExport.map(_.render)
+        )
+      ),
+      div(
         className := "description-section",
+        className <-- model.showExport.signal.map(b => if b then "hidden" else ""),
         div(
           className := "details-panel",
           div(
@@ -38,15 +48,18 @@ object RenderCharacter:
       ),
       div(
         className := "qualities-and-powers",
+        className <-- model.showExport.signal.map(b => if b then "hidden" else ""),
         child <-- character.allPowers.map(renderPowers),
         child <-- character.allQualities.map(renderQualities),
         child <-- character.personalitySignal.map(renderStatus)
       ),
       div(
+        className <-- model.showExport.signal.map(b => if b then "hidden" else ""),
         child <-- character.allAbilities.map(as =>
           renderAbilities(as.sortBy(_.status))
         )
       ),
+      exportSheet(),
       closeSheet(closeCharSheet)
     )
 
@@ -229,6 +242,16 @@ object RenderCharacter:
       )
     )
 
+  def exportSheet(): Element =
+    div(
+      className := "export-char-sheet",
+      button(
+        tpe := "button",
+        child.text <-- model.showExport.signal.map(b => if b then "Character Sheet" else "Export"),
+        onClick --> { _ => model.toggleExport.onNext(()) }
+      )
+    )
+
   def closeSheet(closeCharSheet: Observer[Unit]): Element =
     div(
       className := "close-char-sheet",
@@ -239,3 +262,8 @@ object RenderCharacter:
       )
     )
 end RenderCharacter
+
+final class RenderCharacterModel:
+    val showExport: Var[Boolean] = Var(false)
+    val toggleExport: Observer[Unit] = showExport.updater { (b, _) => !b }
+end RenderCharacterModel

@@ -12,6 +12,28 @@ import scrpgHelper.components.SelectWithPrevChoice
 object RenderAbility:
   import scrpgHelper.status.Status
 
+  def renderPrincipleText(
+    ability: Principle
+  ): String =
+    s"${ability.name} - ${ability.status.toString} - ${ability.principleCategory.toString} - ${ability.action.toString} - ${ability.action.toString} by using Principle of ${ability.name}"
+
+  def renderChosenAbilityText(
+    ability: ChosenAbility
+  ): String =
+    val actionText = ability.actions.map(_.toString).mkString(",")
+    val descriptionText = renderChosenDescriptionText(ability)
+    s"${ability.name} - ${ability.category.toString} - ${ability.status.toString} - ${actionText} - ${descriptionText}"
+  end renderChosenAbilityText
+
+  def renderChosenDescriptionText(
+      ability: ChosenAbility,
+  ): String =
+      ability.description.map { l =>
+        l match
+          case s: String => s
+          case ac: AbilityChoice => " " + ac.choiceName("<none>") + " "
+      }.mkString
+
   def renderPrinciple(
     ability: Principle
   ): Element =

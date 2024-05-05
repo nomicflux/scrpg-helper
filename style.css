@@ -744,10 +744,6 @@ div.name-box {
   cursor: pointer;
 }
 
-.hidden {
-  display: none;
-}
-
 .obfuscated-checkboxes {
   cursor: pointer;
   display: inline-block;
@@ -1128,6 +1124,23 @@ select.selector-with-prev-choice option:selected {
   overflow-x:hidden;
 }
 
+.export-char-sheet {
+  position: absolute;
+  top: 0.5em;
+  left: 0;
+  text: white;
+}
+
+.export-char-sheet button {
+  border: 0 solid grey;
+  border-radius: 10px;
+  background: #444444;
+}
+
+.export-char-sheet button:hover {
+  background: #888888;
+}
+
 .close-char-sheet {
   position: absolute;
   top: 0.5em;
@@ -1142,8 +1155,6 @@ select.selector-with-prev-choice option:selected {
 }
 
 .close-char-sheet button:hover {
-  border: 0 solid grey;
-  border-radius: 10px;
   background: #888888;
 }
 
@@ -1319,4 +1330,15 @@ select.selector-with-prev-choice option:selected {
   vertical-align: middle;
   position: relative;
   margin: 1em;
+}
+
+
+.export-section pre {
+  text-align: left;
+}
+
+
+/* Keep at bottom */
+.hidden {
+  display: none;
 }

@@ -41,7 +41,7 @@ object Shadow:
             List(
               "Attack using",
               PowerQualityChoice(AbilityChoice.noDupes(_)),
-              ". Defend yusing your Min die against all Attacks until your next turn."
+              ". Defend using your Min die against all Attacks until your next turn."
             )
           ),
           AbilityTemplate(
@@ -50,7 +50,7 @@ object Shadow:
             AbilityCategory.Reaction,
             _ => List(Action.Attack),
             List(
-              "When you would be dealt damage, roll a d4 while in the Green zone, d6 while in the Yellow, or d8 while in Red. Reduce the damage you take by the value rolled. Attack another target with that roll."
+              s"When you would be dealt damage, roll a ${d(4)} while in the Green zone, ${d(6)} while in the Yellow, or ${d(8)} while in Red. Reduce the damage you take by the value rolled. Attack another target with that roll."
             )
           )
         )
