@@ -15,8 +15,8 @@ object RenderPersonality:
     div(
       className := "personality-section choice-section",
       h2("Personality"),
-      renderRollButton(model.rollTrigger),
-      renderShownToggle(model.showUnchosenSignal, model.shownToggle),
+      RollComponent.renderRollButton(model.rollTrigger, Signal.fromValue(List(Die.d(10), Die.d(10)))),
+      RollComponent.renderShownToggle(model.rollsSignal, model.showUnchosenSignal, model.shownToggle, "Personalities"),
       renderPersonalityTable(character)
     )
 
@@ -131,8 +131,8 @@ final class PersonalityModel:
   val showUnchosen: Var[Boolean] = Var(false)
   val showUnchosenSignal = showUnchosen.signal
 
-  val rollTrigger: Observer[Unit] = rolls.updater { (_, _) =>
-    Some(Die.rollForCharGen(List(d(10), d(10))))
+  val rollTrigger: Observer[List[Die]] = rolls.updater { (_, ds) =>
+    Some(Die.rollForCharGen(ds))
   }
 
   val shownToggle: Observer[Unit] = showUnchosen.updater { (b, _) => !b }

@@ -1332,11 +1332,15 @@ select.selector-with-prev-choice option:selected {
   margin: 1em;
 }
 
-
 .export-section pre {
   text-align: left;
 }
 
+.toggle-char-sheet-div {
+  position: absolute;
+  top: 1em;
+  right: 1em;
+}
 
 /* Keep at bottom */
 .hidden {

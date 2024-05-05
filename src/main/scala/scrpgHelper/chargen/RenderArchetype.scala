@@ -18,44 +18,19 @@ object RenderArchetype:
     div(
       className := "archetype-section choice-section",
       h2("Archetype"),
-      renderRollButton(model.rollTrigger, character),
-      renderShownToggle(model.showUnchosenSignal, model.shownToggle),
+      RollComponent.renderRollButton(
+        model.rollTrigger,
+        character.powerSourceSignal.map(
+          _.toList.flatMap(_.archetypeDiePool)
+        )
+      ),
+      RollComponent.renderShownToggle(
+        model.rollsSignal,
+        model.showUnchosenSignal,
+        model.shownToggle,
+        "Archetypes"
+      ),
       renderArchetypeTable(character)
-    )
-
-  def renderRollButton(
-      rollTrigger: Observer[List[Die]],
-      character: CharacterModel
-  ): Element =
-    div(
-      button(
-        tpe := "button",
-        "Roll",
-        onClick
-          .compose(
-            _.withCurrentValueOf(
-              character.powerSourceSignal.map(
-                _.toList.flatMap(_.archetypeDiePool)
-              )
-            )
-          ) --> { (_, dice) =>
-          rollTrigger.onNext(dice)
-        }
-      )
-    )
-  end renderRollButton
-
-  def renderShownToggle(
-      shown: Signal[Boolean],
-      shownToggle: Observer[Unit]
-  ): Element =
-    div(
-      button(
-        tpe := "button",
-        child.text <-- shown.map(b => if b then "Hide" else "Show"),
-        " Archetypes",
-        onClick --> { _ => shownToggle.onNext(()) }
-      )
     )
 
   def renderArchetypeTable(character: CharacterModel): Element =
@@ -198,12 +173,17 @@ object RenderArchetype:
   ): Boolean =
     val baseSet = pds.map(_._1).toSet
     val newSet =
-      prevChoice.map(_._1).collect { case p: Power => p }.fold(baseSet)(baseSet - _).union(pd.toSet.map(_._1))
+      prevChoice
+        .map(_._1)
+        .collect { case p: Power => p }
+        .fold(baseSet)(baseSet - _)
+        .union(pd.toSet.map(_._1))
     val newSetWithOld = newSet.union(pspds.map(_._1).toSet)
     val allPowersCheckOut = archetype.powerValidation(newSetWithOld)
     val haveEnough = newSet.size >= archetype.minPowers
     val qualSize = prevChoice.map(_._1).collect { case q: Quality => q }.size
-    val notFullYet = (newSet.size + qds.size + qd.size - qualSize) < dicePool.size
+    val notFullYet =
+      (newSet.size + qds.size + qd.size - qualSize) < dicePool.size
     notFullYet || (allPowersCheckOut && haveEnough)
   end mandatoryPowerCheck
 

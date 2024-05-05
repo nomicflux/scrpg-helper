@@ -18,45 +18,11 @@ object RenderPowerSource:
     div(
       className := "power-source-section choice-section",
       h2("Power Source"),
-      renderRollButton(model.rollTrigger, character),
-      renderShownToggle(model.showUnchosenSignal, model.shownToggle),
+      RollComponent.renderRollButton(model.rollTrigger, character.backgroundSignal.map(_.toList.flatMap(_.powerSourceDice))),
+      RollComponent.renderShownToggle(model.rollsSignal, model.showUnchosenSignal, model.shownToggle, "Power Sources"),
       renderPowerSourceTable(character)
     )
   end renderPowerSources
-
-  def renderRollButton(
-      rollTrigger: Observer[List[Die]],
-      character: CharacterModel
-  ): Element =
-    div(
-      button(
-        tpe := "button",
-        "Roll",
-        onClick
-          .compose(
-            _.withCurrentValueOf(
-              character.backgroundSignal.map(_.toList.flatMap(_.powerSourceDice))
-            )
-          ) --> { (_, dice) =>
-          rollTrigger.onNext(dice)
-        }
-      )
-    )
-  end renderRollButton
-
-  def renderShownToggle(
-      shown: Signal[Boolean],
-      shownToggle: Observer[Unit]
-  ): Element =
-    div(
-      button(
-        tpe := "button",
-        child.text <-- shown.map(b => if b then "Hide" else "Show"),
-        " Power Sources",
-        onClick --> { _ => shownToggle.onNext(()) }
-      )
-    )
-  end renderShownToggle
 
   def renderPowerSourceTable(character: CharacterModel): Element =
     table(

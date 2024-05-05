@@ -247,7 +247,7 @@ object RenderCharacter:
       className := "export-char-sheet",
       button(
         tpe := "button",
-        child.text <-- model.showExport.signal.map(b => if b then "Character Sheet" else "Export"),
+        child.text <-- model.showExport.signal.map(b => if b then "Character Sheet" else "To Copyable Text"),
         onClick --> { _ => model.toggleExport.onNext(()) }
       )
     )

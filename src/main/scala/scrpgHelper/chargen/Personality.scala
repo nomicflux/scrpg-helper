@@ -49,7 +49,7 @@ object Personality:
         .zip(List(Status.Green, Status.Yellow, Status.Red))
         .map { case (a, b) => (b, a) }
         .toMap,
-      Quality.personalityQuality(s"${name} Personal Quality", number)
+      Quality.personalityQuality(s"${name} Personal Quality")
     )
   val loneWolf = Personality(
     1,

@@ -15,6 +15,7 @@ object CharGen:
     div(
       h1("Character Generation"),
       div(
+        className := "toggle-char-sheet-div",
         toggleCharSheet(model.showCharSheetSignal, model.toggleCharSheet),
       ),
       div(
@@ -45,7 +46,7 @@ object CharGen:
   ): Element =
     button(
       tpe := "button",
-      "Next Page",
+      ">> Next Page",
       className <-- pageSignal.map(p => if (p == CharGenPage.HealthPage) then "hidden" else ""),
       disabled <-- pageSignal
         .combineWith(character.validBackground, character.validPowerSource,
@@ -73,7 +74,7 @@ object CharGen:
   ): Element =
     button(
       tpe := "button",
-      "Previous Page",
+      "Previous Page <<",
       className <-- pageSignal.map(p => if (p == CharGenPage.BackgroundPage) then "hidden" else ""),
       disabled <-- pageSignal.map(p =>
         p match {

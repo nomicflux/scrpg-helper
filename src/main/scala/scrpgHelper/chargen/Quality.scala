@@ -1,20 +1,19 @@
 package scrpgHelper.chargen
 
 enum QualityCategory:
-  case Information, Mental, Physical, Social
-  case Personal(p: PersonalityId)
+  case Information, Mental, Physical, Social, Personal
 end QualityCategory
 
 final case class Quality(name: String, category: QualityCategory):
-    def changeName(n: String): Quality =
-      copy(name = n)
+  def changeName(n: String): Quality =
+    copy(name = n)
 end Quality
 
 object Quality:
   import QualityCategory.*
 
-  def personalityQuality(n: String, pId: PersonalityId) =
-    Quality(n, Personal(pId))
+  def personalityQuality(n: String) =
+    Quality(n, Personal)
 
   def apply(name: String, category: QualityCategory): Quality =
     new Quality(name, category)
