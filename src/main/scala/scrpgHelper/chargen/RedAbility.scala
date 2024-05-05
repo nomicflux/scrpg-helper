@@ -886,7 +886,7 @@ object RedAbility:
     AbilityCategory.Reaction,
     List(Action.Defend),
     List(
-      "When an opponent Attacks, you may become the target of that Attack and Dfend by rolling your sngle",
+      "When an opponent Attacks, you may become the target of that Attack and Defend by rolling your sngle",
       QualityChoice(AbilityChoice.qualityCategory(QualityCategory.Physical)),
       "die."
     ),
