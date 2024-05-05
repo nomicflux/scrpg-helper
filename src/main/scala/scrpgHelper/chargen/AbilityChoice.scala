@@ -30,14 +30,20 @@ object AbilityChoice:
   def onePower(power: Power)(l: List[Power]): Boolean =
     l.contains(power)
 
+  def powerCategories(powerCategories: List[PowerCategory])(l: List[Power]): Boolean =
+    !l.filter(p => powerCategories.contains(p.category)).isEmpty
+
   def powerCategory(powerCategory: PowerCategory)(l: List[Power]): Boolean =
-    !l.filter(_.category == powerCategory).isEmpty
+    powerCategories(List(powerCategory))(l)
 
   def intersection[A](toIntersect: List[A])(l: List[A]): Boolean =
     !l.filter(a => toIntersect.toSet.contains(a)).isEmpty
 
+  def qualityCategories(qualityCategories: List[QualityCategory])(l: List[Quality]): Boolean =
+    !l.filter(q => qualityCategories.contains(q.category)).isEmpty
+
   def qualityCategory(qualityCategory: QualityCategory)(l: List[Quality]): Boolean =
-    !l.filter(_.category == qualityCategory).isEmpty
+    qualityCategories(List(qualityCategory))(l)
 
   def numChosen(l: List[AbilityChoice]): Int =
     l.map(ac =>
