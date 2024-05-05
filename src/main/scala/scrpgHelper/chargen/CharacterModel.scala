@@ -38,8 +38,6 @@ final class CharacterModel:
 
   val health: Var[Option[Int]] = Var(None)
   val healthSignal = health.signal
-  val changeHealth: Observer[Int] =
-    health.updater { (_, n) => Some(n) }
 
   type StagingKey = Background | PowerSource | Archetype | Personality |
     RedAbility.RedAbilityPhase
@@ -285,6 +283,23 @@ final class CharacterModel:
         val abilityIds = asa.map(_.key).toSet
         aca.filter(a => abilityIds.contains(a.key)) ++ aps
       }
+
+  val redZoneHealth: Signal[Option[Int]] =
+    personalitySignal.map(_.flatMap(p => p.statusDice.get(Status.Red).map(_.n)))
+
+  val powerQualityHealth: Signal[Int] =
+    allPowers.combineWith(allQualities).map { (ps, qs) =>
+            val athleticRolls = ps.filter(_._1.category == PowerCategory.Athletic).map(_._2.n)
+            val maxAthletic = if athleticRolls.isEmpty then 4 else athleticRolls.max
+            val mentalRolls = qs.filter(_._1.category == QualityCategory.Mental).map(_._2.n)
+            val maxMental = if mentalRolls.isEmpty then 4 else mentalRolls.max
+            List(maxAthletic, maxMental).max
+          }
+
+  val calcHealth: Observer[Int] =
+    health.updater { (m, n) =>
+      if(m.isDefined) then m else Some(n)
+    }
 
   val validBackground: Signal[Boolean] = backgroundSignal
     .combineWith(qualityStaging.signal, abilityStaging.signal)

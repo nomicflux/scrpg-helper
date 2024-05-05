@@ -1263,3 +1263,60 @@ select.selector-with-prev-choice option:selected {
 .red-status-die {
   border: 3px solid red;
 }
+
+.health-description {
+  display: block;
+  position: relative;
+}
+
+.health-row {
+  display: block;
+  position: relative;
+}
+
+.health-name {
+  position: absolute;
+  top: -1.5em;
+  left: -1em;
+  font-size: 0.6em;
+}
+
+.health-row {
+  margin: 0.25em;
+}
+
+.health-die {
+  padding: 0.7em;
+  background: #eeeeee;
+  color: black;
+  border-radius: 25%;
+}
+
+.green-health-die {
+  border: 2px ridge green;
+}
+
+.yellow-health-die {
+  border: 2px ridge yellow;
+}
+
+.red-health-die {
+  border: 2px ridge red;
+}
+
+.description-section {
+  display: inline-block;
+}
+
+.details-panel {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 1em;
+}
+
+.health-panel {
+  display: inline-block;
+  vertical-align: middle;
+  position: relative;
+  margin: 1em;
+}

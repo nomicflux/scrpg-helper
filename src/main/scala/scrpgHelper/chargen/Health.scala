@@ -1,0 +1,30 @@
+package scrpgHelper.chargen
+
+object Health:
+  def calcRanges(n: Int): (Int, Int, Int) = n match
+    case 40 => (n, 29, 14)
+    case 39 => (n, 29, 14)
+    case 38 => (n, 28, 13)
+    case 37 => (n, 28, 13)
+    case 36 => (n, 27, 13)
+    case 35 => (n, 26, 12)
+    case 34 => (n, 25, 12)
+    case 33 => (n, 25, 12)
+    case 32 => (n, 24, 11)
+    case 31 => (n, 23, 11)
+    case 30 => (n, 22, 11)
+    case 29 => (n, 22, 10)
+    case 28 => (n, 21, 10)
+    case 27 => (n, 20, 10)
+    case 26 => (n, 20, 9)
+    case 25 => (n, 19, 9)
+    case 24 => (n, 18, 9)
+    case 23 => (n, 18, 8)
+    case 22 => (n, 17, 8)
+    case 21 => (n, 16, 8)
+    case 20 => (n, 15, 7)
+    case 19 => (n, 14, 7)
+    case 18 => (n, 14, 7)
+    case 17 => (n, 13, 6)
+    case _ => (n, 0, 0)
+end Health

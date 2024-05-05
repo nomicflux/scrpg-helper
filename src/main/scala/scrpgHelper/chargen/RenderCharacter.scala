@@ -17,18 +17,30 @@ object RenderCharacter:
   ): Element =
     div(
       className := "character-sheet",
-      h2("Character"),
+      h2("Character Sheet"),
       div(
-        child <-- character.backgroundSignal.map(renderBackground),
-        child <-- character.powerSourceSignal.map(renderPowerSource),
-        child <-- character.archetypeSignal.map(renderArchetype),
-        child <-- character.personalitySignal.map(renderPersonality)
+        className := "description-section",
+        div(
+          className := "details-panel",
+          div(
+            table(
+              child <-- character.backgroundSignal.map(renderBackground),
+              child <-- character.powerSourceSignal.map(renderPowerSource),
+              child <-- character.archetypeSignal.map(renderArchetype),
+              child <-- character.personalitySignal.map(renderPersonality)
+            )
+          )
+        ),
+        div(
+          className := "health-panel",
+          child <-- character.healthSignal.map(renderHealth)
+        )
       ),
       div(
         className := "qualities-and-powers",
         child <-- character.allPowers.map(renderPowers),
         child <-- character.allQualities.map(renderQualities),
-        child <-- character.personalitySignal.map(renderStatus),
+        child <-- character.personalitySignal.map(renderStatus)
       ),
       div(
         child <-- character.allAbilities.map(as =>
@@ -43,36 +55,89 @@ object RenderCharacter:
   def descriptionClass[A](m: Option[A]): String =
     if m.isEmpty then "char-description-missing" else "char-description-present"
 
-  def renderBackground(background: Option[Background]): Element =
+  def renderHealth(health: Option[Int]): Element =
+    val healthMarks: Option[(Int, Int, Int)] = health.map(Health.calcRanges(_))
     div(
+      h3("Health"),
+      table(
+        tr(
+          className := "green-health health-row",
+          td(className := "health-name", "Green"),
+          td(
+            className := "green-health-die health-die",
+            healthMarks.fold("")(hm => s"${hm._1} - ${hm._2 + 1}")
+          )
+        ),
+        tr(
+          className := "yellow-health health-row",
+          td(className := "health-name", "Yellow"),
+          td(
+            className := "yellow-health-die health-die",
+            healthMarks.fold("")(hm => s"${hm._2} - ${hm._3 + 1}")
+          )
+        ),
+        tr(
+          className := "red-health health-row",
+          td(className := "health-name", "Red"),
+          td(
+            className := "red-health-die health-die",
+            healthMarks.fold("")(hm => s"${hm._3} - 1")
+          )
+        )
+      )
+    )
+  end renderHealth
+
+  def renderBackground(background: Option[Background]): Element =
+    tr(
       className := "background-description char-description",
       className := descriptionClass(background),
-      "Background: ",
-      span(className := "char-description-field", background.fold(missingDescription)(_.name))
+      td("Background:"),
+      td(
+        span(
+          className := "char-description-field",
+          background.fold(missingDescription)(_.name)
+        )
+      )
     )
 
   def renderPowerSource(powerSource: Option[PowerSource]): Element =
-    div(
+    tr(
       className := "power-source-description char-description",
       className := descriptionClass(powerSource),
-      "Power Source: ",
-      span(className := "char-description-field", powerSource.fold(missingDescription)(_.name))
+      td("Power Source:"),
+      td(
+        span(
+          className := "char-description-field",
+          powerSource.fold(missingDescription)(_.name)
+        )
+      )
     )
 
   def renderArchetype(archetype: Option[Archetype]): Element =
-    div(
+    tr(
       className := "archetype-description char-description",
       className := descriptionClass(archetype),
-      "Archetype: ",
-      span(className := "char-description-field", archetype.fold(missingDescription)(_.name))
+      td("Archetype:"),
+      td(
+        span(
+          className := "char-description-field",
+          archetype.fold(missingDescription)(_.name)
+        )
+      )
     )
 
   def renderPersonality(personality: Option[Personality]): Element =
-    div(
+    tr(
       className := "personality-description char-description",
       className := descriptionClass(personality),
-      "Personality: ",
-      span(className := "char-description-field", personality.fold(missingDescription)(_.name))
+      td("Personality:"),
+      td(
+        span(
+          className := "char-description-field",
+          personality.fold(missingDescription)(_.name)
+        )
+      )
     )
 
   def renderAbilities(qualities: List[Ability[_]]): Element =
@@ -90,8 +155,8 @@ object RenderCharacter:
       className := "chosen-ability",
       ability match
         case ca: ChosenAbility => RenderAbility.renderChosenAbility(ca)
-        case p: Principle => RenderAbility.renderPrinciple(p)
-        case _: Ability[_] => span("Don't know what to do")
+        case p: Principle      => RenderAbility.renderPrinciple(p)
+        case _: Ability[_]     => span("Don't know what to do")
     )
 
   def renderQualities(qualities: List[(Quality, Die)]): Element =
@@ -139,7 +204,8 @@ object RenderCharacter:
           td(className := "status-name", "Green"),
           td(
             className := "green-status-die status-die",
-            mp.flatMap(_.statusDice.get(Status.Green).map(_.toString)).getOrElse("")
+            mp.flatMap(_.statusDice.get(Status.Green).map(_.toString))
+              .getOrElse("")
           )
         ),
         tr(
@@ -147,7 +213,8 @@ object RenderCharacter:
           td(className := "status-name", "Yellow"),
           td(
             className := "yellow-status-die status-die",
-            mp.flatMap(_.statusDice.get(Status.Yellow).map(_.toString)).getOrElse("")
+            mp.flatMap(_.statusDice.get(Status.Yellow).map(_.toString))
+              .getOrElse("")
           )
         ),
         tr(
@@ -155,9 +222,10 @@ object RenderCharacter:
           td(className := "status-name", "Red"),
           td(
             className := "red-status-die status-die",
-            mp.flatMap(_.statusDice.get(Status.Red).map(_.toString)).getOrElse("")
+            mp.flatMap(_.statusDice.get(Status.Red).map(_.toString))
+              .getOrElse("")
           )
-        ),
+        )
       )
     )
 
