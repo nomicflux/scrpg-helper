@@ -9,13 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "chart.js": "^4.4.2",
-    "esbuild": "^0.20.1",
-    "typescript": "^5.4.5"
+    "chart.js": "^4.4.2"
   },
   "devDependencies": {
     "source-map-support": "^0.5.21",
+    "typescript": "^5.4.5",
+    "@scala-js/vite-plugin-scalajs": "^1.0.0",
     "@types/chart.js": "^2.9.41",
-    "@types/source-map-support": "^0.5.10"
+    "@types/source-map-support": "^0.5.10",
+    "vite": "^4.1.0"
   }
 }
