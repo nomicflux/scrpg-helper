@@ -145,6 +145,12 @@ final class CharacterModel:
       m + (stagingKey -> newList)
     }
 
+  def abilitySelected(stagingKey: StagingKey, ability: Signal[Option[ChosenAbility]]): Signal[Boolean] =
+    abilityStaging.signal.combineWith(ability).map { (as, ma) =>
+      val currListKeys = as.getOrElse(stagingKey, List()).map(_.key).toSet
+      ma.fold(false)(a => currListKeys.contains(a.key))
+    }
+
   def toggleAbility(stagingKey: StagingKey): Observer[ChosenAbility] =
     abilityStaging.updater { (m, a) =>
       val currList = m.getOrElse(stagingKey, List())

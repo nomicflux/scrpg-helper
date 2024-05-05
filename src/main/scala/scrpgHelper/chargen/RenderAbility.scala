@@ -13,12 +13,12 @@ object RenderAbility:
   import scrpgHelper.status.Status
 
   def renderPrincipleText(
-    ability: Principle
+      ability: Principle
   ): String =
     s"${ability.name} - ${ability.status.toString} - ${ability.principleCategory.toString} - ${ability.action.toString} - ${ability.action.toString} by using Principle of ${ability.name}"
 
   def renderChosenAbilityText(
-    ability: ChosenAbility
+      ability: ChosenAbility
   ): String =
     val actionText = ability.actions.map(_.toString).mkString(",")
     val descriptionText = renderChosenDescriptionText(ability)
@@ -26,39 +26,39 @@ object RenderAbility:
   end renderChosenAbilityText
 
   def renderChosenDescriptionText(
-      ability: ChosenAbility,
+      ability: ChosenAbility
   ): String =
-      ability.description.map { l =>
-        l match
-          case s: String => s
-          case ac: AbilityChoice => " " + ac.choiceName("<none>") + " "
-      }.mkString
+    ability.description.map { l =>
+      l match
+        case s: String         => s
+        case ac: AbilityChoice => " " + ac.choiceName("<none>") + " "
+    }.mkString
 
   def renderPrinciple(
-    ability: Principle
+      ability: Principle
   ): Element =
     div(
       className := s"ability status-${ability.status.toString.toLowerCase()}",
       span(
         className := "ability-actions",
-        ability.action.toSymbol,
+        ability.action.toSymbol
       ),
       span(
         className := "ability-name",
-        ability.name,
+        ability.name
       ),
       span(
         className := "ability-category",
-        ability.category.toAbbreviation,
+        ability.category.toAbbreviation
       ),
       span(
         className := "ability-description",
         s"${ability.action.toString} by using Principle of ${ability.name}"
-      ),
+      )
     )
 
   def renderChosenAbility(
-    ability: ChosenAbility
+      ability: ChosenAbility
   ): Element =
     div(
       className := s"ability status-${ability.status.toString.toLowerCase()}",
@@ -68,23 +68,23 @@ object RenderAbility:
       ),
       span(
         className := "ability-name",
-        ability.name,
+        ability.name
       ),
       span(
         className := "ability-category",
-        ability.category.toAbbreviation,
+        ability.category.toAbbreviation
       ),
       span(
         className := "ability-description",
         renderChosenDescription(
-          ability,
+          ability
         )
-      ),
+      )
     )
   end renderChosenAbility
 
   def renderChosenDescription(
-      ability: ChosenAbility,
+      ability: ChosenAbility
   ): Element =
     span(
       ability.description.map { l =>
@@ -93,7 +93,7 @@ object RenderAbility:
           case ac: AbilityChoice =>
             renderChosenChoice(
               ability,
-              ac,
+              ac
             )
       }
     )
@@ -101,7 +101,7 @@ object RenderAbility:
 
   def renderChosenChoice[Choice <: AbilityChoice](
       ability: ChosenAbility,
-      choice: Choice,
+      choice: Choice
   ): Element =
     span(
       className := "ability-choice-chosen",
@@ -119,18 +119,17 @@ object RenderAbility:
       className := "ability-pool",
       span(s"Pick ${abilityPool.max}:"),
       div(
-        abilityPool
-          .abilities
+        abilityPool.abilities
           .filter(showAbility)
           .map(
-          renderAbility(
-            character,
-            stagingKey,
-            abilityPool,
-            _,
-            character.abilityChoicesSignal(stagingKey)
+            renderAbility(
+              character,
+              stagingKey,
+              abilityPool,
+              _,
+              character.abilityChoicesSignal(stagingKey)
+            )
           )
-        )
       )
     )
   end renderAbilityPool
@@ -149,7 +148,8 @@ object RenderAbility:
       template: AbilityTemplate,
       chosenSignal: Signal[Map[AbilityKey, ChosenAbility]]
   ): Element =
-    val chosenAbility: Signal[Option[ChosenAbility]] = chosenSignal.map(_.get(template.key))
+    val chosenAbility: Signal[Option[ChosenAbility]] =
+      chosenSignal.map(_.get(template.key))
     val hovering: Var[Boolean] = Var(false)
 
     div(
@@ -168,9 +168,12 @@ object RenderAbility:
       className <-- character
         .abilitiesSignal(Signal.fromValue(Some(stagingKey)))
         .map(l =>
-          if !l.collect { case ca: ChosenAbility => ca.template }
-            .filter(at => at.id == template.id && at.status != template.status)
-            .isEmpty
+          if !l
+              .collect { case ca: ChosenAbility => ca.template }
+              .filter(at =>
+                at.id == template.id && at.status != template.status
+              )
+              .isEmpty
           then "hidden"
           else ""
         ),
@@ -182,11 +185,11 @@ object RenderAbility:
       ),
       span(
         className := "ability-name",
-        template.name ,
+        template.name
       ),
       span(
         className := "ability-category",
-        template.category.toAbbreviation,
+        template.category.toAbbreviation
       ),
       span(
         className := "ability-description",
@@ -196,13 +199,15 @@ object RenderAbility:
           template,
           chosenSignal.map(
             _.values.toList.filter(_.inPool.id == abilityPool.id)
-          )
+          ),
+          character.abilitySelected(stagingKey, chosenAbility),
         )
       ),
       onMouseOver --> { _ => hovering.update { _ => true } },
       onMouseOut --> { _ => hovering.update { _ => false } },
       onBlur --> { _ => hovering.update { _ => false } },
-      onClick.compose(_.withCurrentValueOf(chosenAbility)) --> { (ev, mChosen) =>
+      onClick.compose(_.withCurrentValueOf(chosenAbility)) --> {
+        (ev, mChosen) =>
           mChosen.foreach { chosen =>
             character.toggleAbility(stagingKey).onNext(chosen)
           }
@@ -214,55 +219,98 @@ object RenderAbility:
       character: CharacterModel,
       stagingKey: character.StagingKey,
       ability: AbilityTemplate,
-      chosen: Signal[List[ChosenAbility]]
+      chosen: Signal[List[ChosenAbility]],
+      abilitySelected: Signal[Boolean]
   ): Element =
     val powerSignal: Signal[List[Power]] = stagingKey match
-        case bg: Background => Signal.fromValue(List.empty)
-        case ps: PowerSource => character.powersSignal(Signal.fromValue(Some(ps))).map(_.map(_._1))
-        case at: Archetype => character.powersSignal(character.powerSourceSignal)
-            .combineWith(character.powersSignal(Signal.fromValue(Some(at))))
-            .map(_.map(_._1) ++ _.map(_._1))
-        case p: Personality => character.powersSignal(character.powerSourceSignal)
-            .combineWith(character.powersSignal(character.archetypeSignal))
-            .map(_.map(_._1) ++ _.map(_._1))
-        case ra: RedAbility.RedAbilityPhase => character.powersSignal(Signal.fromValue(Some(ra)))
-            .combineWith(
-              character.powersSignal(character.powerSourceSignal),
-              character.powersSignal(character.archetypeSignal),
-            ).map(_.map(_._1) ++ _.map(_._1) ++ _.map(_._1))
+      case bg: Background => Signal.fromValue(List.empty)
+      case ps: PowerSource =>
+        character.powersSignal(Signal.fromValue(Some(ps))).map(_.map(_._1))
+      case at: Archetype =>
+        character
+          .powersSignal(character.powerSourceSignal)
+          .combineWith(character.powersSignal(Signal.fromValue(Some(at))))
+          .map(_.map(_._1) ++ _.map(_._1))
+      case p: Personality =>
+        character
+          .powersSignal(character.powerSourceSignal)
+          .combineWith(character.powersSignal(character.archetypeSignal))
+          .map(_.map(_._1) ++ _.map(_._1))
+      case ra: RedAbility.RedAbilityPhase =>
+        character
+          .powersSignal(Signal.fromValue(Some(ra)))
+          .combineWith(
+            character.powersSignal(character.powerSourceSignal),
+            character.powersSignal(character.archetypeSignal)
+          )
+          .map(_.map(_._1) ++ _.map(_._1) ++ _.map(_._1))
 
     val qualitySignal: Signal[List[Quality]] = stagingKey match
-        case bg: Background => character.qualitiesSignal(Signal.fromValue(Some(bg))).map(_.map(_._1))
-        case ps: PowerSource => character.qualitiesSignal(character.backgroundSignal)
-            .combineWith(character.qualitiesSignal(Signal.fromValue(Some(ps))))
-            .map(_.map(_._1) ++ _.map(_._1))
-        case at: Archetype => character.qualitiesSignal(character.backgroundSignal)
-            .combineWith(
-              character.qualitiesSignal(character.powerSourceSignal),
-              character.qualitiesSignal(Signal.fromValue(Some(at))),
+      case bg: Background =>
+        character.qualitiesSignal(Signal.fromValue(Some(bg))).map(_.map(_._1))
+      case ps: PowerSource =>
+        character
+          .qualitiesSignal(character.backgroundSignal)
+          .combineWith(character.qualitiesSignal(Signal.fromValue(Some(ps))))
+          .map(_.map(_._1) ++ _.map(_._1))
+      case at: Archetype =>
+        character
+          .qualitiesSignal(character.backgroundSignal)
+          .combineWith(
+            character.qualitiesSignal(character.powerSourceSignal),
+            character.qualitiesSignal(Signal.fromValue(Some(at)))
+          )
+          .map(_.map(_._1) ++ _.map(_._1) ++ _.map(_._1))
+      case p: Personality =>
+        character
+          .qualitiesSignal(character.archetypeSignal)
+          .combineWith(
+            character.qualitiesSignal(character.powerSourceSignal),
+            character.qualitiesSignal(character.backgroundSignal),
+            character.qualitiesSignal(Signal.fromValue(Some(p)))
+          )
+          .map(_.map(_._1) ++ _.map(_._1) ++ _.map(_._1) ++ _.map(_._1))
+      case ra: RedAbility.RedAbilityPhase =>
+        character
+          .qualitiesSignal(Signal.fromValue(Some(ra)))
+          .combineWith(
+            character.qualitiesSignal(character.backgroundSignal),
+            character.qualitiesSignal(character.powerSourceSignal),
+            character.qualitiesSignal(character.archetypeSignal),
+            character.qualitiesSignal(character.personalitySignal)
+          )
+          .map(
+            _.map(_._1) ++ _.map(_._1) ++ _.map(_._1) ++ _.map(_._1) ++ _.map(
+              _._1
             )
-            .map(_.map(_._1) ++ _.map(_._1) ++ _.map(_._1))
-        case p: Personality => character.qualitiesSignal(character.archetypeSignal)
-            .combineWith(character.qualitiesSignal(character.powerSourceSignal),
-                         character.qualitiesSignal(character.backgroundSignal),
-                         character.qualitiesSignal(Signal.fromValue(Some(p))))
-            .map(_.map(_._1) ++ _.map(_._1) ++ _.map(_._1) ++ _.map(_._1))
-        case ra: RedAbility.RedAbilityPhase => character.qualitiesSignal(Signal.fromValue(Some(ra)))
-            .combineWith(
-              character.qualitiesSignal(character.backgroundSignal),
-              character.qualitiesSignal(character.powerSourceSignal),
-              character.qualitiesSignal(character.archetypeSignal),
-              character.qualitiesSignal(character.personalitySignal),
-            ).map(_.map(_._1) ++ _.map(_._1) ++ _.map(_._1) ++ _.map(_._1) ++ _.map(_._1))
+          )
 
     span(
       ability.description.map { l =>
         l match
           case s: String => span(s)
           case ec: EnergyChoice =>
-            renderChoices(character, stagingKey, ec, Signal.fromValue(Energy.values.toList), chosen, ability, _.getEnergy)
+            renderChoices(
+              character,
+              stagingKey,
+              ec,
+              Signal.fromValue(Energy.values.toList),
+              chosen,
+              ability,
+              _.getEnergy,
+              abilitySelected,
+            )
           case ac: ActionChoice =>
-            renderChoices(character, stagingKey, ac, Signal.fromValue(Action.values.toList), chosen, ability, _.getAction)
+            renderChoices(
+              character,
+              stagingKey,
+              ac,
+              Signal.fromValue(Action.values.toList),
+              chosen,
+              ability,
+              _.getAction,
+              abilitySelected,
+            )
           case pc: PowerChoice =>
             renderChoices(
               character,
@@ -272,6 +320,7 @@ object RenderAbility:
               chosen,
               ability,
               _.getPower,
+              abilitySelected,
             )
           case qc: QualityChoice =>
             renderChoices(
@@ -282,16 +331,20 @@ object RenderAbility:
               chosen,
               ability,
               _.getQuality,
+              abilitySelected,
             )
           case pqc: PowerQualityChoice =>
             renderChoices(
               character,
               stagingKey,
               pqc,
-              powerSignal.combineWith(qualitySignal).map { (ps, qs) => ps ++ qs},
+              powerSignal.combineWith(qualitySignal).map { (ps, qs) =>
+                ps ++ qs
+              },
               chosen,
               ability,
               c => c.getPower.orElse(c.getQuality),
+              abilitySelected,
             )
           case _: AbilityChoice => span("Not valid")
       }
@@ -305,25 +358,28 @@ object RenderAbility:
       items: Signal[List[choice.Item]],
       chosen: Signal[List[ChosenAbility]],
       ability: AbilityTemplate,
-      retriever: AbilityChoice => Option[choice.Item]
+      retriever: AbilityChoice => Option[choice.Item],
+      abilitySelected: Signal[Boolean]
   ): Element =
     span(
-      onMouseOver --> { ev => ev.stopPropagation() },
-      onClick --> { ev => ev.stopPropagation() },
+      onMouseOver.compose(_.withCurrentValueOf(abilitySelected)) --> { (ev, b) =>
+        if b then ev.stopPropagation()
+      },
+      onClick.compose(_.withCurrentValueOf(abilitySelected)) --> { (ev, b) =>
+        if b then ev.stopPropagation()
+      },
       SelectWithPrevChoice
         .forSignal[choice.Item](
           items.map(_.filter(i => choice.validateFn(List(i)))),
           i => choice.itemName(i)
         )
         .render(
-          chosen.map(cas =>
-            { (p: choice.Item, mp: Option[choice.Item]) =>
-              val chosenItems = cas.flatMap(ca =>
-                (ca.currentChoices.flatMap(retriever(_).toList))
-              ) :+ p
-              !choice.validateFn(chosenItems)
-            }
-          ),
+          chosen.map(cas => { (p: choice.Item, mp: Option[choice.Item]) =>
+            val chosenItems = cas.flatMap(ca =>
+              (ca.currentChoices.flatMap(retriever(_).toList))
+            ) :+ p
+            !choice.validateFn(chosenItems)
+          }),
           character
             .removeAbilityChoice(stagingKey, ability)
             .contramap(p => choice.withChoice(p)),
