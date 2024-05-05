@@ -1170,10 +1170,9 @@ select.selector-with-prev-choice option:selected {
   padding: 0;
 }
 
-.pqs li {
-  list-style: none;
+.pqs td {
   margin: 0;
-  padding: 0;
+  padding: 0.25em;
 }
 
 .abilities li {
@@ -1232,4 +1231,35 @@ select.selector-with-prev-choice option:selected {
   padding-left: 0.1em;
   padding-right: 0.1em;
   background-color: rgba(255, 255, 255, 0.3);
+}
+
+.status {
+  margin: auto;
+}
+
+.status-name {
+  transform: rotate(-90deg);
+  font-size: 0.6em;
+}
+
+.status-row {
+  margin: 0.25em;
+}
+
+.status-die {
+  padding: 0.7em;
+  background: #eeeeee;
+  color: black;
+}
+
+.green-status-die {
+  border: 3px solid green;
+}
+
+.yellow-status-die {
+  border: 3px solid yellow;
+}
+
+.red-status-die {
+  border: 3px solid red;
 }

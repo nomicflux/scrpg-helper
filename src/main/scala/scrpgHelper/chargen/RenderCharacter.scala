@@ -8,6 +8,7 @@ import org.scalajs.dom
 import com.raquo.laminar.api.L.{*, given}
 
 import scrpgHelper.rolls.Die
+import scrpgHelper.status.Status
 
 object RenderCharacter:
   def renderCharacter(
@@ -25,8 +26,9 @@ object RenderCharacter:
       ),
       div(
         className := "qualities-and-powers",
+        child <-- character.allPowers.map(renderPowers),
         child <-- character.allQualities.map(renderQualities),
-        child <-- character.allPowers.map(renderPowers)
+        child <-- character.personalitySignal.map(renderStatus),
       ),
       div(
         child <-- character.allAbilities.map(as =>
@@ -96,36 +98,67 @@ object RenderCharacter:
     div(
       className := "qualities pqs",
       h3("Qualities"),
-      ul(
+      table(
         className := "quality-list",
-        qualities.map(qd => li(renderQuality(qd._1, qd._2)))
+        qualities.map(qd => renderQuality(qd._1, qd._2))
       )
     )
 
   def renderQuality(quality: Quality, die: Die): Element =
-    span(
+    tr(
       className := "quality pq",
-      span(className := "pq-name", quality.name),
-      " ",
-      span(className := "pq-die-size", die.toString)
+      td(className := "pq-name", quality.name),
+      td(className := "pq-die-size", die.toString)
     )
 
   def renderPowers(powers: List[(Power, Die)]): Element =
     div(
       className := "powers pqs",
       h3("Powers"),
-      ul(
+      table(
         className := "power-list",
-        powers.map(qd => li(renderPower(qd._1, qd._2)))
+        powers.map(qd => renderPower(qd._1, qd._2))
       )
     )
 
   def renderPower(power: Power, die: Die): Element =
-    span(
+    tr(
       className := "power pq",
-      span(className := "pq-name", power.name),
-      " ",
-      span(className := "pq-die-size", die.toString)
+      td(className := "pq-name", power.name),
+      td(className := "pq-die-size", die.toString)
+    )
+
+  def renderStatus(mp: Option[Personality]): Element =
+    div(
+      className := "status",
+      h3("Status"),
+      table(
+        className := "status-list",
+        tr(
+          className := "green-status status-row",
+          td(className := "status-name", "Green"),
+          td(
+            className := "green-status-die status-die",
+            mp.flatMap(_.statusDice.get(Status.Green).map(_.toString)).getOrElse("")
+          )
+        ),
+        tr(
+          className := "yellow-status status-row",
+          td(className := "status-name", "Yellow"),
+          td(
+            className := "yellow-status-die status-die",
+            mp.flatMap(_.statusDice.get(Status.Yellow).map(_.toString)).getOrElse("")
+          )
+        ),
+        tr(
+          className := "red-status status-row",
+          td(className := "status-name", "Red"),
+          td(
+            className := "red-status-die status-die",
+            mp.flatMap(_.statusDice.get(Status.Red).map(_.toString)).getOrElse("")
+          )
+        ),
+      )
     )
 
   def closeSheet(closeCharSheet: Observer[Unit]): Element =
