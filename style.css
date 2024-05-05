@@ -1122,7 +1122,10 @@ select.selector-with-prev-choice option:selected {
   z-index: 1000;
   top: 2em;
   left: 2em;
+  bottom: 1em;
   background: black;
+  overflow-y:scroll;
+  overflow-x:hidden;
 }
 
 .close-char-sheet {

@@ -73,7 +73,7 @@ object RenderCharacter:
       span(className := "char-description-field", personality.fold(missingDescription)(_.name))
     )
 
-  def renderAbilities(qualities: List[ChosenAbility]): Element =
+  def renderAbilities(qualities: List[Ability[_]]): Element =
     div(
       className := "abilities",
       h3("abilities"),
@@ -83,10 +83,13 @@ object RenderCharacter:
       )
     )
 
-  def renderAbility(ability: ChosenAbility): Element =
+  def renderAbility(ability: Ability[_]): Element =
     span(
       className := "chosen-ability",
-      RenderAbility.renderChosenAbility(ability)
+      ability match
+        case ca: ChosenAbility => RenderAbility.renderChosenAbility(ca)
+        case p: Principle => RenderAbility.renderPrinciple(p)
+        case _: Ability[_] => span("Don't know what to do")
     )
 
   def renderQualities(qualities: List[(Quality, Die)]): Element =

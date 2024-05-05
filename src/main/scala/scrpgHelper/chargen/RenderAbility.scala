@@ -12,6 +12,29 @@ import scrpgHelper.components.SelectWithPrevChoice
 object RenderAbility:
   import scrpgHelper.status.Status
 
+  def renderPrinciple(
+    ability: Principle
+  ): Element =
+    div(
+      className := s"ability status-${ability.status.toString.toLowerCase()}",
+      span(
+        className := "ability-actions",
+        ability.action.toSymbol,
+      ),
+      span(
+        className := "ability-name",
+        ability.name,
+      ),
+      span(
+        className := "ability-category",
+        ability.category.toAbbreviation,
+      ),
+      span(
+        className := "ability-description",
+        s"${ability.action.toString} by using Principle of ${ability.name}"
+      ),
+    )
+
   def renderChosenAbility(
     ability: ChosenAbility
   ): Element =

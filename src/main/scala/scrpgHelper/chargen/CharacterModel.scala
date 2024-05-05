@@ -267,12 +267,23 @@ final class CharacterModel:
     )
     .map(_.map(_._2).filter(_.descriptionFilledOut).toList)
 
-  val allAbilities: Signal[List[ChosenAbility]] =
+  val allPrinciples: Signal[List[Principle]] = abilityStaging.signal
+    .combineWith(
+      backgroundSignal,
+      archetypeSignal,
+    )
+    .map((abils, mbg, mat) =>
+      mbg.fold(List())(bg => abils.getOrElse(bg, List())) ++
+        mat.fold(List())(at => abils.getOrElse(at, List()))
+    )
+    .map(_.collect { case p: Principle => p })
+
+  val allAbilities: Signal[List[Ability[_]]] =
     allStagedAbilities
-      .combineWith(allChosenAbilities)
-      .map { (asa, aca) =>
+      .combineWith(allChosenAbilities, allPrinciples)
+      .map { (asa, aca, aps) =>
         val abilityIds = asa.map(_.key).toSet
-        aca.filter(a => abilityIds.contains(a.key))
+        aca.filter(a => abilityIds.contains(a.key)) ++ aps
       }
 
   val validBackground: Signal[Boolean] = backgroundSignal
