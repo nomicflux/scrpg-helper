@@ -1347,6 +1347,18 @@ select.selector-with-prev-choice option:selected {
   right: 1em;
 }
 
+.next-page-button {
+  position: absolute;
+  top: 3.5em;
+  right: 1em;
+}
+
+.prev-page-button {
+  position: absolute;
+  top: 3.5em;
+  right: 4.5em;
+}
+
 /* Keep at bottom */
 .hidden {
   display: none;

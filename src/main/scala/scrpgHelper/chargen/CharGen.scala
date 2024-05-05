@@ -16,27 +16,34 @@ object CharGen:
       h1("Character Generation"),
       div(
         className := "toggle-char-sheet-div",
-        toggleCharSheet(model.showCharSheetSignal, model.toggleCharSheet),
+        toggleCharSheet(model.showCharSheetSignal, model.toggleCharSheet)
       ),
       div(
         prevPageButton(character, model.pageSignal, model.retreatPage),
         nextPageButton(character, model.pageSignal, model.advancePage)
       ),
-      renderPage(model.pageSignal, model.showCharSheetSignal, model.toggleCharSheet, character)
+      renderPage(
+        model.pageSignal,
+        model.showCharSheetSignal,
+        model.toggleCharSheet,
+        character
+      )
     )
   end charGen
 
   def toggleCharSheet(
-    showCharSheetSignal: Signal[Boolean],
-    toggleCharSheet: Observer[Unit]
+      showCharSheetSignal: Signal[Boolean],
+      toggleCharSheet: Observer[Unit]
   ): Element =
     button(
       className := "toggle-char-sheet",
-      className <-- showCharSheetSignal.map(b => if b then "char-sheet-shown" else "char-sheet-hidden"),
+      className <-- showCharSheetSignal.map(b =>
+        if b then "char-sheet-shown" else "char-sheet-hidden"
+      ),
       tpe := "button",
       child.text <-- showCharSheetSignal.map(b => if b then "Hide" else "Show"),
       " Character Sheet",
-      onClick --> { _ev => toggleCharSheet.onNext(()) },
+      onClick --> { _ev => toggleCharSheet.onNext(()) }
     )
 
   def nextPageButton(
@@ -44,26 +51,36 @@ object CharGen:
       pageSignal: Signal[CharGenPage],
       advancePage: Observer[Unit]
   ): Element =
-    button(
-      tpe := "button",
-      ">> Next Page",
-      className <-- pageSignal.map(p => if (p == CharGenPage.HealthPage) then "hidden" else ""),
-      disabled <-- pageSignal
-        .combineWith(character.validBackground, character.validPowerSource,
-                     character.validArchetype, character.validPersonality,
-                     character.validRedAbilities, character.validHealth)
-        .map((p, b, ps, at, pt, ra, h) =>
-          p match {
-            case CharGenPage.BackgroundPage  => !b
-            case CharGenPage.PowerSourcePage => !ps
-            case CharGenPage.ArchetypePage   => !at
-            case CharGenPage.PersonalityPage => !pt
-            case CharGenPage.RedAbilityPage  => !ra
-            case CharGenPage.RetconPage      => false
-            case CharGenPage.HealthPage      => true
-          }
+    span(
+      className := "next-page-button",
+      button(
+        tpe := "button",
+        ">>",
+        className <-- pageSignal.map(p =>
+          if (p == CharGenPage.HealthPage) then "hidden" else ""
         ),
-      onClick --> { _ => advancePage.onNext(()) }
+        disabled <-- pageSignal
+          .combineWith(
+            character.validBackground,
+            character.validPowerSource,
+            character.validArchetype,
+            character.validPersonality,
+            character.validRedAbilities,
+            character.validHealth
+          )
+          .map((p, b, ps, at, pt, ra, h) =>
+            p match {
+              case CharGenPage.BackgroundPage  => !b
+              case CharGenPage.PowerSourcePage => !ps
+              case CharGenPage.ArchetypePage   => !at
+              case CharGenPage.PersonalityPage => !pt
+              case CharGenPage.RedAbilityPage  => !ra
+              case CharGenPage.RetconPage      => false
+              case CharGenPage.HealthPage      => true
+            }
+          ),
+        onClick --> { _ => advancePage.onNext(()) }
+      )
     )
   end nextPageButton
 
@@ -72,17 +89,22 @@ object CharGen:
       pageSignal: Signal[CharGenPage],
       retreatPage: Observer[Unit]
   ): Element =
-    button(
-      tpe := "button",
-      "Previous Page <<",
-      className <-- pageSignal.map(p => if (p == CharGenPage.BackgroundPage) then "hidden" else ""),
-      disabled <-- pageSignal.map(p =>
-        p match {
-          case CharGenPage.BackgroundPage => true
-          case _                          => false
-        }
-      ),
-      onClick --> { _ => retreatPage.onNext(()) }
+    span(
+      className := "prev-page-button",
+      button(
+        tpe := "button",
+        "<<",
+        className <-- pageSignal.map(p =>
+          if (p == CharGenPage.BackgroundPage) then "hidden" else ""
+        ),
+        disabled <-- pageSignal.map(p =>
+          p match {
+            case CharGenPage.BackgroundPage => true
+            case _                          => false
+          }
+        ),
+        onClick --> { _ => retreatPage.onNext(()) }
+      )
     )
   end prevPageButton
 
@@ -94,7 +116,9 @@ object CharGen:
   ): Element =
     div(
       div(
-        className <-- charSheetSignal.map(b => if b then "char-sheet" else "hidden"),
+        className <-- charSheetSignal.map(b =>
+          if b then "char-sheet" else "hidden"
+        ),
         RenderCharacter.renderCharacter(character, toggleCharSheet)
       ),
       div(
@@ -138,13 +162,14 @@ object CharGen:
           if p == CharGenPage.HealthPage then "" else "hidden"
         ),
         RenderHealth.renderHealth(character)
-      ),
+      )
     )
   end renderPage
 end CharGen
 
 enum CharGenPage:
-  case BackgroundPage, PowerSourcePage, ArchetypePage, PersonalityPage, RedAbilityPage, RetconPage, HealthPage
+  case BackgroundPage, PowerSourcePage, ArchetypePage, PersonalityPage,
+    RedAbilityPage, RetconPage, HealthPage
 end CharGenPage
 
 final class CharGenModel:
