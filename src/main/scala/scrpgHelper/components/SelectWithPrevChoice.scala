@@ -37,7 +37,10 @@ case class SelectWithPrevChoice[A](items: Signal[List[A]],
       children <-- items.map(_.distinctBy(toName(_))).split(toName(_)) { (name, a, _) =>
         option(
           value := name,
-          disabled <-- disabledChecker.combineWith(prevChoiceSignal).map((f, mpc) => f(a, mpc)),
+          disabled <-- disabledChecker.combineWith(prevChoiceSignal).map{(f, mpc) =>
+            val res = f(a, mpc)
+            res
+          },
           name
         )
       },
