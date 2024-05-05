@@ -21,6 +21,8 @@ object RenderHealth:
     )
 
   def renderHealthElements(character: CharacterModel): Element =
+    val finalStep: Var[Option[Int]] = Var(None)
+    val calcFinalStep: Observer[Int] = finalStep.updater { (_, n) => Some(n) }
     table(
       className := "health-table",
       tr(
@@ -40,6 +42,7 @@ object RenderHealth:
         )
       ),
       tr(
+        className <-- finalStep.signal.map(fs => if fs.isDefined then "hidden" else ""),
         td("Roll or 4:"),
         td(
           button(
@@ -47,7 +50,9 @@ object RenderHealth:
             disabled <-- character.healthSignal.map(_.isDefined),
             "Roll",
             onClick.compose(_.withCurrentValueOf(character.redZoneHealth, character.powerQualityHealth)) --> { (_ev, rzh, pqh) =>
-              character.calcHealth.onNext(8 + rzh.getOrElse(4) + pqh + Die.d(8).roll())
+              val roll = Die.d(8).roll()
+              calcFinalStep.onNext(roll)
+              character.calcHealth.onNext(8 + rzh.getOrElse(4) + pqh + roll)
             }
           ),
           " - or  -",
@@ -56,9 +61,17 @@ object RenderHealth:
             disabled <-- character.healthSignal.map(_.isDefined),
             "Four",
             onClick.compose(_.withCurrentValueOf(character.redZoneHealth, character.powerQualityHealth)) --> { (_ev, rzh, pqh) =>
+              calcFinalStep.onNext(4)
               character.calcHealth.onNext(8 + rzh.getOrElse(4) + pqh + 4)
             }
           ),
+        )
+      ),
+      tr(
+        className <-- finalStep.signal.map(fs => if fs.isDefined then "" else "hidden"),
+        td("Roll or 4:"),
+        td(
+          child.text <-- finalStep.signal.map(_.fold("<none>")(_.toString))
         )
       ),
       tfoot(

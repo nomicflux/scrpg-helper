@@ -1332,6 +1332,11 @@ select.selector-with-prev-choice option:selected {
   margin: 1em;
 }
 
+.health-table tfoot {
+  border-top: 3px dotted grey;
+  background: #444444;
+}
+
 .export-section pre {
   text-align: left;
 }
