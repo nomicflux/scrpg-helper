@@ -48,7 +48,7 @@ object RenderHealth:
           button(
             tpe := "button",
             disabled <-- character.healthSignal.map(_.isDefined),
-            "Roll",
+            s"Roll ${Die.d(8)}",
             onClick.compose(_.withCurrentValueOf(character.redZoneHealth, character.powerQualityHealth)) --> { (_ev, rzh, pqh) =>
               val roll = Die.d(8).roll()
               calcFinalStep.onNext(roll)
