@@ -19,6 +19,8 @@ case class Principle(
 
     override def inPrincipleCategory(category: PrincipleCategory): Boolean = category == principleCategory
 
+    def fullName: String = s"Principle of ${name}"
+
     def changeName(s: String): Principle =
       copy(name = s)
     end changeName
