@@ -724,7 +724,7 @@ object RedAbility:
   )
 
   val discernWeakness: RedAbility = RedAbility(
-    "Discen Weakness",
+    "Discern Weakness",
     AbilityCategory.Action,
     List(Action.Hinder),
     List(

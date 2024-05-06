@@ -16,6 +16,7 @@ case class CharacterModelExport(
   powerSource: Option[String],
   archetype: Option[String],
   personality: Option[String],
+  statuses: Map[Status, Die],
   health: Option[Int],
   powers: List[(Power, Die)],
   qualities: List[(Quality, Die)],
@@ -26,8 +27,9 @@ case class CharacterModelExport(
       val healthMarks = health.map(Health.calcRanges(_))
       val powerText = powers.map((p, d) => s"* ${p.name}, ${p.category.toString} - ${d.toString}").mkString("\n\t")
       val qualityText = qualities.map((q, d) => s"* ${q.name}, ${q.category.toString} - ${d.toString}").mkString("\n\t")
+      val statusText = statuses.toList.sortBy(_._1).map((s,d) => s"* ${s.toString}: ${d.toString}").mkString("\n\t")
       val principleText = principles.map(p => "* " + RenderAbility.renderPrincipleText(p)).mkString("\n\t")
-      val abilityText = abilities.map(ca => "* " + RenderAbility.renderChosenAbilityText(ca)).mkString("\n\t")
+      val abilityText = abilities.sortBy(_.status).map(ca => "* " + RenderAbility.renderChosenAbilityText(ca)).mkString("\n\t")
       s"""
 Background: ${background.getOrElse("<none>")}
 PowerSource: ${powerSource.getOrElse("<none>")}
@@ -38,6 +40,8 @@ Powers:
 \t${powerText}
 Qualities:
 \t${qualityText}
+Status Dice:
+\t${statusText}
 Principles:
 \t${principleText}
 Abilities:
@@ -467,6 +471,7 @@ final class CharacterModel:
         ps.map(_.name),
         at.map(_.name),
         pt.map(_.name),
+        pt.fold(Map())(_.statusDice),
         h,
         pows,
         quals,

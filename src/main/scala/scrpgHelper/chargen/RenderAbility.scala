@@ -22,7 +22,7 @@ object RenderAbility:
   ): String =
     val actionText = ability.actions.map(_.toString).mkString(",")
     val descriptionText = renderChosenDescriptionText(ability)
-    s"${ability.name} - ${ability.category.toString} - ${ability.status.toString} - ${actionText} - ${descriptionText}"
+    s"${ability.name} - ${ability.status.toString} - ${ability.category.toString} - ${actionText} - ${descriptionText}"
   end renderChosenAbilityText
 
   def renderChosenDescriptionText(
