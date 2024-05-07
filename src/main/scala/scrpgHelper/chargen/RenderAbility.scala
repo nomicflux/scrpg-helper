@@ -15,7 +15,7 @@ object RenderAbility:
   def renderPrincipleText(
       ability: Principle
   ): String =
-    s"${ability.fullName} - ${ability.status.toString} - ${ability.principleCategory.toString} - ${ability.action.toString} - ${ability.action.toString} by using ${ability.fullName}"
+    s"${ability.fullName} - ${ability.status.toString} - ${ability.principleCategory.toString} - ${ability.action.toString} - ${ability.description}"
 
   def renderChosenAbilityText(
       ability: ChosenAbility
@@ -53,7 +53,7 @@ object RenderAbility:
       ),
       span(
         className := "ability-description",
-        s"${ability.action.toString} by using ${ability.fullName}"
+        ability.description
       )
     )
 

@@ -21,6 +21,8 @@ case class Principle(
 
     def fullName: String = s"Principle of ${name}"
 
+    def description: String = s"${action} using ${fullName}. Use your Max die. You and all other heroes gain a hero point."
+
     def changeName(s: String): Principle =
       copy(name = s)
     end changeName
