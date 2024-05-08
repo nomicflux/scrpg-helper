@@ -977,6 +977,7 @@ div.choice-section .picked {
   transform: scale(1.1, 1.1);
   border-radius: 10px;
   outline: 3px groove grey;
+  z-index: 10;
 }
 
 div.choice-section .chosen.picked {
@@ -1120,8 +1121,7 @@ select.selector-with-prev-choice option:selected {
   left: 2em;
   bottom: 1em;
   background: black;
-  overflow-y:scroll;
-  overflow-x:hidden;
+  overflow: scroll;
 }
 
 .export-char-sheet {
@@ -1345,18 +1345,21 @@ select.selector-with-prev-choice option:selected {
   position: fixed;
   top: 1em;
   right: 1em;
+  z-index: 20;
 }
 
 .next-page-button {
   position: fixed;
   top: 3.5em;
   right: 1em;
+  z-index: 20;
 }
 
 .prev-page-button {
   position: fixed;
   top: 3.5em;
   right: 4.5em;
+  z-index: 20;
 }
 
 /* Keep at bottom */
