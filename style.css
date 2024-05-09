@@ -997,6 +997,33 @@ div.choice-section td {
   padding: 0.5em;
 }
 
+.quality-list::after {
+  display: block;
+  content: "Quality";
+  font-size: 0.6em;
+  padding: 0;
+  margin: 0;
+}
+
+.power-list::after {
+  display: block;
+  content: "Power";
+  font-size: 0.6em;
+  padding: 0;
+  margin: 0;
+}
+
+.power-quality-list {
+  border: 1px solid grey;
+  border-radius: 5px;
+  padding: 0.25em;
+}
+
+.pq-list-separator {
+  display: block;
+  font-size: 0.8em;
+}
+
 div.choice-section .choice-die-box {
   margin: 0px 0.5em;
   display: inline-block;

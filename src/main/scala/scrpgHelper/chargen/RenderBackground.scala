@@ -139,7 +139,7 @@ object RenderBackground:
     div(
       dice.map { d =>
         span(
-          className := "choice-die-box",
+          className := "choice-die-box quality-list",
           d.toString,
           ":",
           SelectWithPrevChoice(qualities.map(q => (q, d)), qd => qd._1.name)

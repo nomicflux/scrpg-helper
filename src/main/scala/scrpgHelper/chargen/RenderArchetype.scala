@@ -313,9 +313,11 @@ object RenderArchetype:
 
     div(
       className := "choice-die-box",
+      className <-- chosen.signal.map { spq => if spq.isEmpty then "power-quality-list" else "" },
       die.toString,
-      ":",
+      ": ",
       span(
+        className := "quality-list",
         className <-- chosen.signal.map { spq =>
           spq.fold("")(pq =>
             pq match
@@ -331,6 +333,12 @@ object RenderArchetype:
           )
       ),
       span(
+        className := "pq-list-separator",
+        className <-- chosen.signal.map { spq => if spq.isDefined then "hidden" else "" },
+        "-or-"
+      ),
+      span(
+        className := "power-list",
         className <-- chosen.signal.map { spq =>
           spq.fold("")(pq =>
             pq match

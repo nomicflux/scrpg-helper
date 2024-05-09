@@ -159,7 +159,7 @@ object RenderPowerSource:
         .map(ds =>
           ds.map { d =>
             span(
-              className := "choice-die-box",
+              className := "choice-die-box power-list",
               d.toString,
               ":",
               SelectWithPrevChoice[(Power, Die)](
@@ -172,7 +172,7 @@ object RenderPowerSource:
         ),
       extraPower.toList.map { case (d, ps) =>
         span(
-          className := "choice-die-box",
+          className := "choice-die-box power-list",
           d.toString,
           ":",
           SelectWithPrevChoice[(Power, Die)](
@@ -197,7 +197,7 @@ object RenderPowerSource:
       extraQuality.toList
         .map { case (d, q) =>
           span(
-            className := "choice-die-box",
+            className := "choice-die-box quality-list",
             d.toString,
             ":",
             SelectWithPrevChoice[(Quality, Die)](
