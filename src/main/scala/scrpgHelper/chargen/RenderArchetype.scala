@@ -317,7 +317,7 @@ object RenderArchetype:
       die.toString,
       ": ",
       span(
-        className := "quality-list",
+        className := "power-list",
         className <-- chosen.signal.map { spq =>
           spq.fold("")(pq =>
             pq match
@@ -338,7 +338,7 @@ object RenderArchetype:
         "-or-"
       ),
       span(
-        className := "power-list",
+        className := "quality-list",
         className <-- chosen.signal.map { spq =>
           spq.fold("")(pq =>
             pq match
