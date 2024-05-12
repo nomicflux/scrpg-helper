@@ -23,7 +23,7 @@ object Alien:
             _ => List(Action.Boost, Action.Recover),
             List(
               "Boost an ally using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". You and nearby heroes in the Yellow and Red zones Recover Health equal to your Min die."
             ),
           ),
@@ -34,7 +34,7 @@ object Alien:
             _ => List(Action.Boost, Action.Hinder),
             List(
               "Boost or Hinder using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ", and apply that mod to multiple close targets.",
             ),
           ),
@@ -45,7 +45,7 @@ object Alien:
             _ => List(Action.Boost),
             List(
               "Boost yourself using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Max die. That bonus is persistent and exclusive.",
             ),
           ),

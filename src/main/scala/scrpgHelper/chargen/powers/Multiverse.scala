@@ -20,7 +20,7 @@ object Multiverse:
             _ => List(Action.Boost, Action.Attack),
             List(
               "Boost yourself using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Max die. That bonus is persistent and exclusive. Then, Attack using your Min die."
             ),
           ),
@@ -40,7 +40,7 @@ object Multiverse:
             _ => List(Action.Hinder),
             List(
               "Hinder multiple targets using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Mid die for one and your Min die for the rest.",
             ),
           ),
@@ -51,7 +51,7 @@ object Multiverse:
             _ => List(Action.Attack),
             List(
               "Attack uising ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". If your target survived, Hinder them using your Max die.",
             ),
           ),

@@ -20,7 +20,7 @@ object Radiation:
             _ => List(Action.Boost, Action.Defend),
             List(
               "Boost yourself using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Then, either remove a penalty on yourself or Recover using your Min die."
             ),
           ),
@@ -40,7 +40,7 @@ object Radiation:
             _ => List(Action.Attack, Action.Hinder),
             List(
               "Attack using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Hinder that target using your Max die.",
             ),
           ),

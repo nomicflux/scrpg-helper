@@ -20,7 +20,7 @@ object TechUpgrades:
             _ => List(Action.Attack),
             List(
               "Attack multiple targets using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ", using your Min die afainst each."
             ),
           ),
@@ -31,7 +31,7 @@ object TechUpgrades:
             _ => List(Action.Boost, Action.Recover),
             List(
               "Boost yourself using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Then, either remove a penalty on yourself or Recover using your Min die.",
             ),
           ),

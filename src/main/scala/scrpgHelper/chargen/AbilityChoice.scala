@@ -1,8 +1,16 @@
 package scrpgHelper.chargen
 
 import scala.reflect.TypeTest
+import scrpgHelper.chargen.AbilityChoice.powerCategory
 
 final class AbilityChoiceId
+
+case class ChoiceContext(
+  powers: List[Power],
+  qualities: List[Quality],
+  action: List[Action],
+  energy: List[Energy]
+)
 
 trait AbilityChoice:
   type Item
@@ -17,33 +25,38 @@ trait AbilityChoice:
   def itemName(i: Item): String
   def withChoice(i: Item): AbilityChoice
   def withoutChoice: AbilityChoice
-  def validateFn: List[Item] => Boolean
-  def validate(l: List[AbilityChoice]): Boolean
+  def validateFn: (List[Item], ChoiceContext) => Boolean
 
   def choiceName(default: String): String = getItem.fold(default)(itemName(_))
 end AbilityChoice
 
 object AbilityChoice:
-  def noDupes[A](l: List[A]): Boolean =
+  def noDupes[A](l: List[A], m: ChoiceContext): Boolean =
     l.distinct.size == l.size
 
-  def onePower(power: Power)(l: List[Power]): Boolean =
+  def onePower(power: Power)(l: List[Power], m: ChoiceContext): Boolean =
     l.contains(power)
 
-  def powerCategories(powerCategories: List[PowerCategory])(l: List[Power]): Boolean =
+  def powerCategories(powerCategories: List[PowerCategory])(
+      l: List[Power], m: ChoiceContext
+  ): Boolean =
     !l.filter(p => powerCategories.contains(p.category)).isEmpty
 
-  def powerCategory(powerCategory: PowerCategory)(l: List[Power]): Boolean =
-    powerCategories(List(powerCategory))(l)
+  def powerCategory(powerCategory: PowerCategory)(l: List[Power], m: ChoiceContext): Boolean =
+    powerCategories(List(powerCategory))(l, m)
 
-  def intersection[A](toIntersect: List[A])(l: List[A]): Boolean =
+  def intersection[A](toIntersect: List[A])(l: List[A], m: ChoiceContext): Boolean =
     !l.filter(a => toIntersect.toSet.contains(a)).isEmpty
 
-  def qualityCategories(qualityCategories: List[QualityCategory])(l: List[Quality]): Boolean =
+  def qualityCategories(qualityCategories: List[QualityCategory])(
+      l: List[Quality], m: ChoiceContext
+  ): Boolean =
     !l.filter(q => qualityCategories.contains(q.category)).isEmpty
 
-  def qualityCategory(qualityCategory: QualityCategory)(l: List[Quality]): Boolean =
-    qualityCategories(List(qualityCategory))(l)
+  def qualityCategory(qualityCategory: QualityCategory)(
+      l: List[Quality], m: ChoiceContext
+  ): Boolean =
+    qualityCategories(List(qualityCategory))(l, m)
 
   def numChosen(l: List[AbilityChoice]): Int =
     l.map(ac =>
@@ -58,7 +71,7 @@ end AbilityChoice
 case class PowerQualityChoice(
     id: AbilityChoiceId,
     powerQuality: Option[Power | Quality],
-    validateFn: List[Power | Quality] => Boolean
+    validateFn: (List[Power | Quality], ChoiceContext) => Boolean
 ) extends AbilityChoice:
   type Item = Power | Quality
   val getPower: Option[Power] = powerQuality.flatMap { pq =>
@@ -80,36 +93,25 @@ case class PowerQualityChoice(
 
   def getItem: Option[Item] = powerQuality
   def itemName(pq: Item): String = pq match
-    case p: Power => p.name
+    case p: Power   => p.name
     case q: Quality => q.name
 
   override def toString(): String =
     s"PowerQualityChoice($powerQuality)"
-
-  def validate(l: List[AbilityChoice]): Boolean =
-    validateFn(
-      l.collect {
-        case pc: PowerChoice         => pc.power
-        case qc: QualityChoice       => qc.quality
-        case pqc: PowerQualityChoice => pqc.powerQuality
-      }.collect { case Some(pq) =>
-        pq
-      }
-    )
 end PowerQualityChoice
 
 object PowerQualityChoice:
   def apply(): PowerQualityChoice =
-    PowerQualityChoice(new AbilityChoiceId(), None, _ => true)
+    PowerQualityChoice(new AbilityChoiceId(), None, (_, _) => true)
 
-  def apply(vfn: List[Power | Quality] => Boolean): PowerQualityChoice =
+  def apply(vfn: (List[Power | Quality], ChoiceContext) => Boolean): PowerQualityChoice =
     PowerQualityChoice(new AbilityChoiceId(), None, vfn)
 end PowerQualityChoice
 
 case class PowerChoice(
     id: AbilityChoiceId,
     power: Option[Power],
-    validateFn: List[Power] => Boolean
+    validateFn: (List[Power], ChoiceContext) => Boolean
 ) extends AbilityChoice:
   type Item = Power
   val getPower: Option[Power] = power
@@ -125,25 +127,20 @@ case class PowerChoice(
 
   override def toString(): String =
     s"PowerChoice($power)"
-
-  def validate(l: List[AbilityChoice]): Boolean =
-    validateFn(l.collect { case pc: PowerChoice => pc.power }.collect {
-      case Some(p) => p
-    })
 end PowerChoice
 
 object PowerChoice:
   def apply(): PowerChoice =
-    PowerChoice(new AbilityChoiceId(), None, _ => true)
+    PowerChoice(new AbilityChoiceId(), None, (_, _) => true)
 
-  def apply(vfn: List[Power] => Boolean): PowerChoice =
+  def apply(vfn: (List[Power], ChoiceContext) => Boolean): PowerChoice =
     PowerChoice(new AbilityChoiceId(), None, vfn)
 end PowerChoice
 
 case class QualityChoice(
     id: AbilityChoiceId,
     quality: Option[Quality],
-    validateFn: List[Quality] => Boolean
+    validateFn: (List[Quality], ChoiceContext) => Boolean
 ) extends AbilityChoice:
   type Item = Quality
   val getPower: Option[Power] = None
@@ -159,25 +156,20 @@ case class QualityChoice(
 
   override def toString(): String =
     s"QualityChoice($quality)"
-
-  def validate(l: List[AbilityChoice]): Boolean =
-    validateFn(l.collect { case qc: QualityChoice => qc.quality }.collect {
-      case Some(q) => q
-    })
 end QualityChoice
 
 object QualityChoice:
   def apply(): QualityChoice =
-    QualityChoice(new AbilityChoiceId(), None, _ => true)
+    QualityChoice(new AbilityChoiceId(), None, (_, _) => true)
 
-  def apply(vfn: List[Quality] => Boolean): QualityChoice =
+  def apply(vfn: (List[Quality], ChoiceContext) => Boolean): QualityChoice =
     QualityChoice(new AbilityChoiceId(), None, vfn)
 end QualityChoice
 
 case class ActionChoice(
     id: AbilityChoiceId,
     action: Option[Action],
-    validateFn: List[Action] => Boolean
+    validateFn: (List[Action], ChoiceContext) => Boolean
 ) extends AbilityChoice:
   type Item = Action
 
@@ -194,25 +186,21 @@ case class ActionChoice(
 
   override def toString(): String =
     s"ActionChoice($action)"
-
-  def validate(l: List[AbilityChoice]): Boolean =
-    validateFn(l.collect { case ac: ActionChoice => ac.action }.collect {
-      case Some(a) => a
-    })
 end ActionChoice
 
 object ActionChoice:
   def apply(): ActionChoice =
-    ActionChoice(new AbilityChoiceId(), None, _ => true)
+    ActionChoice(new AbilityChoiceId(), None, (_, _) => true)
 
-  def apply(vfn: List[Action] => Boolean): ActionChoice =
+  def apply(vfn: (List[Action], ChoiceContext) => Boolean): ActionChoice =
     ActionChoice(new AbilityChoiceId(), None, vfn)
 end ActionChoice
 
 case class EnergyChoice(
     id: AbilityChoiceId,
     energy: Option[Energy],
-    validateFn: List[Energy] => Boolean
+    validateFn: (List[Energy], ChoiceContext) => Boolean,
+    usePowersToValidate: Boolean
 ) extends AbilityChoice:
   type Item = Energy
 
@@ -229,17 +217,12 @@ case class EnergyChoice(
 
   override def toString(): String =
     s"EnergyChoice($energy)"
-
-  def validate(l: List[AbilityChoice]): Boolean =
-    validateFn(l.collect { case ec: EnergyChoice => ec.energy }.collect {
-      case Some(e) => e
-    })
 end EnergyChoice
 
 object EnergyChoice:
-  def apply(): EnergyChoice =
-    EnergyChoice(new AbilityChoiceId(), None, _ => true)
+  def apply(vfn: (List[Energy], ChoiceContext) => Boolean): EnergyChoice =
+    EnergyChoice(new AbilityChoiceId(), None, vfn, false)
 
-  def apply(vfn: List[Energy] => Boolean): EnergyChoice =
-    EnergyChoice(new AbilityChoiceId(), None, vfn)
+  def apply(): EnergyChoice =
+    EnergyChoice((_, _) => true)
 end EnergyChoice

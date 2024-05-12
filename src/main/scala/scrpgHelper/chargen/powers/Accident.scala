@@ -19,13 +19,13 @@ object Accident:
             AbilityCategory.Action,
             choices => choices.flatMap(_.getAction.toList),
             List(
-              ActionChoice(actions =>
+              ActionChoice((actions, _) =>
                 actions
                   .map(Set(Action.Boost, Action.Hinder).contains(_))
                   .foldLeft(true)(_ && _)
               ),
               " any number of nearby targets using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Max die."
             ),
           ),
@@ -36,7 +36,7 @@ object Accident:
             _ => List(Action.Attack, Action.Hinder),
             List(
               "Attack using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Hinder that same target using your Min die.",
             ),
           ),
@@ -47,7 +47,7 @@ object Accident:
             _ => List(Action.Attack),
             List(
               "When your personal zone changes, Attack all close enemy targets by rolling your single ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               " die.",
             ),
           ),
@@ -63,7 +63,7 @@ object Accident:
             _ => List(Action.Defend),
             List(
               "If you haven't yet acted in an action scene, you may Defend against an Attack by rolling your single ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               " die.",
             ),
           ),
@@ -74,7 +74,7 @@ object Accident:
             _ => List(Action.Boost),
             List(
               "When you change personal zones, you may Boost by rolling your single ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               " die.",
             ),
           ),

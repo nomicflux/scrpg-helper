@@ -20,7 +20,7 @@ object Unknown:
             _ => List(Action.Attack, Action.Boost),
             List(
               "Attack using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Hit one target using your Min die, another target with your Mid die, and Boost using your Max die."
             ),
           ),
@@ -31,7 +31,7 @@ object Unknown:
             _ => List(Action.Boost, Action.Hinder),
             List(
               "Boost all nearby allies using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               " using your Max + Mid dice. Hinder yourself with your Min die.",
             ),
           ),
@@ -42,7 +42,7 @@ object Unknown:
             _ => List(),
             List(
               "When one of your bonuses, penalties, or other creation of your powers is destroyed, deala target damage equal to the roll of your ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               " die.",
             ),
           ),

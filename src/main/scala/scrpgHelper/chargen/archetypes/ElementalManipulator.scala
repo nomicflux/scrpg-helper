@@ -33,7 +33,7 @@ object ElementalManipulator:
             _ => List(Action.Attack, Action.Defend),
             List(
               "Attack using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Max die. Take damage equal to your Min die."
             )
           ),
@@ -44,7 +44,7 @@ object ElementalManipulator:
             _ => List(Action.Defend, Action.Boost),
             List(
               "Defend using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Max die. Boost using your Min die."
             )
           ),
@@ -55,7 +55,7 @@ object ElementalManipulator:
             _ => List(Action.Attack),
             List(
               "Attack up to two targets using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Also take an amount of damage equal to your Min die."
             )
           ),
@@ -66,7 +66,7 @@ object ElementalManipulator:
             _ => List(Action.Hinder, Action.Attack),
             List(
               "Hinder using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Attack using your Min die. If you are in the Red zone, you may apply the penalty to any number of nearby targets."
             )
           )
@@ -83,7 +83,7 @@ object ElementalManipulator:
             _ => List(Action.Attack),
             List(
               "Attack using",
-              PowerChoice(ps => ps == ps.filter(_.category == PowerCategory.Energy)),
+              PowerChoice(AbilityChoice.powerCategory(PowerCategory.Energy)),
               ". Use your Max + Min dice. Take damage equal to your Mid die."
             )
           ),
@@ -94,7 +94,7 @@ object ElementalManipulator:
             _ => List(Action.Recover),
             List(
               "If you would take damage from",
-              PowerChoice(ps => ps == ps.filter(_.category == PowerCategory.Energy)),
+              PowerChoice(AbilityChoice.powerCategory(PowerCategory.Energy)),
               ", reduce that damage to 0 and Recover that amount of Health instead."
             )
           ),
@@ -105,7 +105,7 @@ object ElementalManipulator:
             _ => List(),
             List(
               "Whenever you take damage from",
-              PowerChoice(ps => ps == ps.filter(_.category == PowerCategory.Energy)),
+              PowerChoice(AbilityChoice.powerCategory(PowerCategory.Energy)),
               ", you may also inflict that much damage on another target."
             )
           ),
@@ -116,7 +116,7 @@ object ElementalManipulator:
             _ => List(Action.Boost),
             List(
               "Attack multiple targets using",
-              PowerChoice(ps => ps == ps.filter(_.category == PowerCategory.Energy)),
+              PowerChoice(AbilityChoice.powerCategory(PowerCategory.Energy)),
               ". Take damage equal to your Max die."
             )
           )

@@ -32,7 +32,7 @@ object RealityShaper:
             _ => List(Action.Hinder),
             List(
               "Hinder using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". That penalty is persistent and exclusive."
             )
           ),
@@ -52,7 +52,7 @@ object RealityShaper:
             _ => List(Action.Boost, Action.Attack),
             List(
               "Boost using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Max die. If you roll doubles, you may also Attack using your Mid die."
             )
           ),
@@ -63,7 +63,7 @@ object RealityShaper:
             _ => List(Action.Attack),
             List(
               "Attack using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". You may move the target of that Attack anywhere else nearby. If the target goes next, you decide who takes the next turn after that."
             )
           ),
@@ -105,7 +105,7 @@ object RealityShaper:
             AbilityCategory.Reaction,
             _ => List(),
             List(
-              "You may apply a bonus to a roll after rolling instead of before."
+              "When a nearby enemy would create a bonus or penalty, you may remove it immediately."
             )
           ),
         )

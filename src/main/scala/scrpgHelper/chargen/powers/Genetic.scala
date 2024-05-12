@@ -20,7 +20,7 @@ object Genetic:
             _ => List(Action.Defend),
             List(
               "When damaged by an environment target or a surprise Attack, Defend by rolling your single ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               " die."
             ),
           ),
@@ -31,7 +31,7 @@ object Genetic:
             _ => List(Action.Boost, Action.Recover),
             List(
               "Boost yourself using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ", then either remove a penalty on yourself or Recover using your Min die.",
             ),
           ),
@@ -42,7 +42,7 @@ object Genetic:
             _ => List(Action.Attack),
             List(
               "Attack multiple targets using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ", using your Min die against each.",
             ),
           ),

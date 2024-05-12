@@ -27,7 +27,7 @@ object Blaster:
             _ => List(Action.Attack),
             List(
               "Attack using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". If you Attacked or Hindered that target in your previous turn, use your Max die in this Attack."
             )
           ),
@@ -38,7 +38,7 @@ object Blaster:
             _ => List(Action.Attack, Action.Hinder),
             List(
               "Attack using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Hinder using your Min die."
             )
           ),
@@ -49,7 +49,7 @@ object Blaster:
             _ => List(Action.Attack),
             List(
               "Attack multiple targets using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Min die against each."
             )
           ),
@@ -60,7 +60,7 @@ object Blaster:
             _ => List(Action.Attack),
             List(
               "Attack using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Ignore all penalties on this Attack, ignore any Defend actions, and it cannot be affected by Reactions."
             )
           ),
@@ -76,7 +76,7 @@ object Blaster:
             _ => List(Action.Recover),
             List(
               "If you would take damage from",
-              PowerChoice(ps => ps == ps.filter(_.category == PowerCategory.Energy) && AbilityChoice.noDupes(ps)),
+              EnergyChoice(),
               ", instead reduce that damage to 0 and Recover that amount of Health."
             )
           ),
@@ -87,7 +87,7 @@ object Blaster:
             _ => List(Action.Attack),
             List(
               "Attack multiple targets using using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Mid die against each target. Take irreducible damage equal to your Mid die."
             )
           ),
@@ -98,7 +98,7 @@ object Blaster:
             _ => List(Action.Attack),
             List(
               "Attack using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Max die. If you choose another hero to go next, Boost that hero using your Mid die."
             )
           ),

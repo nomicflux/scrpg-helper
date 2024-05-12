@@ -20,7 +20,7 @@ object Genius:
             _ => List(Action.Boost, Action.Defend),
             List(
               "When you are attacked, first roll your single ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               " die. Defend yourself with that roll. Then, Boost yourself using that roll."
             ),
           ),
@@ -31,7 +31,7 @@ object Genius:
             _ => List(Action.Boost, Action.Attack),
             List(
               "Boost yourself using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Max die. That bonus is persistent and exclusive. Then Attack using your Min die.",
             ),
           ),
@@ -42,7 +42,7 @@ object Genius:
             _ => List(Action.Attack, Action.Recover),
             List(
               "Attack using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Then, if the target of the Attack survived, also Attack that target with your Max die. Otherwise, Recover an amount of Health equal to your Min die.",
             ),
           ),

@@ -21,7 +21,7 @@ object Flyer:
             _ => List(Action.Attack),
             List(
               "Attack up to three targets using",
-              PowerQualityChoice(AbilityChoice.noDupes(_)),
+              PowerQualityChoice(AbilityChoice.noDupes),
               ". Attack using your Min die."
             )
           ),
@@ -32,7 +32,7 @@ object Flyer:
             _ => List(Action.Boost),
             List(
               "Boost using",
-              PowerQualityChoice(AbilityChoice.noDupes(_)),
+              PowerQualityChoice(AbilityChoice.noDupes),
               ". Apply that bonus to all hero Attack and Overcome actions until the start of your next turn."
             )
           ),
@@ -43,7 +43,7 @@ object Flyer:
             _ => List(Action.Defend),
             List(
               "When you are attacked while Flying, you may Defend yourself by rolling your single",
-              PowerQualityChoice(AbilityChoice.noDupes(_)),
+              PowerQualityChoice(AbilityChoice.noDupes),
               "die."
             )
           ),
@@ -54,7 +54,7 @@ object Flyer:
             _ => List(Action.Attack),
             List(
               "Attack a minion using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use whatever that minion rolls for its save as an Attack against another target of your choice."
             )
           ),
@@ -65,7 +65,7 @@ object Flyer:
             _ => List(Action.Hinder),
             List(
               "Hinder multiple targets using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Apply your Min die to each of them."
             )
           ),
@@ -76,7 +76,7 @@ object Flyer:
             _ => List(Action.Attack, Action.Defend),
             List(
               "Attack using",
-              PowerQualityChoice(AbilityChoice.noDupes(_)),
+              PowerQualityChoice(AbilityChoice.noDupes),
               ". Defend against all Attacks against you using your Min die until your next turn."
             )
           ),

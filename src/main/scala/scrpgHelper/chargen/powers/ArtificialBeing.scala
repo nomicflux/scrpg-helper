@@ -31,7 +31,7 @@ object ArtificialBeing:
             _ => List(Action.Attack),
             List(
               "Attack using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               " against multiple targets, using your Min die against each.",
             ),
           ),

@@ -37,7 +37,7 @@ object Gadgeteer:
             _ => List(Action.Hinder),
             List(
               "Hinder using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Max die, or use your Mid die and make it persistent and exclusive."
             )
           ),
@@ -48,7 +48,7 @@ object Gadgeteer:
             _ => List(Action.Boost),
             List(
               "Boost using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Make one bonus for one ally using your Mid die and another for another ally using your Min die."
             )
           ),
@@ -59,7 +59,7 @@ object Gadgeteer:
             _ => List(Action.Boost),
             List(
               "Boost using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Max die, or use your Mid die and make it persistent and exclusive."
             )
           ),

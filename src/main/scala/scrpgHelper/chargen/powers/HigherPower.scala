@@ -31,7 +31,7 @@ object HigherPower:
             _ => List(Action.Attack, Action.Hinder),
             List(
               "Attack multiple targets using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Mid die. Hinder all targets damaged by this ability with your Min die. Hinder yourself with your Max die.",
             ),
           ),
@@ -42,11 +42,11 @@ object HigherPower:
             _ => List(Action.Attack, Action.Boost),
             List(
               "Attack using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ", and Boost all nearby heroes taking ",
-              ActionChoice(AbilityChoice.noDupes(_)),
+              ActionChoice(AbilityChoice.noDupes),
               " or ",
-              ActionChoice(AbilityChoice.noDupes(_)),
+              ActionChoice(AbilityChoice.noDupes),
               " using your Min die until your next turn."
             ),
           ),
@@ -57,7 +57,7 @@ object HigherPower:
             _ => List(Action.Boost, Action.Recover),
             List(
               "Boost yourself using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ", then remove a penalty on yourself or Recover using your Min die.",
             ),
           ),

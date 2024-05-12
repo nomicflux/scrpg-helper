@@ -20,7 +20,7 @@ object Mystical:
             _ => List(Action.Boost, Action.Hinder),
             List(
               "Boost or Hinder using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ", and apply that mod to multiple nearby targets."
             ),
           ),
@@ -31,7 +31,7 @@ object Mystical:
             _ => List(Action.Defend),
             List(
               "When another hero in the Yellow or Red zone would take damage, you may redirect it to yourself and Defend against it by rolling your single ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               " die.",
             ),
           ),
@@ -42,7 +42,7 @@ object Mystical:
             _ => List(Action.Overcome, Action.Boost),
             List(
               "Overcome an environmental challenge using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Max die. Either remove any penalty in the scene or Boost equal to you Mid die.",
             ),
           ),

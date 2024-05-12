@@ -20,7 +20,7 @@ object Transporter:
             _ => List(Action.Attack, Action.Hinder),
             List(
               "Attack using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Either Hinder your target with your Min die or move them somewhere else in the scene."
             )
           ),
@@ -31,7 +31,7 @@ object Transporter:
             _ => List(Action.Attack, Action.Defend),
             List(
               "Attack using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Defend against all Attacks against you using your Min die until your next turn."
             )
           ),
@@ -42,7 +42,7 @@ object Transporter:
             _ => List(Action.Boost, Action.Attack),
             List(
               "Boost another hero using using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Attack using your Min die."
             )
           ),
@@ -62,7 +62,7 @@ object Transporter:
             _ => List(Action.Attack),
             List(
               "Attack multiple targets using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Min die against each."
             )
           ),

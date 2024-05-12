@@ -20,7 +20,7 @@ object Relic:
             _ => List(Action.Attack, Action.Recover),
             List(
               "Attack using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Min die. Take damage equal to your Mid die, and one nearby ally Recovers Health equal to you Max die."
             ),
           ),
@@ -31,7 +31,7 @@ object Relic:
             _ => List(Action.Defend),
             List(
               "When another hero in the Yellow or Red zone would take damage, you may Defend them by rolling your single",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               " die.",
             ),
           ),
@@ -42,7 +42,7 @@ object Relic:
             _ => List(Action.Boost, Action.Hinder),
             List(
               "Boost yourself using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". That bonus is persistent and exclusive.",
             ),
           ),
@@ -53,7 +53,7 @@ object Relic:
             _ => List(Action.Hinder, Action.Recover),
             List(
               "Hinder using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Also Recover Health equal to your Min die.",
             ),
           ),

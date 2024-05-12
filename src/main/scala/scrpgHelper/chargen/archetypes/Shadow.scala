@@ -29,7 +29,7 @@ object Shadow:
             _ => List(Action.Attack, Action.Hinder),
             List(
               "Attack using",
-              PowerQualityChoice(AbilityChoice.noDupes(_)),
+              PowerQualityChoice(AbilityChoice.noDupes),
               ". Remove one physical bonus or penalty. Hinder a target using your Min die, or maneuver to a new location in your environment."
             )
           ),
@@ -40,7 +40,7 @@ object Shadow:
             _ => List(Action.Attack, Action.Defend),
             List(
               "Attack using",
-              PowerQualityChoice(AbilityChoice.noDupes(_)),
+              PowerQualityChoice(AbilityChoice.noDupes),
               ". Defend using your Min die against all Attacks until your next turn."
             )
           ),

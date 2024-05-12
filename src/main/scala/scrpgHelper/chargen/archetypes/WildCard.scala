@@ -28,7 +28,7 @@ object WildCard:
             _ => List(Action.Attack, Action.Boost, Action.Hinder),
             List(
               "Boost or Hinder using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your MAx die. If you roll doubles, you may also Attack using your Mid die."
             )
           ),
@@ -39,7 +39,7 @@ object WildCard:
             _ => List(Action.Boost, Action.Hinder, Action.Defend, Action.Attack, Action.Overcome),
             List(
               "Take any two different basic actions using",
-              PowerQualityChoice(AbilityChoice.noDupes(_)),
+              PowerQualityChoice(AbilityChoice.noDupes),
               ", each using your Min die."
             )
           ),
@@ -59,7 +59,7 @@ object WildCard:
             _ => List(Action.Boost, Action.Hinder, Action.Defend, Action.Attack, Action.Overcome),
             List(
               "Take any basic action using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Then roll a d6. On 1, Boost with your Min die. On 2, Hinder with your Min die. On 3, Defend with your Min die. On 4, lose Health equal to your Min die. On 5, your basic action uses your Max die. On 6, your basic action uses your Min die."
             )
           ),

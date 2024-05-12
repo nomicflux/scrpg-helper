@@ -31,7 +31,7 @@ object Speedster:
             _ => List(Action.Attack, Action.Defend),
             List(
               "Attack using",
-              PowerQualityChoice(AbilityChoice.noDupes(_)),
+              PowerQualityChoice(AbilityChoice.noDupes),
               ". Defend yourself using your Min die."
             )
           ),
@@ -42,7 +42,7 @@ object Speedster:
             _ => List(Action.Boost, Action.Hinder, Action.Attack),
             List(
               "Boost or Hinder using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Max die. If you roll doubles, you may also Attack using your Mid die."
             )
           ),
@@ -53,7 +53,7 @@ object Speedster:
             _ => List(Action.Attack, Action.Hinder),
             List(
               "Attack multiple targets using",
-              QualityChoice(AbilityChoice.noDupes(_)),
+              QualityChoice(AbilityChoice.noDupes),
               ". Use your Min die. Hinder each target equal to your Mid die."
             )
           )

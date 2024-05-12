@@ -20,7 +20,7 @@ object Experimentation:
             _ => List(Action.Boost),
             List(
               "Boost yourself using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Max die. That bonus is persistent and exclusive."
             ),
           ),
@@ -31,7 +31,7 @@ object Experimentation:
             _ => List(Action.Defend),
             List(
               "When a nearby hero in the Yellow or Red zone would take damage, Defend against that damage by rolling your single ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               "die, then redirect any remaining damage to a nearby minion of your choice.",
             ),
           ),
@@ -42,7 +42,7 @@ object Experimentation:
             _ => List(Action.Attack),
             List(
               "Attack a minion using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". The result of the minion's save Attacks another target of your choice.",
             ),
           ),

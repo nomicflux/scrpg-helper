@@ -41,7 +41,7 @@ object Archetype:
 
   val archetypes: List[Archetype] = List(
     Speedster.speedster,
-    Shadow.shadow, // TODO: Issues with quality & power restrictions together
+    Shadow.shadow,
     PhysicalPowerhouse.physicalPowerhouse,
     Marksman.marksman,
     Blaster.blaster, // TODO: restrict EnergyChoice to available energy powers? Or PowerChoice that doesn't affect dupes?

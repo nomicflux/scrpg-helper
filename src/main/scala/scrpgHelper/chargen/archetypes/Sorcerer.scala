@@ -25,7 +25,7 @@ object Sorcerer:
             _ => List(Action.Hinder, Action.Attack),
             List(
               "Hinder using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Max die. If you roll doubles, also Attack using your Mid die."
             )
           ),
@@ -36,7 +36,7 @@ object Sorcerer:
             _ => List(Action.Attack),
             List(
               "Attack multiple targets using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ", applying your Min die against each."
             )
           ),
@@ -47,7 +47,7 @@ object Sorcerer:
             _ => List(Action.Attack, Action.Hinder),
             List(
               "Attack using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               "and use your Max die."
             )
           ),
@@ -58,7 +58,7 @@ object Sorcerer:
             _ => List(Action.Attack, Action.Hinder),
             List(
               "Attack using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Hinder the same target using your Min die."
             )
           ),

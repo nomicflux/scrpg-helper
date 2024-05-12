@@ -29,7 +29,7 @@ object Marksman:
             _ => List(Action.Attack),
             List(
               "Attack two different targets using",
-              PowerQualityChoice(AbilityChoice.noDupes(_)),
+              PowerQualityChoice(AbilityChoice.noDupes),
               ", one target using your Mid die and the other your Min die."
             )
           ),
@@ -40,7 +40,7 @@ object Marksman:
             _ => List(Action.Boost),
             List(
               "Boost using",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               "to create one bonus using your Max die and another using your Mid die."
             )
           ),
@@ -51,7 +51,7 @@ object Marksman:
             _ => List(Action.Attack),
             List(
               "Attack using",
-              PowerQualityChoice(AbilityChoice.noDupes(_)),
+              PowerQualityChoice(AbilityChoice.noDupes),
               ". Ignore all penalties on this Attack, ignore any Defend actions, and it cannot be affected by Reactions."
             )
           ),
@@ -62,7 +62,7 @@ object Marksman:
             _ => List(Action.Boost),
             List(
               "Boost yourself using",
-              PowerQualityChoice(AbilityChoice.noDupes(_)),
+              PowerQualityChoice(AbilityChoice.noDupes),
               ". Use your Max + Min dice. This bonus can only be used against one chosen target, and is persistent & exclusive against that target until it leaves the scene."
             )
           ),
@@ -73,7 +73,7 @@ object Marksman:
             _ => List(Action.Attack, Action.Defend),
             List(
               "Attack using",
-              PowerQualityChoice(AbilityChoice.noDupes(_)),
+              PowerQualityChoice(AbilityChoice.noDupes),
               ". Defend using your Min die."
             )
           ),
@@ -89,7 +89,7 @@ object Marksman:
             _ => List(Action.Attack, Action.Boost),
             List(
               "Attack using",
-              QualityChoice(AbilityChoice.noDupes(_)),
+              QualityChoice(AbilityChoice.noDupes),
               ". Boost another hero using your Max die."
             )
           ),
@@ -100,7 +100,7 @@ object Marksman:
             _ => List(Action.Attack, Action.Overcome),
             List(
               "Attack or Overcome using",
-              QualityChoice(AbilityChoice.noDupes(_)),
+              QualityChoice(AbilityChoice.noDupes),
               "on an environmental target, using your Max + Min dice. If you roll doubles, take a minor twist."
             )
           ),
@@ -111,7 +111,7 @@ object Marksman:
             _ => List(Action.Attack),
             List(
               "When a new target enters close range, Attack that target by rolling your single",
-              QualityChoice(AbilityChoice.noDupes(_)),
+              QualityChoice(AbilityChoice.noDupes),
               "die."
             )
           ),
@@ -122,7 +122,7 @@ object Marksman:
             _ => List(Action.Attack),
             List(
               "Attack using",
-              QualityChoice(AbilityChoice.noDupes(_)),
+              QualityChoice(AbilityChoice.noDupes),
               ". Use your Max die. If you roll doubles, use Max + Min instead."
             )
           )

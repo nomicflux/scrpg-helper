@@ -29,7 +29,7 @@ object Extradimensional:
             _ => List(Action.Attack),
             List(
               "Attack multiple targets using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Then, take irreducible damage equal to the number of targets hit.",
             ),
           ),
@@ -40,7 +40,7 @@ object Extradimensional:
             _ => List(Action.Attack, Action.Hinder),
             List(
               "Attack using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Max die. Hinder that target with your Mid die. Hinder yourself with your Min die.",
             ),
           ),

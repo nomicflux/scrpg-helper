@@ -31,7 +31,7 @@ object Cursed:
             _ => List(Action.Boost, Action.Hinder),
             List(
               "Boost all nearby allies using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Use your Max+Mid die. Hinder yourself with your Min die.",
             ),
           ),
@@ -42,7 +42,7 @@ object Cursed:
             _ => List(Action.Boost, Action.Recover),
             List(
               "Boost yourself using ",
-              PowerChoice(AbilityChoice.noDupes(_)),
+              PowerChoice(AbilityChoice.noDupes),
               ". Then, either remove a penalty on yourself or Recover using your Min die.",
             ),
           ),

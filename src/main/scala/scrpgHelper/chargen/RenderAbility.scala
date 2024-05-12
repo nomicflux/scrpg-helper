@@ -285,6 +285,16 @@ object RenderAbility:
             )
           )
 
+    val context: Signal[ChoiceContext] =
+      powerSignal.combineWith(qualitySignal).map { (ps, qs) =>
+        ChoiceContext(
+          ps,
+          qs,
+          Action.values.toList,
+          Energy.values.toList,
+        )
+      }
+
     span(
       ability.description.map { l =>
         l match
@@ -299,6 +309,7 @@ object RenderAbility:
               ability,
               _.getEnergy,
               abilitySelected,
+              context,
             )
           case ac: ActionChoice =>
             renderChoices(
@@ -310,6 +321,7 @@ object RenderAbility:
               ability,
               _.getAction,
               abilitySelected,
+              context,
             )
           case pc: PowerChoice =>
             renderChoices(
@@ -321,6 +333,7 @@ object RenderAbility:
               ability,
               _.getPower,
               abilitySelected,
+              context,
             )
           case qc: QualityChoice =>
             renderChoices(
@@ -332,6 +345,7 @@ object RenderAbility:
               ability,
               _.getQuality,
               abilitySelected,
+              context,
             )
           case pqc: PowerQualityChoice =>
             renderChoices(
@@ -345,6 +359,7 @@ object RenderAbility:
               ability,
               c => c.getPower.orElse(c.getQuality),
               abilitySelected,
+              context,
             )
           case _: AbilityChoice => span("Not valid")
       }
@@ -359,7 +374,8 @@ object RenderAbility:
       chosen: Signal[List[ChosenAbility]],
       ability: AbilityTemplate,
       retriever: AbilityChoice => Option[choice.Item],
-      abilitySelected: Signal[Boolean]
+      abilitySelected: Signal[Boolean],
+      context: Signal[ChoiceContext],
   ): Element =
     span(
       onMouseOver.compose(_.withCurrentValueOf(abilitySelected)) --> { (ev, b) =>
@@ -370,15 +386,19 @@ object RenderAbility:
       },
       SelectWithPrevChoice
         .forSignal[choice.Item](
-          items.map(_.filter(i => choice.validateFn(List(i)))),
+          items
+            .combineWith(context)
+            .map((is, ctx) => is.filter(i => choice.validateFn(List(i), ctx))),
           i => choice.itemName(i)
         )
         .render(
-          chosen.map(cas => { (p: choice.Item, mp: Option[choice.Item]) =>
+          chosen
+            .combineWith(context)
+            .map((cas, ctx) => { (p: choice.Item, mp: Option[choice.Item]) =>
             val chosenItems = cas.flatMap(ca =>
               (ca.currentChoices.flatMap(retriever(_).toList))
             ) :+ p
-            !choice.validateFn(chosenItems)
+            !choice.validateFn(chosenItems, ctx)
           }),
           character
             .removeAbilityChoice(stagingKey, ability)

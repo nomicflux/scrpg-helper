@@ -32,7 +32,7 @@ object PhysicalPowerhouse:
             _ => List(Action.Attack),
             List(
               "Attack using",
-              PowerQualityChoice(pqs => AbilityChoice.intersection(powers ++ qualities)(pqs) && AbilityChoice.noDupes(pqs)),
+              PowerQualityChoice((pqs, ctx) => AbilityChoice.intersection(powers ++ qualities)(pqs, ctx) && AbilityChoice.noDupes(pqs, ctx)),
               ". The target of that Attack must take an Attack action against you as its next turn, if possible."
             )
           ),
@@ -43,7 +43,7 @@ object PhysicalPowerhouse:
             _ => List(Action.Boost),
             List(
               "Boost using",
-              PowerQualityChoice(pqs => AbilityChoice.intersection(powers ++ qualities)(pqs) && AbilityChoice.noDupes(pqs)),
+              PowerQualityChoice((pqs, ctx) => AbilityChoice.intersection(powers ++ qualities)(pqs, ctx) && AbilityChoice.noDupes(pqs, ctx)),
               ". Apply that bonus to all hero Attack and Overcome actions until the start of your next turn."
             )
           ),
@@ -54,7 +54,7 @@ object PhysicalPowerhouse:
             _ => List(Action.Attack),
             List(
               "Attack using",
-              PowerQualityChoice(pqs => AbilityChoice.intersection(powers ++ qualities)(pqs) && AbilityChoice.noDupes(pqs)),
+              PowerQualityChoice((pqs, ctx) => AbilityChoice.intersection(powers ++ qualities)(pqs, ctx) && AbilityChoice.noDupes(pqs, ctx)),
               "and use your Max die."
             )
           ),
@@ -65,7 +65,7 @@ object PhysicalPowerhouse:
             _ => List(Action.Recover),
             List(
               "When you eliminate a minion with an Attack using",
-              PowerQualityChoice(pqs => AbilityChoice.intersection(powers ++ qualities)(pqs) && AbilityChoice.noDupes(pqs)),
+              PowerQualityChoice((pqs, ctx) => AbilityChoice.intersection(powers ++ qualities)(pqs, ctx) && AbilityChoice.noDupes(pqs, ctx)),
               ", Recover Health equal to you Min die."
             )
           ),
