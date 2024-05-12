@@ -76,7 +76,7 @@ object Blaster:
             _ => List(Action.Recover),
             List(
               "If you would take damage from",
-              EnergyChoice(),
+              EnergyChoice(AbilityChoice.existingEnergyPower),
               ", instead reduce that damage to 0 and Recover that amount of Health."
             )
           ),

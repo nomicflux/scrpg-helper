@@ -58,6 +58,11 @@ object AbilityChoice:
   ): Boolean =
     qualityCategories(List(qualityCategory))(l, m)
 
+  def existingEnergyPower(l: List[Energy], m: ChoiceContext): Boolean =
+    val energyPowers = m.powers.flatMap(p => Energy.powerToEnergy(p).toList).toSet
+    !l.filter(e => energyPowers.contains(e)).isEmpty
+  end existingEnergyPower
+
   def numChosen(l: List[AbilityChoice]): Int =
     l.map(ac =>
       ac.getPower
