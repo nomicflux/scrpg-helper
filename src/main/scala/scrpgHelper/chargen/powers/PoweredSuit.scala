@@ -60,7 +60,7 @@ object PoweredSuit:
             _ => List(),
             List(
               "Reduce ",
-              EnergyChoice(), // TODO: this needs to include physical damage too
+              EnergyChoice.includePhysical(),
               " damage you take by 1 while you are in the Green zone, 2 while in the Yellow zone, and 3 while in the Red zone.",
             ),
           ),

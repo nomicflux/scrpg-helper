@@ -44,7 +44,7 @@ object Archetype:
     Shadow.shadow,
     PhysicalPowerhouse.physicalPowerhouse,
     Marksman.marksman,
-    Blaster.blaster, // TODO: restrict EnergyChoice to available energy powers? Or PowerChoice that doesn't affect dupes?
+    Blaster.blaster,
     CloseQuartersCombatant.closeQuartersCombatant, // TODO: mandate one power used with abilities; shared no-dupes between zones
     // Armored.armored, //TODO: change how health is calculated
     Flyer.flyer, // TODO: enforce abilities using flight & sig vehicle

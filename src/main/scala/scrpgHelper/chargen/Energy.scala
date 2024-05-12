@@ -1,10 +1,12 @@
 package scrpgHelper.chargen
 
 enum Energy:
-    case Cold, Cosmic, Electricity, Fire, Infernal, Nuclear, Radiant, Sonic, Weather
+    case Cold, Cosmic, Electricity, Fire, Infernal, Nuclear, Radiant, Sonic, Weather, Physical
 end Energy
 
 object Energy:
+  def standardValues: List[Energy] = Energy.values.filter(_ != Physical).toList
+
   def powerToEnergy(p: Power): Option[Energy] = p match
     case Power.cold => Some(Energy.Cold)
     case Power.cosmic => Some(Energy.Cosmic)

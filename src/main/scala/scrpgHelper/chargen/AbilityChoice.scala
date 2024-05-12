@@ -229,5 +229,8 @@ object EnergyChoice:
     EnergyChoice(new AbilityChoiceId(), None, vfn, false)
 
   def apply(): EnergyChoice =
+    EnergyChoice((es, _) => !es.contains(Energy.Physical))
+
+  def includePhysical(): EnergyChoice =
     EnergyChoice((_, _) => true)
 end EnergyChoice
