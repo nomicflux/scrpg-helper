@@ -9,7 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "chart.js": "^4.4.2"
+    "chart.js": "^4.4.2",
+    "esbuild": "^0.20.1",
+    "typescript": "^5.4.5"
   },
   "devDependencies": {
     "source-map-support": "^0.5.21",
