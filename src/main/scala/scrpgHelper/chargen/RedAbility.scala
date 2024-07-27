@@ -440,7 +440,7 @@ object RedAbility:
     List(
       "Hinder using",
       PowerChoice(AbilityChoice.powerCategory(PowerCategory.Psychic)),
-      ". Use your Max+Mid dice. If you roll doubles, also Attack the target using your Mid+Min dice and take damage equal to you Min die."
+      ". Use your Max+Mid dice. If you roll doubles, also Attack the target using your Mid+Min dice and take damage equal to your Min die."
     ),
     PowerCategory.Psychic
   )

@@ -39,7 +39,7 @@ object Nature:
             AbilityCategory.Reaction,
             _ => List(Action.Boost),
             List(
-              "When you defeat a minion, roll that minion's die and Boost yourself using that roll to creat a bonus for your next action."
+              "When you defeat a minion, roll that minion's die and Boost yourself using that roll to create a bonus for your next action."
             ),
           ),
         ),

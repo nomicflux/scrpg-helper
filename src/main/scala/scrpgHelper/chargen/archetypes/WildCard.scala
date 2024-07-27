@@ -29,7 +29,7 @@ object WildCard:
             List(
               "Boost or Hinder using",
               PowerChoice(AbilityChoice.noDupes),
-              ". Use your MAx die. If you roll doubles, you may also Attack using your Mid die."
+              ". Use your Max die. If you roll doubles, you may also Attack using your Mid die."
             )
           ),
           AbilityTemplate(
@@ -74,7 +74,7 @@ object WildCard:
             AbilityCategory.Reaction,
             _ => List(),
             List(
-              "You may uncheck a checkoud off collection on your hero sheet.",
+              "You may uncheck a checked off collection on your hero sheet.",
             )
           ),
           AbilityTemplate(
