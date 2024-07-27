@@ -12,30 +12,44 @@ import scrpgHelper.rolls.Die
 import scrpgHelper.status.Status
 
 case class CharacterModelExport(
-  background: Option[String],
-  powerSource: Option[String],
-  archetype: Option[String],
-  personality: Option[String],
-  statuses: Map[Status, Die],
-  health: Option[Int],
-  powers: List[(Power, Die)],
-  qualities: List[(Quality, Die)],
-  abilities: List[ChosenAbility],
-  principles: List[Principle],
+    background: Option[String],
+    powerSource: Option[String],
+    archetype: Option[String],
+    personality: Option[String],
+    statuses: Map[Status, Die],
+    health: Option[Int],
+    powers: List[(Power, Die)],
+    qualities: List[(Quality, Die)],
+    abilities: List[ChosenAbility],
+    principles: List[Principle]
 ):
-    def render: String =
-      val healthMarks = health.map(Health.calcRanges(_))
-      val powerText = powers.map((p, d) => s"* ${p.name}, ${p.category.toString} - ${d.toString}").mkString("\n\t")
-      val qualityText = qualities.map((q, d) => s"* ${q.name}, ${q.category.toString} - ${d.toString}").mkString("\n\t")
-      val statusText = statuses.toList.sortBy(_._1).map((s,d) => s"* ${s.toString}: ${d.toString}").mkString("\n\t")
-      val principleText = principles.map(p => "* " + RenderAbility.renderPrincipleText(p)).mkString("\n\t")
-      val abilityText = abilities.sortBy(_.status).map(ca => "* " + RenderAbility.renderChosenAbilityText(ca)).mkString("\n\t")
-      s"""
+  def render: String =
+    val healthMarks = health.map(Health.calcRanges(_))
+    val powerText = powers
+      .map((p, d) => s"* ${p.name}, ${p.category.toString} - ${d.toString}")
+      .mkString("\n\t")
+    val qualityText = qualities
+      .map((q, d) => s"* ${q.name}, ${q.category.toString} - ${d.toString}")
+      .mkString("\n\t")
+    val statusText = statuses.toList
+      .sortBy(_._1)
+      .map((s, d) => s"* ${s.toString}: ${d.toString}")
+      .mkString("\n\t")
+    val principleText = principles
+      .map(p => "* " + RenderAbility.renderPrincipleText(p))
+      .mkString("\n\t")
+    val abilityText = abilities
+      .sortBy(_.status)
+      .map(ca => "* " + RenderAbility.renderChosenAbilityText(ca))
+      .mkString("\n\t")
+    s"""
 Background: ${background.getOrElse("<none>")}
-PowerSource: ${powerSource.getOrElse("<none>")}
+Power Source: ${powerSource.getOrElse("<none>")}
 Archetype: ${archetype.getOrElse("<none>")}
 Personality: ${personality.getOrElse("<none>")}
-Health: ${healthMarks.fold("")(hm => hm._1.toString + " - " + (hm._2 + 1).toString + "; " + hm._2.toString + " - " + (hm._3 + 1).toString + "; " + hm._3 + " - 1")}
+Health: ${healthMarks.fold("")(hm =>
+        hm._1.toString + " - " + (hm._2 + 1).toString + "; " + hm._2.toString + " - " + (hm._3 + 1).toString + "; " + hm._3 + " - 1"
+      )}
 Powers:
 \t${powerText}
 Qualities:
@@ -47,7 +61,7 @@ Principles:
 Abilities:
 \t${abilityText}
        """
-    end render
+  end render
 end CharacterModelExport
 
 final class CharacterModel:
@@ -149,7 +163,10 @@ final class CharacterModel:
       m + (stagingKey -> newList)
     }
 
-  def abilitySelected(stagingKey: StagingKey, ability: Signal[Option[ChosenAbility]]): Signal[Boolean] =
+  def abilitySelected(
+      stagingKey: StagingKey,
+      ability: Signal[Option[ChosenAbility]]
+  ): Signal[Boolean] =
     abilityStaging.signal.combineWith(ability).map { (as, ma) =>
       val currListKeys = as.getOrElse(stagingKey, List()).map(_.key).toSet
       ma.fold(false)(a => currListKeys.contains(a.key))
@@ -313,7 +330,7 @@ final class CharacterModel:
   val allPrinciples: Signal[List[Principle]] = abilityStaging.signal
     .combineWith(
       backgroundSignal,
-      archetypeSignal,
+      archetypeSignal
     )
     .map((abils, mbg, mat) =>
       mbg.fold(List())(bg => abils.getOrElse(bg, List())) ++
@@ -334,16 +351,18 @@ final class CharacterModel:
 
   val powerQualityHealth: Signal[Int] =
     allPowers.combineWith(allQualities).map { (ps, qs) =>
-            val athleticRolls = ps.filter(_._1.category == PowerCategory.Athletic).map(_._2.n)
-            val maxAthletic = if athleticRolls.isEmpty then 4 else athleticRolls.max
-            val mentalRolls = qs.filter(_._1.category == QualityCategory.Mental).map(_._2.n)
-            val maxMental = if mentalRolls.isEmpty then 4 else mentalRolls.max
-            List(maxAthletic, maxMental).max
-          }
+      val athleticRolls =
+        ps.filter(_._1.category == PowerCategory.Athletic).map(_._2.n)
+      val maxAthletic = if athleticRolls.isEmpty then 4 else athleticRolls.max
+      val mentalRolls =
+        qs.filter(_._1.category == QualityCategory.Mental).map(_._2.n)
+      val maxMental = if mentalRolls.isEmpty then 4 else mentalRolls.max
+      List(maxAthletic, maxMental).max
+    }
 
   val calcHealth: Observer[Int] =
     health.updater { (m, n) =>
-      if(m.isDefined) then m else Some(n)
+      if (m.isDefined) then m else Some(n)
     }
 
   val validBackground: Signal[Boolean] = backgroundSignal
@@ -457,26 +476,28 @@ final class CharacterModel:
   val validHealth: Signal[Boolean] = healthSignal.map(_.isDefined)
 
   val forExport: Signal[CharacterModelExport] =
-    backgroundSignal.combineWith(
-      powerSourceSignal,
-      archetypeSignal,
-      personalitySignal,
-      healthSignal,
-      allPowers,
-      allQualities,
-      allAbilities
-    ).map { (bg, ps, at, pt, h, pows, quals, abils) =>
-      CharacterModelExport(
-        bg.map(_.name),
-        ps.map(_.name),
-        at.map(_.name),
-        pt.map(_.name),
-        pt.fold(Map())(_.statusDice),
-        h,
-        pows,
-        quals,
-        abils.collect { case ca: ChosenAbility => ca },
-        abils.collect { case p: Principle => p },
+    backgroundSignal
+      .combineWith(
+        powerSourceSignal,
+        archetypeSignal,
+        personalitySignal,
+        healthSignal,
+        allPowers,
+        allQualities,
+        allAbilities
       )
-    }
+      .map { (bg, ps, at, pt, h, pows, quals, abils) =>
+        CharacterModelExport(
+          bg.map(_.name),
+          ps.map(_.name),
+          at.map(_.name),
+          pt.map(_.name),
+          pt.fold(Map())(_.statusDice),
+          h,
+          pows,
+          quals,
+          abils.collect { case ca: ChosenAbility => ca },
+          abils.collect { case p: Principle => p }
+        )
+      }
 end CharacterModel

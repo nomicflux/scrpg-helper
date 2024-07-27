@@ -18,8 +18,16 @@ object RenderPowerSource:
     div(
       className := "power-source-section choice-section",
       h2("Power Source"),
-      RollComponent.renderRollButton(model.rollTrigger, character.backgroundSignal.map(_.toList.flatMap(_.powerSourceDice))),
-      RollComponent.renderShownToggle(model.rollsSignal, model.showUnchosenSignal, model.shownToggle, "Power Sources"),
+      RollComponent.renderRollButton(
+        model.rollTrigger,
+        character.backgroundSignal.map(_.toList.flatMap(_.powerSourceDice))
+      ),
+      RollComponent.renderShownToggle(
+        model.rollsSignal,
+        model.showUnchosenSignal,
+        model.shownToggle,
+        "Power Sources"
+      ),
       renderPowerSourceTable(character)
     )
   end renderPowerSources
