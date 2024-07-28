@@ -128,6 +128,36 @@ object RenderPowerSource:
             },
           character.removeQuality(powerSource),
           character.addQuality(powerSource)
+        ),
+        powerSource.upgrades.fold(span())(upgrades =>
+          renderDieChange(
+            "Upgrade",
+            character
+              .qualitiesSignal(Signal.fromValue(Some(powerSource)))
+              .combineWith(
+                character.qualitiesSignal(character.backgroundSignal)
+              )
+              .map { (psqs, bgqs) => psqs ++ bgqs },
+            character.powersSignal(Signal.fromValue(Some(powerSource))),
+            powerSource.upgrades,
+            character.upgrade(powerSource),
+            character.downgrade(powerSource)
+          )
+        ),
+        powerSource.downgrades.fold(span())(upgrades =>
+          renderDieChange(
+            "Downgrade",
+            character
+              .qualitiesSignal(Signal.fromValue(Some(powerSource)))
+              .combineWith(
+                character.qualitiesSignal(character.backgroundSignal)
+              )
+              .map { (psqs, bgqs) => psqs ++ bgqs },
+            character.powersSignal(Signal.fromValue(Some(powerSource))),
+            powerSource.upgrades,
+            character.downgrade(powerSource),
+            character.upgrade(powerSource)
+          )
         )
       ),
       td(
@@ -154,10 +184,39 @@ object RenderPowerSource:
     )
   end renderPowerSourceRow
 
+  def renderDieChange(
+      text: String,
+      qualities: Signal[List[(Quality, Die)]],
+      powers: Signal[List[(Power, Die)]],
+      changeable: Option[((Quality | Power, Die) => Boolean)],
+      forwardChange: Observer[Quality | Power],
+      reverseChange: Observer[Quality | Power]
+  ): Element =
+    val pqs: Signal[List[Quality | Power]] =
+      powers.combineWith(qualities).map { (ps, qs) =>
+        changeable.fold(List()) { fn =>
+          (ps ++ qs).filter(pqd => fn(pqd._1, pqd._2)).map(_._1)
+        }
+      }
+    div(
+      span(
+        className := s"choice-die-box ${text.toLowerCase()}-list",
+        text,
+        ": ",
+        SelectWithPrevChoice[Quality | Power](
+          pqs,
+          qp =>
+            qp match
+              case p: Power   => p.name
+              case q: Quality => q.name
+        ).render(Signal.fromValue((_, _) => false), reverseChange, forwardChange)
+      )
+    )
+
   def renderPowers(
       dicePool: Signal[List[Die]],
       powers: List[Power],
-      extraPower: Option[(Die, List[Power])],
+      extraPower: List[Die] => Option[(Die, List[Power])],
       powerAllowed: Signal[((Power, Die), Option[(Power, Die)]) => Boolean],
       removePower: Observer[(Power, Die)],
       addPower: Observer[(Power, Die)]
@@ -168,7 +227,7 @@ object RenderPowerSource:
           ds.map { d =>
             span(
               className := "choice-die-box power-list",
-              d.toString,
+              d.render,
               ":",
               SelectWithPrevChoice[(Power, Die)](
                 powers.map(p => (p, d)),
@@ -178,18 +237,20 @@ object RenderPowerSource:
             )
           }
         ),
-      extraPower.toList.map { case (d, ps) =>
-        span(
-          className := "choice-die-box power-list",
-          d.toString,
-          ":",
-          SelectWithPrevChoice[(Power, Die)](
-            ps.map(p => (p, d)),
-            pd => pd._1.name
+      children <-- dicePool.map(dp =>
+        extraPower(dp).toList.map { case (d, ps) =>
+          span(
+            className := "choice-die-box power-list",
+            d.toString,
+            ":",
+            SelectWithPrevChoice[(Power, Die)](
+              ps.map(p => (p, d)),
+              pd => pd._1.name
+            )
+              .render(powerAllowed, removePower, addPower)
           )
-            .render(powerAllowed, removePower, addPower)
-        )
-      }
+        }
+      )
     )
   end renderPowers
 

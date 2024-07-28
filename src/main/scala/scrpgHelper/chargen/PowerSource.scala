@@ -12,18 +12,29 @@ case class PowerSource(
     powerList: List[Power],
     archetypeDiePool: List[Die],
     extraQuality: Option[(Die, List[Quality])],
-    extraPower: Option[(Die, List[Power])]
+    extraPower: List[Die] => Option[(Die, List[Power])],
+    upgrades: Option[((Quality | Power, Die) => Boolean)],
+    downgrades: Option[((Quality | Power, Die) => Boolean)],
 ):
   def valid(
       diePool: List[Die],
-      powers: List[Power],
+      powers: List[(Power, Die)],
       qualities: List[Quality],
       abilities: List[ChosenAbility]
   ): Boolean =
     abilities.filter(_.valid).size == abilityPools.map(_.max).sum &&
-      powers.size == (diePool.size + extraPower.fold(0)(_ => 1)) &&
+      powers.size == (diePool.size + extraPower(diePool).fold(0)(_ => 1)) &&
       qualities.size == extraQuality.fold(0)(_ => 1)
   end valid
+
+  def withConditionalExtraPowers(fn: List[Die] => Option[(Die, List[Power])]): PowerSource =
+    copy(extraPower = fn)
+
+  def withUpgrades(fn: (Quality | Power, Die) => Boolean): PowerSource =
+    copy(upgrades = Some(fn))
+
+  def withDowngrades(fn: (Quality | Power, Die) => Boolean): PowerSource =
+    copy(downgrades = Some(fn))
 end PowerSource
 
 object PowerSource:
@@ -49,7 +60,9 @@ object PowerSource:
     powerList.distinct,
     archetypeDiePool,
     None,
-    None
+    _ => None,
+    None,
+    None,
   )
 
   def apply(
@@ -67,7 +80,9 @@ object PowerSource:
     (mandatoryPowers ++ powerList).distinct,
     archetypeDiePool,
     None,
-    None
+    _ => None,
+    None,
+    None,
   )
 
   def apply(
@@ -86,7 +101,9 @@ object PowerSource:
     powerList.distinct,
     archetypeDiePool,
     extraQuality,
-    extraPower
+    _ => extraPower,
+    None,
+    None,
   )
 
   def uniquePowers(abilities: List[ChosenAbility]): Boolean =
@@ -109,9 +126,9 @@ object PowerSource:
     Supernatural.supernatural,
     ArtificialBeing.artificialBeing,
     Cursed.cursed,
-    // Alien.alien, // TODO: Implement upgrade or add
+    Alien.alien,
     Genius.genius,
-    // Cosmos.cosmos, // TODO: Implement downgrade and upgrade
+    Cosmos.cosmos,
     Extradimensional.extradimensional,
     Unknown.unknown,
     HigherPower.higherPower,

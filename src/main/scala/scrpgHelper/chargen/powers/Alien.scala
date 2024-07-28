@@ -7,63 +7,53 @@ object Alien:
   import scrpgHelper.rolls.Die.d
 
   val powers =
-    List(Power.awareness, Power.cold, Power.electricity, Power.fire, Power.infernal, Power.plants, Power.presence, Power.radiant, Power.strength, Power.transmutation, Power.vitality, Power.weather) ++ Power.mobilityPowers ++ Power.psychicPowers ++ Power.selfControlPowers
+    List(Power.signatureVehicle, Power.signatureWeapon) ++ Power.athleticPowers ++ Power.energyPowers ++ Power.intellectualPowers ++ Power.mobilityPowers ++ Power.psychicPowers ++ Power.technologicalPowers
 
-  val supernatural: PowerSource = PowerSource(
-    "Supernatural",
-    11,
+  val alien: PowerSource = PowerSource(
+    "Alien",
+    14,
     List(
       AbilityPool(
         2,
         List(
           AbilityTemplate(
-            "Area Healing",
-            Status.Yellow,
-            AbilityCategory.Action,
-            _ => List(Action.Boost, Action.Recover),
-            List(
-              "Boost an ally using ",
-              PowerChoice(AbilityChoice.noDupes),
-              ". You and nearby heroes in the Yellow and Red zones Recover Health equal to your Min die."
-            ),
-          ),
-          AbilityTemplate(
-            "Mass Modification",
+            "Alien Boost",
             Status.Yellow,
             AbilityCategory.Action,
             _ => List(Action.Boost, Action.Hinder),
             List(
-              "Boost or Hinder using ",
+              "Boost all nearby allies using",
               PowerChoice(AbilityChoice.noDupes),
-              ", and apply that mod to multiple close targets.",
+              ". Use your Max+Mid dice. Hinder yourself with your Min die."
             ),
           ),
           AbilityTemplate(
-            "Personal Upgrade",
+            "Empower and Repair",
             Status.Yellow,
             AbilityCategory.Action,
-            _ => List(Action.Boost),
+            _ => List(Action.Boost, Action.Hinder, Action.Defend, Action.Attack, Action.Recover),
             List(
-              "Boost yourself using ",
+              "Boost, Hinder, Defend, or Attack using",
               PowerChoice(AbilityChoice.noDupes),
-              ". Use your Max die. That bonus is persistent and exclusive.",
+              ". You and all nearby heroes in the Yellow or Red zone Recover Health equal to your Min die.",
             ),
           ),
           AbilityTemplate(
-            "Reach through Veil",
+            "Halt",
             Status.Yellow,
             AbilityCategory.Reaction,
             _ => List(Action.Defend),
             List(
-              "When a nearby ally would take damage, Defend that ally by rolling your single status die, and move them elsewhere in the same scene.",
+              "When you are Attacked at close range, Defend yourself by rolling your single",
+              PowerChoice(AbilityChoice.noDupes),
+              "die."
             ),
           ),
         ),
       ),
     ),
     powers,
-    List(d(10), d(10), d(6)),
-    None,
-    Some((d(10), Power.allPowers.filterNot(p => powers.toSet.contains(p)))),
-  )
+    List(d(8), d(8), d(8)),
+  ).withUpgrades((qp, d) => d.n == 6)
+    .withConditionalExtraPowers(ds => if ds.filter(_.n == 6).isEmpty then Some((d(6), powers)) else None)
 end Alien

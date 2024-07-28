@@ -1013,6 +1013,18 @@ div.choice-section td {
   margin: 0;
 }
 
+.upgrade-list {
+  border: 1px solid grey;
+  border-radius: 5px;
+  padding: 0.25em;
+}
+
+.downgrade-list {
+  border: 1px solid grey;
+  border-radius: 5px;
+  padding: 0.25em;
+}
+
 .power-quality-list {
   border: 1px solid grey;
   border-radius: 5px;

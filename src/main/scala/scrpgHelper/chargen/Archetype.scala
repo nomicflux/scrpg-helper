@@ -48,7 +48,7 @@ object Archetype:
     CloseQuartersCombatant.closeQuartersCombatant, // TODO: mandate one power used with abilities; shared no-dupes between zones
     // Armored.armored, //TODO: change how health is calculated
     Flyer.flyer, // TODO: enforce abilities using flight & sig vehicle
-    ElementalManipulator.elementalManipulator, // TODO: restrict EnergyChoice to available energy powers? Or PowerChoice that doesn't affect dupes?
+    ElementalManipulator.elementalManipulator,
     // RobotCyborg.robotCyborg, //TODO: change how health is calculated
     Sorcerer.sorcerer,
     Psychic.psychic,

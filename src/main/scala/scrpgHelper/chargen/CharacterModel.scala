@@ -267,18 +267,70 @@ final class CharacterModel:
       }
     }
 
+  enum DieChange:
+    case Upgrade, Downgrade
+
+    def onDie(d: Die): Die = this match
+      case Upgrade => d.upgrade
+      case Downgrade => d.downgrade
+  end DieChange
+
+  object DieChange:
+    def combine(
+        ths: Option[DieChange],
+        that: Option[DieChange]
+    ): Option[DieChange] =
+      (ths, that) match
+        case (None, None)       => None
+        case (Some(x), None)    => Some(x)
+        case (None, Some(y))    => Some(y)
+        case (Some(x), Some(y)) => if x == y then Some(x) else None
+  end DieChange
+
+  val dieChanges: Var[Map[StagingKey, Map[Quality | Power, DieChange]]] = Var(
+    Map()
+  )
+  def changeDieChanges(
+      key: StagingKey,
+      direction: DieChange
+  ): Observer[Quality | Power] = dieChanges
+    .updater { (m, pq) =>
+      val currForKey: Map[Quality | Power, DieChange] = m.getOrElse(key, Map())
+      val changed: Option[DieChange] = currForKey.get(pq)
+      val updated = DieChange.combine(changed, Some(direction))
+      updated.fold(m + (key -> (currForKey - pq)))(dc =>
+        m + (key -> (currForKey + (pq -> dc)))
+      )
+    }
+  def upgrade(key: StagingKey): Observer[Quality | Power] =
+    changeDieChanges(key, DieChange.Upgrade)
+  def downgrade(key: StagingKey): Observer[Quality | Power] =
+    changeDieChanges(key, DieChange.Downgrade)
+
+  def allDieChanges(dcs: Map[StagingKey, Map[Quality | Power, DieChange]],
+                    mps: Option[PowerSource],
+                    mat: Option[Archetype],
+                    mpt: Option[Personality]
+  ): Map[Quality | Power, DieChange] =
+    (mps.fold(List())(ps => dcs.get(ps).fold(List())(dcps => dcps.toList)) ++
+      mat.fold(List())(at => dcs.get(at).fold(List())(dcat => dcat.toList)) ++
+      mpt.fold(List())(pt => dcs.get(pt).fold(List())(dcpt => dcpt.toList))).toMap
+
   val allQualities: Signal[List[(Quality, Die)]] = qualityStaging.signal
     .combineWith(
       backgroundSignal,
       powerSourceSignal,
       archetypeSignal,
-      personalitySignal
+      personalitySignal,
+      dieChanges,
     )
-    .map((quals, mbg, mps, mat, mpt) =>
-      mbg.fold(List())(bg => quals.getOrElse(bg, List())) ++
+    .map((quals, mbg, mps, mat, mpt, dcs) =>
+      val relDieChanges = allDieChanges(dcs, mps, mat, mpt)
+      val baseQualities = mbg.fold(List())(bg => quals.getOrElse(bg, List())) ++
         mps.fold(List())(ps => quals.getOrElse(ps, List())) ++
         mat.fold(List())(at => quals.getOrElse(at, List())) ++
         mpt.fold(List())(pt => quals.getOrElse(pt, List()))
+      baseQualities.map{case (q, d) => (q, relDieChanges.get(q).fold(d)(dc => dc.onDie(d)))}
     )
 
   val allPowers: Signal[List[(Power, Die)]] = powerStaging.signal
@@ -286,13 +338,16 @@ final class CharacterModel:
       backgroundSignal,
       powerSourceSignal,
       archetypeSignal,
-      personalitySignal
+      personalitySignal,
+      dieChanges,
     )
-    .map((pows, mbg, mps, mat, mpt) =>
-      mbg.fold(List())(bg => pows.getOrElse(bg, List())) ++
+    .map((pows, mbg, mps, mat, mpt, dcs) =>
+      val relDieChanges = allDieChanges(dcs, mps, mat, mpt)
+      val basePowers = mbg.fold(List())(bg => pows.getOrElse(bg, List())) ++
         mps.fold(List())(ps => pows.getOrElse(ps, List())) ++
         mat.fold(List())(at => pows.getOrElse(at, List())) ++
         mpt.fold(List())(pt => pows.getOrElse(pt, List()))
+      basePowers.map{case (p, d) => (p, relDieChanges.get(p).fold(d)(dc => dc.onDie(d)))}
     )
 
   val allStagedAbilities: Signal[List[ChosenAbility]] = abilityStaging.signal
@@ -385,7 +440,7 @@ final class CharacterModel:
     )
     .map { (mp, dice, pm, qm, asm, am) =>
       mp.fold(false) { p =>
-        val powers: List[Power] = pm.getOrElse(p, List()).map(_._1)
+        val powers: List[(Power, Die)] = pm.getOrElse(p, List())
         val qualities: List[Quality] = qm.getOrElse(p, List()).map(_._1)
         val selectedAbilities: Set[AbilityKey] = asm
           .getOrElse(p, List())
