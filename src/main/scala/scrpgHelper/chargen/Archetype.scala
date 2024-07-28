@@ -75,7 +75,7 @@ object Archetype:
     Marksman.marksman,
     Blaster.blaster,
     CloseQuartersCombatant.closeQuartersCombatant, // TODO: mandate one power used with abilities; shared no-dupes between zones
-    // Armored.armored, //TODO: change how health is calculated
+    Armored.armored,
     Flyer.flyer, // TODO: enforce abilities using flight & sig vehicle
     ElementalManipulator.elementalManipulator,
     RobotCyborg.robotCyborg,

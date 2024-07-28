@@ -34,6 +34,9 @@ object AbilityChoice:
   def noDupes[A](l: List[A], m: ChoiceContext): Boolean =
     l.distinct.size == l.size
 
+  def nDistinct[A](n: Int)(l: List[A], m: ChoiceContext): Boolean =
+    l.distinct.size >= (l.size - n + 1)
+
   def onePower(power: Power)(l: List[Power], m: ChoiceContext): Boolean =
     l.contains(power)
 
