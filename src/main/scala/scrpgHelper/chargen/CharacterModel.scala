@@ -271,7 +271,7 @@ final class CharacterModel:
     case Upgrade, Downgrade
 
     def onDie(d: Die): Die = this match
-      case Upgrade => d.upgrade
+      case Upgrade   => d.upgrade
       case Downgrade => d.downgrade
   end DieChange
 
@@ -307,14 +307,17 @@ final class CharacterModel:
   def downgrade(key: StagingKey): Observer[Quality | Power] =
     changeDieChanges(key, DieChange.Downgrade)
 
-  def allDieChanges(dcs: Map[StagingKey, Map[Quality | Power, DieChange]],
-                    mps: Option[PowerSource],
-                    mat: Option[Archetype],
-                    mpt: Option[Personality]
+  def allDieChanges(
+      dcs: Map[StagingKey, Map[Quality | Power, DieChange]],
+      mps: Option[PowerSource],
+      mat: Option[Archetype],
+      mpt: Option[Personality]
   ): Map[Quality | Power, DieChange] =
     (mps.fold(List())(ps => dcs.get(ps).fold(List())(dcps => dcps.toList)) ++
       mat.fold(List())(at => dcs.get(at).fold(List())(dcat => dcat.toList)) ++
-      mpt.fold(List())(pt => dcs.get(pt).fold(List())(dcpt => dcpt.toList))).toMap
+      mpt.fold(List())(pt =>
+        dcs.get(pt).fold(List())(dcpt => dcpt.toList)
+      )).toMap
 
   val allQualities: Signal[List[(Quality, Die)]] = qualityStaging.signal
     .combineWith(
@@ -322,7 +325,7 @@ final class CharacterModel:
       powerSourceSignal,
       archetypeSignal,
       personalitySignal,
-      dieChanges,
+      dieChanges
     )
     .map((quals, mbg, mps, mat, mpt, dcs) =>
       val relDieChanges = allDieChanges(dcs, mps, mat, mpt)
@@ -330,7 +333,9 @@ final class CharacterModel:
         mps.fold(List())(ps => quals.getOrElse(ps, List())) ++
         mat.fold(List())(at => quals.getOrElse(at, List())) ++
         mpt.fold(List())(pt => quals.getOrElse(pt, List()))
-      baseQualities.map{case (q, d) => (q, relDieChanges.get(q).fold(d)(dc => dc.onDie(d)))}
+      baseQualities.map { case (q, d) =>
+        (q, relDieChanges.get(q).fold(d)(dc => dc.onDie(d)))
+      }
     )
 
   val allPowers: Signal[List[(Power, Die)]] = powerStaging.signal
@@ -339,7 +344,7 @@ final class CharacterModel:
       powerSourceSignal,
       archetypeSignal,
       personalitySignal,
-      dieChanges,
+      dieChanges
     )
     .map((pows, mbg, mps, mat, mpt, dcs) =>
       val relDieChanges = allDieChanges(dcs, mps, mat, mpt)
@@ -347,7 +352,9 @@ final class CharacterModel:
         mps.fold(List())(ps => pows.getOrElse(ps, List())) ++
         mat.fold(List())(at => pows.getOrElse(at, List())) ++
         mpt.fold(List())(pt => pows.getOrElse(pt, List()))
-      basePowers.map{case (p, d) => (p, relDieChanges.get(p).fold(d)(dc => dc.onDie(d)))}
+      basePowers.map { case (p, d) =>
+        (p, relDieChanges.get(p).fold(d)(dc => dc.onDie(d)))
+      }
     )
 
   val allStagedAbilities: Signal[List[ChosenAbility]] = abilityStaging.signal
@@ -405,15 +412,33 @@ final class CharacterModel:
     personalitySignal.map(_.flatMap(p => p.statusDice.get(Status.Red).map(_.n)))
 
   val powerQualityHealth: Signal[Int] =
-    allPowers.combineWith(allQualities).map { (ps, qs) =>
-      val athleticRolls =
-        ps.filter(_._1.category == PowerCategory.Athletic).map(_._2.n)
-      val maxAthletic = if athleticRolls.isEmpty then 4 else athleticRolls.max
-      val mentalRolls =
-        qs.filter(_._1.category == QualityCategory.Mental).map(_._2.n)
-      val maxMental = if mentalRolls.isEmpty then 4 else mentalRolls.max
-      List(maxAthletic, maxMental).max
-    }
+    allPowers
+      .combineWith(allQualities)
+      .combineWith(archetypeSignal)
+      .combineWith(personalitySignal)
+      .map { (ps, qs, mat, mpe) =>
+        val acceptableCats: Set[QualityCategory | PowerCategory] =
+          Set(PowerCategory.Athletic, QualityCategory.Mental)
+            .union(mat.fold(Set())(_.extraHealthCategories.toSet))
+            .union(mpe.fold(Set()) { pe =>
+              (PowerCategory.values ++ QualityCategory.values)
+                .filter((cat: QualityCategory | PowerCategory) =>
+                  pe.extraHealthCheck(cat)
+                )
+                .toSet
+            })
+        val powerRolls =
+          ps.filter((pd: (Power, Die)) =>
+            acceptableCats.contains(pd._1.category)
+          ).map(_._2.n)
+        val maxPower = if powerRolls.isEmpty then 4 else powerRolls.max
+        val qualityRolls =
+          qs.filter((qd: (Quality, Die)) =>
+            acceptableCats.contains(qd._1.category)
+          ).map(_._2.n)
+        val maxQuality = if qualityRolls.isEmpty then 4 else qualityRolls.max
+        List(maxPower, maxQuality).max
+      }
 
   val calcHealth: Observer[Int] =
     health.updater { (m, n) =>

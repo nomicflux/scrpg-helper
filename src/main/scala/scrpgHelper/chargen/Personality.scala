@@ -10,10 +10,14 @@ case class Personality(
     name: String,
     outAbilityPool: AbilityPool,
     statusDice: Map[Status, Die],
-    baseQuality: Quality
+    baseQuality: Quality,
+    extraHealthCheck: (QualityCategory | PowerCategory) => Boolean
 ):
   def ability: ChosenAbility = outAbilityPool.abilities.head.toChosenAbility(outAbilityPool)
   def changeQualityName(qname: String) = copy(baseQuality = baseQuality.copy(name = qname))
+
+  def withExtraHealthCheck(cats: (QualityCategory | PowerCategory) => Boolean): Personality =
+    copy(extraHealthCheck = cats)
 
   def valid(
       qualities: List[Quality],
@@ -49,7 +53,8 @@ object Personality:
         .zip(List(Status.Green, Status.Yellow, Status.Red))
         .map { case (a, b) => (b, a) }
         .toMap,
-      Quality.personalityQuality(s"${name} Personal Quality")
+      Quality.personalityQuality(s"${name} Personal Quality"),
+      _ => false
     )
   val loneWolf = Personality(
     1,
@@ -71,6 +76,16 @@ object Personality:
     ),
     List(d(6), d(8), d(10))
   )
+  val mischievous = Personality(
+    4,
+    "Mischievous",
+    List(
+      "Hinder an opponent by rolling your single",
+      PowerChoice(),
+      "die."
+    ),
+    List(d(6), d(8), d(8))
+  ).withExtraHealthCheck(_ => true)
   val sarcastic = Personality(
     5,
     "Sarcastic",
@@ -226,7 +241,7 @@ object Personality:
     loneWolf,
     naturalLeader,
     // impulsive, // TODO: add upgrade
-    // mischievous, // TODO: change health qualities
+    mischievous,
     sarcastic,
     distant,
     stalwart,

@@ -11,8 +11,20 @@ case class Archetype(
     powerList: List[Power],
     qualityList: List[Quality],
     abilityPools: List[AbilityPool],
+    extraPowers: List[(Power, Die)],
+    extraHealthCategories: List[QualityCategory | PowerCategory],
     principleCategory: PrincipleCategory
 ):
+  def withExtraHealthCategories(
+    cats: List[QualityCategory | PowerCategory]
+  ): Archetype =
+    copy(extraHealthCategories = cats)
+
+  def withExtraPowers(
+    ps: List[(Power, Die)]
+  ): Archetype =
+    copy(extraPowers = ps)
+
   def valid(
       diePool: List[Die],
       powers: List[Power],
@@ -29,6 +41,22 @@ end Archetype
 
 object Archetype:
   import scrpgHelper.chargen.archetypes.*
+
+  def apply(
+    name: String,
+    number: Int,
+    powerValidation: Set[Power] => Boolean,
+    qualityValidation: Set[Quality] => Boolean,
+    minPowers: Int,
+    powerList: List[Power],
+    qualityList: List[Quality],
+    abilityPools: List[AbilityPool],
+    principleCategory: PrincipleCategory
+  ): Archetype =
+    new Archetype(
+      name, number, powerValidation, qualityValidation, minPowers,
+      powerList, qualityList, abilityPools, List(), List(), principleCategory
+    )
 
   def signaturePower(p: Power): Set[Power] => Boolean =
     ps => ps.contains(p)
@@ -49,7 +77,7 @@ object Archetype:
     // Armored.armored, //TODO: change how health is calculated
     Flyer.flyer, // TODO: enforce abilities using flight & sig vehicle
     ElementalManipulator.elementalManipulator,
-    // RobotCyborg.robotCyborg, //TODO: change how health is calculated
+    // RobotCyborg.robotCyborg, //TODO: add extra power
     Sorcerer.sorcerer,
     Psychic.psychic,
     Transporter.transporter,
