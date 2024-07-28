@@ -49,6 +49,61 @@ object RenderArchetype:
       character: CharacterModel,
       archetype: Archetype
   ): Element =
+    val qualityDisallowed:Signal[
+        (
+            Option[(Quality, Die)],
+            Option[(Power, Die)],
+            Option[(Quality, Die)]
+        ) => Boolean
+      ]  = character
+            .qualitiesSignal(Signal.fromValue(Some(archetype)))
+            .combineWith(
+              character.qualitiesSignal(character.powerSourceSignal),
+              character.qualitiesSignal(character.backgroundSignal),
+              character.powersSignal(Signal.fromValue(Some(archetype))),
+              character.powerSourceSignal
+                .map(_.toList.flatMap(_.archetypeDiePool))
+            )
+            .map { (qs, psqs, bgqs, ps, ds) =>
+              val qualitySet: Set[Quality] =
+                (qs ++ psqs ++ bgqs).map(_._1).toSet
+              { (mqd, mpd, mpc) =>
+                val alreadyHave =
+                  mqd.fold(false)(qd => qualitySet.contains(qd._1))
+                val wouldFail = !mandatoryQualityCheck(
+                  ds,
+                  archetype
+                )(qs, psqs ++ bgqs, ps)(mqd, mpd, mpc)
+                alreadyHave || wouldFail
+              }
+            }
+    val powerDisallowed: Signal[
+        (
+            Option[(Power, Die)],
+            Option[(Quality, Die)],
+            Option[(Power | Quality, Die)]
+        ) => Boolean
+      ] = character
+            .powersSignal(Signal.fromValue(Some(archetype)))
+            .combineWith(
+              character.powersSignal(character.powerSourceSignal),
+              character.qualitiesSignal(Signal.fromValue(Some(archetype))),
+              character.powerSourceSignal
+                .map(_.toList.flatMap(_.archetypeDiePool))
+            )
+            .map { (ps, psps, qs, ds) =>
+              val powerSet: Set[Power] = (ps ++ psps).map(_._1).toSet
+              { (mpd, mqd, mpc) =>
+                val alreadyHave =
+                  mpd.fold(false)(pd => powerSet.contains(pd._1))
+                val wouldFail = !mandatoryPowerCheck(ds, archetype)(
+                  ps,
+                  psps,
+                  qs
+                )(mpd, mqd, mpc)
+                alreadyHave || wouldFail
+              }
+            }
     tr(
       className := "archetype-row",
       className <-- model.rollsSignal
@@ -78,49 +133,19 @@ object RenderArchetype:
           ),
           archetype.powerList,
           archetype.qualityList,
-          character
-            .powersSignal(Signal.fromValue(Some(archetype)))
-            .combineWith(
-              character.powersSignal(character.powerSourceSignal),
-              character.qualitiesSignal(Signal.fromValue(Some(archetype))),
-              character.powerSourceSignal
-                .map(_.toList.flatMap(_.archetypeDiePool))
-            )
-            .map { (ps, psps, qs, ds) =>
-              val powerSet: Set[Power] = (ps ++ psps).map(_._1).toSet
-              { (mpd, mqd, mpc) =>
-                val alreadyHave =
-                  mpd.fold(false)(pd => powerSet.contains(pd._1))
-                val wouldFail = !mandatoryPowerCheck(ds, archetype)(
-                  ps,
-                  psps,
-                  qs
-                )(mpd, mqd, mpc)
-                alreadyHave || wouldFail
-              }
-            },
-          character
-            .qualitiesSignal(Signal.fromValue(Some(archetype)))
-            .combineWith(
-              character.qualitiesSignal(character.powerSourceSignal),
-              character.qualitiesSignal(character.backgroundSignal),
-              character.powersSignal(Signal.fromValue(Some(archetype))),
-              character.powerSourceSignal
-                .map(_.toList.flatMap(_.archetypeDiePool))
-            )
-            .map { (qs, psqs, bgqs, ps, ds) =>
-              val qualitySet: Set[Quality] =
-                (qs ++ psqs ++ bgqs).map(_._1).toSet
-              { (mqd, mpd, mpc) =>
-                val alreadyHave =
-                  mqd.fold(false)(qd => qualitySet.contains(qd._1))
-                val wouldFail = !mandatoryQualityCheck(
-                  ds,
-                  archetype
-                )(qs, psqs ++ bgqs, ps)(mqd, mpd, mpc)
-                alreadyHave || wouldFail
-              }
-            },
+          powerDisallowed,
+          qualityDisallowed,
+          character.removePower(archetype),
+          character.addPower(archetype),
+          character.removeQuality(archetype),
+          character.addQuality(archetype)
+        ),
+        renderPowerQualities(
+          Signal.fromValue(archetype.extraPowers._1),
+          archetype.extraPowers._2,
+          List(),
+          powerDisallowed,
+          qualityDisallowed,
           character.removePower(archetype),
           character.addPower(archetype),
           character.removeQuality(archetype),
@@ -322,7 +347,7 @@ object RenderArchetype:
           spq.fold("")(pq =>
             pq match
               case q: Quality => "hidden"
-              case _          => ""
+              case _          => if powers.isEmpty then "hidden" else ""
           )
         },
         SelectWithPrevChoice(powers.map(p => (p, die)), pd => pd._1.name)
@@ -334,13 +359,13 @@ object RenderArchetype:
       ),
       span(
         className := "pq-list-separator",
-        className <-- chosen.signal.map { spq => if spq.isDefined then "hidden" else "" },
+        className <-- chosen.signal.map { spq => if spq.isDefined || powers.isEmpty || qualities.isEmpty then "hidden" else "" },
         "-or-"
       ),
       span(
         className := "quality-list",
         className <-- chosen.signal.map { spq =>
-          spq.fold("")(pq =>
+          spq.fold(if qualities.isEmpty then "hidden" else "")(pq =>
             pq match
               case p: Power => "hidden"
               case _        => ""

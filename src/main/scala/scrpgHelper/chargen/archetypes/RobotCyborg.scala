@@ -76,6 +76,6 @@ object RobotCyborg:
     List(AbilityPool(2, abilities),
          AbilityPool(1, abilities.map(_.copy(status = Status.Yellow)))),
     PrincipleCategory.Expertise
-  ).withExtraPowers(Power.technologicalPowers.map(p => (p, d(10))))
-    .withExtraHealthCategories(List(PowerCategory.Athletic, QualityCategory.Mental))
+  ).withExtraPowers(List(d(10)), Power.technologicalPowers)
+    .withExtraHealthCategories(List(PowerCategory.Technological))
 end RobotCyborg

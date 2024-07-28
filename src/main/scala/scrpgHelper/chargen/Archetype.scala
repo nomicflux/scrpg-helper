@@ -11,7 +11,7 @@ case class Archetype(
     powerList: List[Power],
     qualityList: List[Quality],
     abilityPools: List[AbilityPool],
-    extraPowers: List[(Power, Die)],
+    extraPowers: (List[Die], List[Power]),
     extraHealthCategories: List[QualityCategory | PowerCategory],
     principleCategory: PrincipleCategory
 ):
@@ -21,9 +21,10 @@ case class Archetype(
     copy(extraHealthCategories = cats)
 
   def withExtraPowers(
-    ps: List[(Power, Die)]
+    ds: List[Die],
+    ps: List[Power]
   ): Archetype =
-    copy(extraPowers = ps)
+    copy(extraPowers = (ds, ps))
 
   def valid(
       diePool: List[Die],
@@ -34,7 +35,7 @@ case class Archetype(
       allQualities: List[Quality],
   ): Boolean =
     abilities.filter(_.valid).size == abilityPools.map(_.max).sum &&
-    (powers.size + qualities.size) == diePool.size &&
+    (powers.size + qualities.size + extraPowers._1.size) == diePool.size &&
     powerValidation(allPowers.toSet) && qualityValidation(allQualities.toSet)
   end valid
 end Archetype
@@ -55,7 +56,7 @@ object Archetype:
   ): Archetype =
     new Archetype(
       name, number, powerValidation, qualityValidation, minPowers,
-      powerList, qualityList, abilityPools, List(), List(), principleCategory
+      powerList, qualityList, abilityPools, (List(), List()), List(), principleCategory
     )
 
   def signaturePower(p: Power): Set[Power] => Boolean =
@@ -77,7 +78,7 @@ object Archetype:
     // Armored.armored, //TODO: change how health is calculated
     Flyer.flyer, // TODO: enforce abilities using flight & sig vehicle
     ElementalManipulator.elementalManipulator,
-    // RobotCyborg.robotCyborg, //TODO: add extra power
+    RobotCyborg.robotCyborg,
     Sorcerer.sorcerer,
     Psychic.psychic,
     Transporter.transporter,
