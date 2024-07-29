@@ -35,7 +35,7 @@ case class Archetype(
       allQualities: List[Quality],
   ): Boolean =
     abilities.filter(_.valid).size == abilityPools.map(_.max).sum &&
-    (powers.size + qualities.size + extraPowers._1.size) == diePool.size &&
+    (powers.size + qualities.size) == (diePool.size + extraPowers._1.size) &&
     powerValidation(allPowers.toSet) && qualityValidation(allQualities.toSet)
   end valid
 end Archetype
