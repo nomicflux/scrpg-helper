@@ -15,6 +15,7 @@ case class PowerSource(
     extraPower: List[Die] => Option[(Die, List[Power])],
     upgrades: Option[((Quality | Power, Die) => Boolean)],
     downgrades: Option[((Quality | Power, Die) => Boolean)],
+    selectExtraArchetypeQuality: Boolean,
 ):
   def valid(
       diePool: List[Die],
@@ -35,6 +36,9 @@ case class PowerSource(
 
   def withDowngrades(fn: (Quality | Power, Die) => Boolean): PowerSource =
     copy(downgrades = Some(fn))
+
+  def withExtraArchetypeQuality(): PowerSource =
+    copy(selectExtraArchetypeQuality = true)
 end PowerSource
 
 object PowerSource:
@@ -63,6 +67,7 @@ object PowerSource:
     _ => None,
     None,
     None,
+    false
   )
 
   def apply(
@@ -83,6 +88,7 @@ object PowerSource:
     _ => None,
     None,
     None,
+    false
   )
 
   def apply(
@@ -104,6 +110,7 @@ object PowerSource:
     _ => extraPower,
     None,
     None,
+    false,
   )
 
   def uniquePowers(abilities: List[ChosenAbility]): Boolean =
@@ -114,7 +121,7 @@ object PowerSource:
 
   val powerSources: List[PowerSource] = List(
     Accident.accident,
-    // Training.training, // TODO: Implement adding quality from archetype in next step
+    Training.training,
     Genetic.genetic,
     Experimentation.experimentation,
     Mystical.mystical,

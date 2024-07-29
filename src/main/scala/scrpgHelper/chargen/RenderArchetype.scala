@@ -141,6 +141,19 @@ object RenderArchetype:
           character.addQuality(archetype)
         ),
         renderPowerQualities(
+          character.powerSourceSignal.map(mps =>
+            mps.fold(List())(ps => if ps.selectExtraArchetypeQuality then List(Die.d(10)) else List())
+          ),
+          List(),
+          archetype.qualityList,
+          powerDisallowed,
+          qualityDisallowed,
+          character.removePower(archetype),
+          character.addPower(archetype),
+          character.removeQuality(archetype),
+          character.addQuality(archetype)
+        ),
+        renderPowerQualities(
           Signal.fromValue(archetype.extraPowers._1),
           archetype.extraPowers._2,
           List(),
@@ -344,10 +357,10 @@ object RenderArchetype:
       span(
         className := "power-list",
         className <-- chosen.signal.map { spq =>
-          spq.fold("")(pq =>
+          spq.fold(if powers.isEmpty then "hidden" else "")(pq =>
             pq match
               case q: Quality => "hidden"
-              case _          => if powers.isEmpty then "hidden" else ""
+              case _          => ""
           )
         },
         SelectWithPrevChoice(powers.map(p => (p, die)), pd => pd._1.name)
