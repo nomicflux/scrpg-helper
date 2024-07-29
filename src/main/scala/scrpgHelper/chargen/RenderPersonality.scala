@@ -9,14 +9,24 @@ import com.raquo.laminar.api.L.{*, given}
 import scrpgHelper.rolls.Die
 
 object RenderPersonality:
+  import scrpgHelper.components.SelectWithPrevChoice
+
   val model = new PersonalityModel()
 
   def renderPersonalities(character: CharacterModel): Element =
     div(
       className := "personality-section choice-section",
       h2("Personality"),
-      RollComponent.renderRollButton(model.rollTrigger, Signal.fromValue(List(Die.d(10), Die.d(10)))),
-      RollComponent.renderShownToggle(model.rollsSignal, model.showUnchosenSignal, model.shownToggle, "Personalities"),
+      RollComponent.renderRollButton(
+        model.rollTrigger,
+        Signal.fromValue(List(Die.d(10), Die.d(10)))
+      ),
+      RollComponent.renderShownToggle(
+        model.rollsSignal,
+        model.showUnchosenSignal,
+        model.shownToggle,
+        "Personalities"
+      ),
       renderPersonalityTable(character)
     )
 
@@ -50,7 +60,8 @@ object RenderPersonality:
         th(),
         th("Personality"),
         th("Quality"),
-        th("Out Ability")
+        th("Out Ability"),
+        th("")
       ),
       Personality.personalities.map(renderPersonality(character, _))
     )
@@ -87,6 +98,15 @@ object RenderPersonality:
           character.abilityChoicesSignal(personality)
         )
       }),
+      td(
+        renderUpgrades(
+          character.allQualities,
+          character.allPowers,
+          personality.upgrades,
+          character.upgrade(personality),
+          character.downgrade(personality)
+        )
+      ),
       onMouseDown --> { _ =>
         character.changePersonality.onNext(personality)
       },
@@ -98,6 +118,38 @@ object RenderPersonality:
       }
     )
   end renderPersonality
+
+  def renderUpgrades(
+      qualities: Signal[List[(Quality, Die)]],
+      powers: Signal[List[(Power, Die)]],
+      changeable: Option[((Quality | Power, Die) => Boolean)],
+      forwardChange: Observer[Quality | Power],
+      reverseChange: Observer[Quality | Power]
+  ): Element =
+    val pqs: Signal[List[Quality | Power]] =
+      powers.combineWith(qualities).map { (ps, qs) =>
+        changeable.fold(List()) { fn =>
+          (ps ++ qs).filter(pqd => fn(pqd._1, pqd._2)).map(_._1)
+        }
+      }
+    div(
+      span(
+        className := s"choice-die-box upgrade-list",
+        className <-- pqs.map(l => if l.isEmpty then "hidden" else ""),
+        "Upgrade: ",
+        SelectWithPrevChoice[Quality | Power](
+          pqs,
+          qp =>
+            qp match
+              case p: Power   => p.name
+              case q: Quality => q.name
+        ).render(
+          Signal.fromValue((_, _) => false),
+          reverseChange,
+          forwardChange
+        )
+      )
+    )
 
   def renderPersonalityQuality(
       character: CharacterModel,

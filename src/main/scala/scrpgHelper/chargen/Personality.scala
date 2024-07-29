@@ -11,13 +11,17 @@ case class Personality(
     outAbilityPool: AbilityPool,
     statusDice: Map[Status, Die],
     baseQuality: Quality,
-    extraHealthCheck: (QualityCategory | PowerCategory) => Boolean
+    extraHealthCheck: (QualityCategory | PowerCategory) => Boolean,
+    upgrades: Option[((Quality | Power, Die) => Boolean)],
 ):
   def ability: ChosenAbility = outAbilityPool.abilities.head.toChosenAbility(outAbilityPool)
   def changeQualityName(qname: String) = copy(baseQuality = baseQuality.copy(name = qname))
 
   def withExtraHealthCheck(cats: (QualityCategory | PowerCategory) => Boolean): Personality =
     copy(extraHealthCheck = cats)
+
+  def withUpgrades(fn: (Quality | Power, Die) => Boolean): Personality =
+    copy(upgrades = Some(fn))
 
   def valid(
       qualities: List[Quality],
@@ -54,8 +58,10 @@ object Personality:
         .map { case (a, b) => (b, a) }
         .toMap,
       Quality.personalityQuality(s"${name} Personal Quality"),
-      _ => false
+      _ => false,
+      None,
     )
+
   val loneWolf = Personality(
     1,
     "Lone Wolf",
@@ -76,6 +82,14 @@ object Personality:
     ),
     List(d(6), d(8), d(10))
   )
+  val impulsive = Personality(
+    3,
+    "Impulsive",
+    List(
+      "The hero who goes directly after you may take 1 damage to reroll their dice pool."
+    ),
+    List(d(6), d(6), d(8))
+  ).withUpgrades((_,d) => d.n < 12)
   val mischievous = Personality(
     4,
     "Mischievous",
@@ -240,7 +254,7 @@ object Personality:
   val personalities: List[Personality] = List(
     loneWolf,
     naturalLeader,
-    // impulsive, // TODO: add upgrade
+    impulsive,
     mischievous,
     sarcastic,
     distant,

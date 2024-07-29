@@ -201,6 +201,7 @@ object RenderPowerSource:
     div(
       span(
         className := s"choice-die-box ${text.toLowerCase()}-list",
+        className <-- pqs.map(l => if l.isEmpty then "hidden" else ""),
         text,
         ": ",
         SelectWithPrevChoice[Quality | Power](

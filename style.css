@@ -1403,5 +1403,5 @@ select.selector-with-prev-choice option:selected {
 
 /* Keep at bottom */
 .hidden {
-  display: none;
+  display: none !important;
 }

@@ -36,7 +36,7 @@ object RenderHealth:
         )
       ),
       tr(
-        td("Maximum Value of Athletic Power or Mental Quality:"),
+        td("Maximum Value of Athletic Power or Mental Quality (or others for relevant Archetype & Personality choices):"),
         td(
           child.text <-- character.powerQualityHealth.map(_.toString)
         )
