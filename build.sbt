@@ -4,7 +4,7 @@ lazy val scrpgHelper = project.in(file("."))
     .enablePlugins(ScalaJSPlugin)
     .enablePlugins(ScalablyTypedConverterExternalNpmPlugin)
     .settings(
-      scalaVersion := "3.3.1",
+      scalaVersion := "3.3.5",
       scalaJSUseMainModuleInitializer := true,
       scalaJSLinkerConfig ~= { _.withSourceMap(true) },
       scalaJSLinkerConfig ~= {
