@@ -228,20 +228,20 @@ object RenderAbility:
         character.powersSignal(Signal.fromValue(Some(ps))).map(_.map(_._1))
       case at: Archetype =>
         character
-          .powersSignal(character.powerSourceSignal)
+          .powersSignal(character.powerSource.signal)
           .combineWith(character.powersSignal(Signal.fromValue(Some(at))))
           .map(_.map(_._1) ++ _.map(_._1))
       case p: Personality =>
         character
-          .powersSignal(character.powerSourceSignal)
-          .combineWith(character.powersSignal(character.archetypeSignal))
+          .powersSignal(character.powerSource.signal)
+          .combineWith(character.powersSignal(character.archetype.signal))
           .map(_.map(_._1) ++ _.map(_._1))
       case ra: RedAbility.RedAbilityPhase =>
         character
           .powersSignal(Signal.fromValue(Some(ra)))
           .combineWith(
-            character.powersSignal(character.powerSourceSignal),
-            character.powersSignal(character.archetypeSignal)
+            character.powersSignal(character.powerSource.signal),
+            character.powersSignal(character.archetype.signal)
           )
           .map(_.map(_._1) ++ _.map(_._1) ++ _.map(_._1))
 
@@ -250,23 +250,23 @@ object RenderAbility:
         character.qualitiesSignal(Signal.fromValue(Some(bg))).map(_.map(_._1))
       case ps: PowerSource =>
         character
-          .qualitiesSignal(character.backgroundSignal)
+          .qualitiesSignal(character.background.signal)
           .combineWith(character.qualitiesSignal(Signal.fromValue(Some(ps))))
           .map(_.map(_._1) ++ _.map(_._1))
       case at: Archetype =>
         character
-          .qualitiesSignal(character.backgroundSignal)
+          .qualitiesSignal(character.background.signal)
           .combineWith(
-            character.qualitiesSignal(character.powerSourceSignal),
+            character.qualitiesSignal(character.powerSource.signal),
             character.qualitiesSignal(Signal.fromValue(Some(at)))
           )
           .map(_.map(_._1) ++ _.map(_._1) ++ _.map(_._1))
       case p: Personality =>
         character
-          .qualitiesSignal(character.archetypeSignal)
+          .qualitiesSignal(character.archetype.signal)
           .combineWith(
-            character.qualitiesSignal(character.powerSourceSignal),
-            character.qualitiesSignal(character.backgroundSignal),
+            character.qualitiesSignal(character.powerSource.signal),
+            character.qualitiesSignal(character.background.signal),
             character.qualitiesSignal(Signal.fromValue(Some(p)))
           )
           .map(_.map(_._1) ++ _.map(_._1) ++ _.map(_._1) ++ _.map(_._1))
@@ -274,10 +274,10 @@ object RenderAbility:
         character
           .qualitiesSignal(Signal.fromValue(Some(ra)))
           .combineWith(
-            character.qualitiesSignal(character.backgroundSignal),
-            character.qualitiesSignal(character.powerSourceSignal),
-            character.qualitiesSignal(character.archetypeSignal),
-            character.qualitiesSignal(character.personalitySignal)
+            character.qualitiesSignal(character.background.signal),
+            character.qualitiesSignal(character.powerSource.signal),
+            character.qualitiesSignal(character.archetype.signal),
+            character.qualitiesSignal(character.personality.signal)
           )
           .map(
             _.map(_._1) ++ _.map(_._1) ++ _.map(_._1) ++ _.map(_._1) ++ _.map(

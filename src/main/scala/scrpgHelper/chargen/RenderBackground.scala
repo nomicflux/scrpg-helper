@@ -88,7 +88,7 @@ object RenderBackground:
             }
           }
       },
-      className <-- character.backgroundSignal.map(mb =>
+      className <-- character.background.signal.map(mb =>
         if mb.fold(false)(_ == background) then "picked" else "unpicked"
       ),
       td(background.number.toString),
@@ -97,7 +97,7 @@ object RenderBackground:
       td(
         renderPrinciples(
           Principle.categoryToPrinciples(background.principleCategory),
-          character.abilitiesSignal(character.backgroundSignal).map { l =>
+          character.abilitiesSignal(character.background.signal).map { l =>
             val abilitySet = l.map(_.key).toSet
             a => abilitySet.contains(a.key)
           },
@@ -109,7 +109,7 @@ object RenderBackground:
         renderQualities(
           background.backgroundDice,
           background.mandatoryQualities ++ background.qualityList,
-          character.qualitiesSignal(character.backgroundSignal).map { l =>
+          character.qualitiesSignal(character.background.signal).map { l =>
             val qualitySet: Set[Quality] = l.map(_._1).toSet
             (qd, mpc) =>
               qualitySet.contains(qd._1) || !mandatoryQualityCheck(background)(

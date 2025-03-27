@@ -20,7 +20,7 @@ object RenderPowerSource:
       h2("Power Source"),
       RollComponent.renderRollButton(
         model.rollTrigger,
-        character.backgroundSignal.map(_.toList.flatMap(_.powerSourceDice))
+        character.background.signal.map(_.toList.flatMap(_.powerSourceDice))
       ),
       RollComponent.renderShownToggle(
         model.rollsSignal,
@@ -80,7 +80,7 @@ object RenderPowerSource:
             }
           }
         },
-      className <-- character.powerSourceSignal.map(mps =>
+      className <-- character.powerSource.signal.map(mps =>
         if mps.fold(false)(_ == powerSource) then "picked" else "unpicked"
       ),
       td(
@@ -93,7 +93,7 @@ object RenderPowerSource:
       ),
       td(
         renderPowers(
-          character.backgroundSignal.map(mbg =>
+          character.background.signal.map(mbg =>
             mbg.fold(List())(_.powerSourceDice)
           ),
           powerSource.powerList,
@@ -101,7 +101,7 @@ object RenderPowerSource:
           character
             .powersSignal(Signal.fromValue(Some(powerSource)))
             .combineWith(
-              character.backgroundSignal.map(mbg =>
+              character.background.signal.map(mbg =>
                 mbg.fold(List())(_.powerSourceDice)
               )
             )
@@ -120,7 +120,7 @@ object RenderPowerSource:
           powerSource.extraQuality,
           character
             .qualitiesSignal(Signal.fromValue(Some(powerSource)))
-            .combineWith(character.qualitiesSignal(character.backgroundSignal))
+            .combineWith(character.qualitiesSignal(character.background.signal))
             .map { (l, bqs) =>
               val qualitySet: Set[Quality] =
                 l.map(_._1).toSet.union(bqs.map(_._1).toSet)
@@ -135,7 +135,7 @@ object RenderPowerSource:
             character
               .qualitiesSignal(Signal.fromValue(Some(powerSource)))
               .combineWith(
-                character.qualitiesSignal(character.backgroundSignal)
+                character.qualitiesSignal(character.background.signal)
               )
               .map { (psqs, bgqs) => psqs ++ bgqs },
             character.powersSignal(Signal.fromValue(Some(powerSource))),
@@ -150,7 +150,7 @@ object RenderPowerSource:
             character
               .qualitiesSignal(Signal.fromValue(Some(powerSource)))
               .combineWith(
-                character.qualitiesSignal(character.backgroundSignal)
+                character.qualitiesSignal(character.background.signal)
               )
               .map { (psqs, bgqs) => psqs ++ bgqs },
             character.powersSignal(Signal.fromValue(Some(powerSource))),

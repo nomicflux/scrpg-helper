@@ -83,7 +83,7 @@ object RenderPersonality:
             }
           }
         },
-      className <-- character.personalitySignal.map(mp =>
+      className <-- character.personality.signal.map(mp =>
         if mp.fold(false)(_ == personality) then "picked" else "unpicked"
       ),
       td(personality.number.toString),

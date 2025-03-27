@@ -34,16 +34,16 @@ object RenderCharacter:
           className := "details-panel",
           div(
             table(
-              child <-- character.backgroundSignal.map(renderBackground),
-              child <-- character.powerSourceSignal.map(renderPowerSource),
-              child <-- character.archetypeSignal.map(renderArchetype),
-              child <-- character.personalitySignal.map(renderPersonality)
+              child <-- character.background.signal.map(renderBackground),
+              child <-- character.powerSource.signal.map(renderPowerSource),
+              child <-- character.archetype.signal.map(renderArchetype),
+              child <-- character.personality.signal.map(renderPersonality)
             )
           )
         ),
         div(
           className := "health-panel",
-          child <-- character.healthSignal.map(renderHealth)
+          child <-- character.health.signal.map(renderHealth)
         )
       ),
       div(
@@ -51,7 +51,7 @@ object RenderCharacter:
         className <-- model.showExport.signal.map(b => if b then "hidden" else ""),
         child <-- character.allPowers.map(renderPowers),
         child <-- character.allQualities.map(renderQualities),
-        child <-- character.personalitySignal.map(renderStatus)
+        child <-- character.personality.signal.map(renderStatus)
       ),
       div(
         className <-- model.showExport.signal.map(b => if b then "hidden" else ""),

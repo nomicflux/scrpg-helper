@@ -66,23 +66,19 @@ end CharacterModelExport
 
 final class CharacterModel:
   val background: Var[Option[Background]] = Var(None)
-  val backgroundSignal = background.signal
   val changeBackground: Observer[Background] = background.updater { (_, b) =>
     Some(b)
   }
 
   val powerSource: Var[Option[PowerSource]] = Var(None)
-  val powerSourceSignal = powerSource.signal
   val changePowerSource: Observer[PowerSource] =
     powerSource.updater { (_, ps) => Some(ps) }
 
   val archetype: Var[Option[Archetype]] = Var(None)
-  val archetypeSignal = archetype.signal
   val changeArchetype: Observer[Archetype] =
     archetype.updater { (_, at) => Some(at) }
 
   val personality: Var[Option[Personality]] = Var(None)
-  val personalitySignal = personality.signal
   val changePersonality: Observer[Personality] =
     personality.updater { (_, p) =>
       toggleAbility(p).onNext(p.ability)
@@ -90,7 +86,6 @@ final class CharacterModel:
     }
 
   val health: Var[Option[Int]] = Var(None)
-  val healthSignal = health.signal
 
   type StagingKey = Background | PowerSource | Archetype | Personality |
     RedAbility.RedAbilityPhase
@@ -321,10 +316,10 @@ final class CharacterModel:
 
   val allQualities: Signal[List[(Quality, Die)]] = qualityStaging.signal
     .combineWith(
-      backgroundSignal,
-      powerSourceSignal,
-      archetypeSignal,
-      personalitySignal,
+      background.signal,
+      powerSource.signal,
+      archetype.signal,
+      personality.signal,
       dieChanges
     )
     .map((quals, mbg, mps, mat, mpt, dcs) =>
@@ -340,10 +335,10 @@ final class CharacterModel:
 
   val allPowers: Signal[List[(Power, Die)]] = powerStaging.signal
     .combineWith(
-      backgroundSignal,
-      powerSourceSignal,
-      archetypeSignal,
-      personalitySignal,
+      background.signal,
+      powerSource.signal,
+      archetype.signal,
+      personality.signal,
       dieChanges
     )
     .map((pows, mbg, mps, mat, mpt, dcs) =>
@@ -359,10 +354,10 @@ final class CharacterModel:
 
   val allStagedAbilities: Signal[List[ChosenAbility]] = abilityStaging.signal
     .combineWith(
-      backgroundSignal,
-      powerSourceSignal,
-      archetypeSignal,
-      personalitySignal
+      background.signal,
+      powerSource.signal,
+      archetype.signal,
+      personality.signal
     )
     .map((abils, mbg, mps, mat, mpt) =>
       mbg.fold(List())(bg => abils.getOrElse(bg, List())) ++
@@ -375,10 +370,10 @@ final class CharacterModel:
 
   val allChosenAbilities: Signal[List[ChosenAbility]] = abilityChoice.signal
     .combineWith(
-      backgroundSignal,
-      powerSourceSignal,
-      archetypeSignal,
-      personalitySignal
+      background.signal,
+      powerSource.signal,
+      archetype.signal,
+      personality.signal
     )
     .map((abils, mbg, mps, mat, mpt) =>
       mbg.fold(List())(bg => abils.getOrElse(bg, List())) ++
@@ -391,8 +386,8 @@ final class CharacterModel:
 
   val allPrinciples: Signal[List[Principle]] = abilityStaging.signal
     .combineWith(
-      backgroundSignal,
-      archetypeSignal
+      background.signal,
+      archetype.signal
     )
     .map((abils, mbg, mat) =>
       mbg.fold(List())(bg => abils.getOrElse(bg, List())) ++
@@ -409,13 +404,13 @@ final class CharacterModel:
       }
 
   val redZoneHealth: Signal[Option[Int]] =
-    personalitySignal.map(_.flatMap(p => p.statusDice.get(Status.Red).map(_.n)))
+    personality.signal.map(_.flatMap(p => p.statusDice.get(Status.Red).map(_.n)))
 
   val powerQualityHealth: Signal[Int] =
     allPowers
       .combineWith(allQualities)
-      .combineWith(archetypeSignal)
-      .combineWith(personalitySignal)
+      .combineWith(archetype.signal)
+      .combineWith(personality.signal)
       .map { (ps, qs, mat, mpe) =>
         val acceptableCats: Set[QualityCategory | PowerCategory] =
           Set(PowerCategory.Athletic, QualityCategory.Mental)
@@ -445,7 +440,7 @@ final class CharacterModel:
       if (m.isDefined) then m else Some(n)
     }
 
-  val validBackground: Signal[Boolean] = backgroundSignal
+  val validBackground: Signal[Boolean] = background.signal
     .combineWith(qualityStaging.signal, abilityStaging.signal)
     .map { (mb, qm, am) =>
       mb.fold(false)(b =>
@@ -453,9 +448,9 @@ final class CharacterModel:
       )
     }
 
-  val validPowerSource: Signal[Boolean] = powerSourceSignal
+  val validPowerSource: Signal[Boolean] = powerSource.signal
     .combineWith(
-      backgroundSignal.map((mb: Option[Background]) =>
+      background.signal.map((mb: Option[Background]) =>
         mb.toList.flatMap((b: Background) => b.powerSourceDice)
       ),
       powerStaging.signal,
@@ -481,15 +476,15 @@ final class CharacterModel:
       }
     }
 
-  val validArchetype: Signal[Boolean] = archetypeSignal
+  val validArchetype: Signal[Boolean] = archetype.signal
     .combineWith(
-      powerSourceSignal.map(_.toList.flatMap(_.archetypeDiePool)),
+      powerSource.signal.map(_.toList.flatMap(_.archetypeDiePool)),
       powerStaging.signal,
       qualityStaging.signal,
       abilityStaging.signal,
       abilityChoice.signal,
-      backgroundSignal,
-      powerSourceSignal
+      background.signal,
+      powerSource.signal
     )
     .map { (mat, dice, pm, qm, asm, am, mbg, mps) =>
       mat.fold(false) { at =>
@@ -514,7 +509,7 @@ final class CharacterModel:
       }
     }
 
-  val validPersonality: Signal[Boolean] = personalitySignal
+  val validPersonality: Signal[Boolean] = personality.signal
     .combineWith(
       powerStaging.signal,
       qualityStaging.signal,
@@ -553,15 +548,15 @@ final class CharacterModel:
       redAbilities.map(_.valid).foldLeft(true)(_ && _)
     }
 
-  val validHealth: Signal[Boolean] = healthSignal.map(_.isDefined)
+  val validHealth: Signal[Boolean] = health.signal.map(_.isDefined)
 
   val forExport: Signal[CharacterModelExport] =
-    backgroundSignal
+    background.signal
       .combineWith(
-        powerSourceSignal,
-        archetypeSignal,
-        personalitySignal,
-        healthSignal,
+        powerSource.signal,
+        archetype.signal,
+        personality.signal,
+        health.signal,
         allPowers,
         allQualities,
         allAbilities

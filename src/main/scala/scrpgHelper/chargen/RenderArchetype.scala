@@ -20,7 +20,7 @@ object RenderArchetype:
       h2("Archetype"),
       RollComponent.renderRollButton(
         model.rollTrigger,
-        character.powerSourceSignal.map(
+        character.powerSource.signal.map(
           _.toList.flatMap(_.archetypeDiePool)
         )
       ),
@@ -58,10 +58,10 @@ object RenderArchetype:
       ]  = character
             .qualitiesSignal(Signal.fromValue(Some(archetype)))
             .combineWith(
-              character.qualitiesSignal(character.powerSourceSignal),
-              character.qualitiesSignal(character.backgroundSignal),
+              character.qualitiesSignal(character.powerSource.signal),
+              character.qualitiesSignal(character.background.signal),
               character.powersSignal(Signal.fromValue(Some(archetype))),
-              character.powerSourceSignal
+              character.powerSource.signal
                 .map(_.toList.flatMap(_.archetypeDiePool))
             )
             .map { (qs, psqs, bgqs, ps, ds) =>
@@ -86,9 +86,9 @@ object RenderArchetype:
       ] = character
             .powersSignal(Signal.fromValue(Some(archetype)))
             .combineWith(
-              character.powersSignal(character.powerSourceSignal),
+              character.powersSignal(character.powerSource.signal),
               character.qualitiesSignal(Signal.fromValue(Some(archetype))),
-              character.powerSourceSignal
+              character.powerSource.signal
                 .map(_.toList.flatMap(_.archetypeDiePool))
             )
             .map { (ps, psps, qs, ds) =>
@@ -117,7 +117,7 @@ object RenderArchetype:
             }
           }
         },
-      className <-- character.archetypeSignal.map(mat =>
+      className <-- character.archetype.signal.map(mat =>
         if mat.fold(false)(_ == archetype) then "picked" else "unpicked"
       ),
       td(
@@ -128,7 +128,7 @@ object RenderArchetype:
       ),
       td(
         renderPowerQualities(
-          character.powerSourceSignal.map(mps =>
+          character.powerSource.signal.map(mps =>
             mps.fold(List())(_.archetypeDiePool)
           ),
           archetype.powerList,
@@ -141,7 +141,7 @@ object RenderArchetype:
           character.addQuality(archetype)
         ),
         renderPowerQualities(
-          character.powerSourceSignal.map(mps =>
+          character.powerSource.signal.map(mps =>
             mps.fold(List())(ps => if ps.selectExtraArchetypeQuality then List(Die.d(10)) else List())
           ),
           List(),
@@ -170,10 +170,10 @@ object RenderArchetype:
         renderPrinciples(
           Principle.categoryToPrinciples(archetype.principleCategory),
           character
-            .abilitiesSignal(character.archetypeSignal)
+            .abilitiesSignal(character.archetype.signal)
             .combineWith(
-              character.abilitiesSignal(character.powerSourceSignal),
-              character.abilitiesSignal(character.backgroundSignal)
+              character.abilitiesSignal(character.powerSource.signal),
+              character.abilitiesSignal(character.background.signal)
             )
             .map { (ats, pss, bgs) =>
               val abilitySet =

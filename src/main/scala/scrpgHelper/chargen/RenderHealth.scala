@@ -47,7 +47,7 @@ object RenderHealth:
         td(
           button(
             tpe := "button",
-            disabled <-- character.healthSignal.map(_.isDefined),
+            disabled <-- character.health.signal.map(_.isDefined),
             s"Roll ${Die.d(8)}",
             onClick.compose(_.withCurrentValueOf(character.redZoneHealth, character.powerQualityHealth)) --> { (_ev, rzh, pqh) =>
               val roll = Die.d(8).roll()
@@ -58,7 +58,7 @@ object RenderHealth:
           " - or  -",
           button(
             tpe := "button",
-            disabled <-- character.healthSignal.map(_.isDefined),
+            disabled <-- character.health.signal.map(_.isDefined),
             "Four",
             onClick.compose(_.withCurrentValueOf(character.redZoneHealth, character.powerQualityHealth)) --> { (_ev, rzh, pqh) =>
               calcFinalStep.onNext(4)
@@ -78,7 +78,7 @@ object RenderHealth:
         tr(
           td("Total Health:"),
           td(
-            child.text <-- character.healthSignal.map(_.fold("")(_.toString))
+            child.text <-- character.health.signal.map(_.fold("")(_.toString))
           )
         )
       )
