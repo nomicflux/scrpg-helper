@@ -51,15 +51,7 @@ object CharGen:
       pageSignal: Signal[CharGenPage],
       advancePage: Observer[Unit]
   ): Element =
-    span(
-      className := "next-page-button",
-      button(
-        tpe := "button",
-        ">>",
-        className <-- pageSignal.map(p =>
-          if (p == CharGenPage.HealthPage) then "hidden" else ""
-        ),
-        disabled <-- pageSignal
+    val disabledSignal = pageSignal
           .combineWith(
             character.validBackground,
             character.validPowerSource,
@@ -78,7 +70,17 @@ object CharGen:
               case CharGenPage.RetconPage      => false
               case CharGenPage.HealthPage      => true
             }
-          ),
+          )
+    span(
+      className := "next-page-button",
+      button(
+        tpe := "button",
+        child <-- disabledSignal.map(b => if b then ">>" else "Proceed >>"),
+        className <-- pageSignal.map(p =>
+          if (p == CharGenPage.HealthPage) then "hidden" else ""
+        ),
+        className <-- disabledSignal.map(b => if b then "dont-proceed" else "proceed"),
+        disabled <-- disabledSignal,
         onClick --> { _ => advancePage.onNext(()) }
       )
     )

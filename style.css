@@ -1394,10 +1394,20 @@ select.selector-with-prev-choice option:selected {
   z-index: 20;
 }
 
+.dont-proceed {
+  background: #444444;
+  opacity: 0.2;
+}
+
+.proceed {
+  background: #111111;
+  color: #ffd700;
+}
+
 .prev-page-button {
   position: fixed;
   top: 3.5em;
-  right: 4.5em;
+  right: 9.5em;
   z-index: 20;
 }
 
