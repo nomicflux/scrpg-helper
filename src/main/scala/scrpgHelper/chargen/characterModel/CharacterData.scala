@@ -11,6 +11,10 @@ import scrpgHelper.chargen.*
   */
 trait CharacterData:
 
+  // Type definitions from computation object
+  type StagingKey = CharacterComputation.StagingKey
+  type DieChange = CharacterComputation.DieChange
+
   // Core character selections - raw values
   def background: Option[Background]
   def powerSource: Option[PowerSource]
@@ -29,5 +33,13 @@ trait CharacterData:
   // Health calculations - pure functions
   def redZoneHealth: Option[Int]
   def powerQualityHealth: Int
+
+  // Staging data access - pure functions (needed for validation)
+  def qualityStaging: Map[StagingKey, List[(Quality, Die)]]
+  def powerStaging: Map[StagingKey, List[(Power, Die)]]
+  def abilityStaging: Map[StagingKey, List[Ability[_]]]
+  def abilityChoice: Map[StagingKey, Map[AbilityKey, ChosenAbility]]
+  def dieChanges: Map[StagingKey, Map[Quality | Power, DieChange]]
+  def baseAbilities: Map[StagingKey, Map[AbilityKey, ChosenAbility]]
 
 end CharacterData

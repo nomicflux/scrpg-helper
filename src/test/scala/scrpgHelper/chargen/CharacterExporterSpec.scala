@@ -9,7 +9,7 @@ class CharacterExporterSpec extends FunSuite:
 
   test("CharacterExporter implements CharacterExport interface"):
     val mockState = MockCharacterState.minimal
-    val exporter = CharacterExporter(mockState)
+    val exporter = CharacterExporter(mockState.data)
 
     // Verify it implements the interface
     val exportInterface: CharacterExport = exporter
@@ -17,7 +17,7 @@ class CharacterExporterSpec extends FunSuite:
 
   test("CharacterExporter combines signals from CharacterState"):
     val mockState = MockCharacterState.basicSelections
-    val exporter = CharacterExporter(mockState)
+    val exporter = CharacterExporter(mockState.data)
 
     // Verify the exporter uses the character state signals
     assert(exporter.forExport != null, "forExport signal should exist")
@@ -30,9 +30,9 @@ class CharacterExporterSpec extends FunSuite:
     val basic = MockCharacterState.basicSelections
     val withPowers = MockCharacterState.withPowersAndQualities
 
-    val exporterMinimal = CharacterExporter(minimal)
-    val exporterBasic = CharacterExporter(basic)
-    val exporterWithPowers = CharacterExporter(withPowers)
+    val exporterMinimal = CharacterExporter(minimal.data)
+    val exporterBasic = CharacterExporter(basic.data)
+    val exporterWithPowers = CharacterExporter(withPowers.data)
 
     // All should create valid exporters
     assert(exporterMinimal.forExport != null, "minimal exporter should work")

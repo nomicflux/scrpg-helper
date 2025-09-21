@@ -1,6 +1,7 @@
-package scrpgHelper.chargen
+package scrpgHelper.chargen.characterModel
 
 import com.raquo.laminar.api.L.{*, given}
+import scrpgHelper.chargen.*
 
 /** Character export interface - export functionality.
   *

@@ -42,6 +42,18 @@ class MockCharacterState(
     def redZoneHealth: Option[Int] = redZoneHealthValue
     def powerQualityHealth: Int = powerQualityHealthValue
 
+    // Type aliases from computation object
+    type StagingKey = CharacterComputation.StagingKey
+    type DieChange = CharacterComputation.DieChange
+
+    // Staging data access - needed for validation, mock implementation
+    def qualityStaging: Map[StagingKey, List[(Quality, Die)]] = Map.empty
+    def powerStaging: Map[StagingKey, List[(Power, Die)]] = Map.empty
+    def abilityStaging: Map[StagingKey, List[Ability[_]]] = Map.empty
+    def abilityChoice: Map[StagingKey, Map[AbilityKey, ChosenAbility]] = Map.empty
+    def dieChanges: Map[StagingKey, Map[Quality | Power, DieChange]] = Map.empty
+    def baseAbilities: Map[StagingKey, Map[AbilityKey, ChosenAbility]] = Map.empty
+
   // Core character selections - only Vars because mandated by trait
   val background: Var[Option[Background]] = Var(backgroundValue)
   val powerSource: Var[Option[PowerSource]] = Var(powerSourceValue)

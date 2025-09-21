@@ -12,7 +12,7 @@ import scrpgHelper.status.Status
 import scrpgHelper.chargen.characterModel.*
 
 
-final class CharacterModel extends CharacterState with CharacterStaging with CharacterExport with CharacterValidation with SignalManager:
+final class CharacterModel extends CharacterState with CharacterExport with CharacterValidation with SignalManager:
 
   val background: Var[Option[Background]] = Var(None)
   val changeBackground: Observer[Background] = background.updater { (_, b) =>
@@ -36,6 +36,10 @@ final class CharacterModel extends CharacterState with CharacterStaging with Cha
 
   val health: Var[Option[Int]] = Var(None)
 
+  // Type aliases from computation object
+  type StagingKey = CharacterComputation.StagingKey
+  type DieChange = CharacterComputation.DieChange
+
   // CharacterData implementation via delegation to computation object
   val data: CharacterData = new CharacterData:
     def background: Option[Background] = CharacterModel.this.background.now()
@@ -45,27 +49,27 @@ final class CharacterModel extends CharacterState with CharacterStaging with Cha
     def health: Option[Int] = CharacterModel.this.health.now()
 
     def allQualities: List[(Quality, Die)] = CharacterComputation.computeAllQualities(
-      qualityStaging.now(),
+      CharacterModel.this.qualityStaging.now(),
       background,
       powerSource,
       archetype,
       personality,
-      dieChanges.now(),
+      CharacterModel.this.dieChanges.now(),
       CharacterModel.this.allDieChanges
     )
 
     def allPowers: List[(Power, Die)] = CharacterComputation.computeAllPowers(
-      powerStaging.now(),
+      CharacterModel.this.powerStaging.now(),
       background,
       powerSource,
       archetype,
       personality,
-      dieChanges.now(),
+      CharacterModel.this.dieChanges.now(),
       CharacterModel.this.allDieChanges
     )
 
     def allStagedAbilities: List[ChosenAbility] = CharacterComputation.computeAllStagedAbilities(
-      abilityStaging.now(),
+      CharacterModel.this.abilityStaging.now(),
       background,
       powerSource,
       archetype,
@@ -73,7 +77,7 @@ final class CharacterModel extends CharacterState with CharacterStaging with Cha
     )
 
     def allChosenAbilities: List[ChosenAbility] = CharacterComputation.computeAllChosenAbilities(
-      abilityChoice.now(),
+      CharacterModel.this.abilityChoice.now(),
       background,
       powerSource,
       archetype,
@@ -81,7 +85,7 @@ final class CharacterModel extends CharacterState with CharacterStaging with Cha
     )
 
     def allPrinciples: List[Principle] = CharacterComputation.computeAllPrinciples(
-      abilityStaging.now(),
+      CharacterModel.this.abilityStaging.now(),
       background,
       archetype
     )
@@ -100,6 +104,14 @@ final class CharacterModel extends CharacterState with CharacterStaging with Cha
       archetype,
       personality
     )
+
+    // Staging data access - needed for validation
+    def qualityStaging: Map[StagingKey, List[(Quality, Die)]] = CharacterModel.this.qualityStaging.now()
+    def powerStaging: Map[StagingKey, List[(Power, Die)]] = CharacterModel.this.powerStaging.now()
+    def abilityStaging: Map[StagingKey, List[Ability[_]]] = CharacterModel.this.abilityStaging.now()
+    def abilityChoice: Map[StagingKey, Map[AbilityKey, ChosenAbility]] = CharacterModel.this.abilityChoice.now()
+    def dieChanges: Map[StagingKey, Map[Quality | Power, DieChange]] = CharacterModel.this.dieChanges.now()
+    def baseAbilities: Map[StagingKey, Map[AbilityKey, ChosenAbility]] = CharacterModel.this.baseAbilities
 
 
   val basePersonalityQualities: Map[StagingKey, List[(Quality, Die)]] =
@@ -285,15 +297,15 @@ final class CharacterModel extends CharacterState with CharacterStaging with Cha
     .updater { (m, pq) =>
       val currForKey: Map[Quality | Power, DieChange] = m.getOrElse(key, Map())
       val changed: Option[DieChange] = currForKey.get(pq)
-      val updated = DieChange.combine(changed, Some(direction))
+      val updated = CharacterComputation.DieChange.combine(changed, Some(direction))
       updated.fold(m + (key -> (currForKey - pq)))(dc =>
         m + (key -> (currForKey + (pq -> dc)))
       )
     }
   def upgrade(key: StagingKey): Observer[Quality | Power] =
-    changeDieChanges(key, DieChange.Upgrade)
+    changeDieChanges(key, CharacterComputation.DieChange.Upgrade)
   def downgrade(key: StagingKey): Observer[Quality | Power] =
-    changeDieChanges(key, DieChange.Downgrade)
+    changeDieChanges(key, CharacterComputation.DieChange.Downgrade)
 
   def allDieChanges(
       dcs: Map[StagingKey, Map[Quality | Power, DieChange]],
@@ -372,14 +384,39 @@ final class CharacterModel extends CharacterState with CharacterStaging with Cha
       if (m.isDefined) then m else Some(n)
     }
 
-  private val validator = CharacterValidator(this, this)
-  val validBackground: Signal[Boolean] = validator.validBackground
-  val validPowerSource: Signal[Boolean] = validator.validPowerSource
-  val validArchetype: Signal[Boolean] = validator.validArchetype
-  val validPersonality: Signal[Boolean] = validator.validPersonality
-  val validRedAbilities: Signal[Boolean] = validator.validRedAbilities
-  val validHealth: Signal[Boolean] = validator.validHealth
+  private val validator = CharacterValidator(data)
 
-  private val exporter = CharacterExporter(this)
-  val forExport: Signal[CharacterModelExport] = exporter.forExport
+  // Create a combined signal that triggers when any relevant data changes
+  private val validationTrigger: Signal[Unit] = background.signal
+    .combineWith(
+      powerSource.signal,
+      archetype.signal,
+      personality.signal,
+      health.signal
+    )
+    .combineWith(
+      qualityStaging.signal,
+      powerStaging.signal,
+      abilityStaging.signal
+    )
+    .combineWith(
+      abilityChoice.signal,
+      dieChanges.signal
+    )
+    .map { _ => () }
+
+  // Create reactive validation signals that call pure validation functions when data changes
+  val validBackground: Signal[Boolean] = validationTrigger.map { _ => validator.validBackground(data) }
+  val validPowerSource: Signal[Boolean] = validationTrigger.map { _ => validator.validPowerSource(data) }
+  val validArchetype: Signal[Boolean] = validationTrigger.map { _ => validator.validArchetype(data) }
+  val validPersonality: Signal[Boolean] = validationTrigger.map { _ => validator.validPersonality(data) }
+  val validRedAbilities: Signal[Boolean] = validationTrigger.map { _ => validator.validRedAbilities(data) }
+  val validHealth: Signal[Boolean] = health.signal.map { _ => validator.validHealth(data) }
+
+  private val exporter = CharacterExporter(data)
+
+  // Create reactive export signal that calls pure export function when data changes
+  val forExport: Signal[CharacterModelExport] = validationTrigger
+    .combineWith(allPowers, allQualities, allAbilities)
+    .map { _ => exporter.exportData(data) }
 end CharacterModel

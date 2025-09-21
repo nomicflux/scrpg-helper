@@ -3,37 +3,18 @@ package scrpgHelper.chargen
 import com.raquo.laminar.api.L.{*, given}
 import scrpgHelper.chargen.characterModel.*
 
-/** Character exporter implementation - exports character state to CharacterModelExport.
+/** Character exporter implementation - exports character data to CharacterModelExport.
   *
-  * Takes a CharacterState and implements CharacterExport by combining all the
-  * character data into a structured export format.
+  * Takes CharacterData and implements both CharacterExportData (pure) and
+  * CharacterExport (reactive) by delegating to pure computation logic.
   */
-class CharacterExporter(characterState: CharacterState) extends CharacterExport:
+class CharacterExporter(characterData: CharacterData) extends CharacterExportData with CharacterExport:
 
-  val forExport: Signal[CharacterModelExport] =
-    characterState.background.signal
-      .combineWith(
-        characterState.powerSource.signal,
-        characterState.archetype.signal,
-        characterState.personality.signal,
-        characterState.health.signal,
-        characterState.allPowers,
-        characterState.allQualities,
-        characterState.allAbilities
-      )
-      .map { (bg, ps, at, pt, h, pows, quals, abils) =>
-        CharacterModelExport(
-          bg.map(_.name),
-          ps.map(_.name),
-          at.map(_.name),
-          pt.map(_.name),
-          pt.fold(Map())(_.statusDice),
-          h,
-          pows,
-          quals,
-          abils.collect { case ca: ChosenAbility => ca },
-          abils.collect { case p: Principle => p }
-        )
-      }
+  // Pure data implementation
+  def exportData(data: CharacterData): CharacterModelExport =
+    CharacterExportComputation.computeExport(data)
+
+  // Reactive implementation - deterministic view disguised as signal (temporary for API compatibility)
+  val forExport: Signal[CharacterModelExport] = Signal.fromValue(exportData(characterData))
 
 end CharacterExporter

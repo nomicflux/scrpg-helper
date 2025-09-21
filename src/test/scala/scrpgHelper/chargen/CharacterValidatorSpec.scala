@@ -8,8 +8,7 @@ class CharacterValidatorSpec extends FunSuite:
 
   test("CharacterValidator implements CharacterValidation interface"):
     val mockState = MockCharacterState.minimal
-    val mockStager = MockCharacterStager.minimal
-    val validator = CharacterValidator(mockState, mockStager)
+    val validator = CharacterValidator(mockState.data)
 
     // Verify it implements the interface
     val validationInterface: CharacterValidation = validator
@@ -17,8 +16,7 @@ class CharacterValidatorSpec extends FunSuite:
 
   test("CharacterValidator combines signals from CharacterState and CharacterStaging"):
     val mockState = MockCharacterState.basicSelections
-    val mockStager = MockCharacterStager.withBasicStaging
-    val validator = CharacterValidator(mockState, mockStager)
+    val validator = CharacterValidator(mockState.data)
 
     // Verify all validation signals exist
     assert(validator.validBackground != null, "validBackground signal should exist")
@@ -33,12 +31,9 @@ class CharacterValidatorSpec extends FunSuite:
     val basic = MockCharacterState.basicSelections
     val withPowers = MockCharacterState.withPowersAndQualities
 
-    val minimalStager = MockCharacterStager.minimal
-    val basicStager = MockCharacterStager.withBasicStaging
-
-    val validatorMinimal = CharacterValidator(minimal, minimalStager)
-    val validatorBasic = CharacterValidator(basic, basicStager)
-    val validatorWithPowers = CharacterValidator(withPowers, minimalStager)
+    val validatorMinimal = CharacterValidator(minimal.data)
+    val validatorBasic = CharacterValidator(basic.data)
+    val validatorWithPowers = CharacterValidator(withPowers.data)
 
     // All should create valid validators
     assert(validatorMinimal.validBackground != null, "minimal validator should work")
