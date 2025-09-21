@@ -479,29 +479,6 @@ final class CharacterModel extends CharacterState with CharacterStaging with Cha
 
   val validHealth: Signal[Boolean] = health.signal.map(_.isDefined)
 
-  val forExport: Signal[CharacterModelExport] =
-    background.signal
-      .combineWith(
-        powerSource.signal,
-        archetype.signal,
-        personality.signal,
-        health.signal,
-        allPowers,
-        allQualities,
-        allAbilities
-      )
-      .map { (bg, ps, at, pt, h, pows, quals, abils) =>
-        CharacterModelExport(
-          bg.map(_.name),
-          ps.map(_.name),
-          at.map(_.name),
-          pt.map(_.name),
-          pt.fold(Map())(_.statusDice),
-          h,
-          pows,
-          quals,
-          abils.collect { case ca: ChosenAbility => ca },
-          abils.collect { case p: Principle => p }
-        )
-      }
+  private val exporter = CharacterExporter(this)
+  val forExport: Signal[CharacterModelExport] = exporter.forExport
 end CharacterModel
