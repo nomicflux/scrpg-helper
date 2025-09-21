@@ -8,11 +8,12 @@ import org.scalajs.dom
 import com.raquo.laminar.api.L.{*, given}
 
 import scrpgHelper.rolls.Die
-
 import scrpgHelper.status.Status
+import scrpgHelper.chargen.characterModel.*
 
 
 final class CharacterModel extends CharacterState with CharacterStaging with CharacterExport with CharacterValidation with SignalManager:
+
   val background: Var[Option[Background]] = Var(None)
   val changeBackground: Observer[Background] = background.updater { (_, b) =>
     Some(b)
@@ -35,8 +36,71 @@ final class CharacterModel extends CharacterState with CharacterStaging with Cha
 
   val health: Var[Option[Int]] = Var(None)
 
-  type StagingKey = Background | PowerSource | Archetype | Personality |
-    RedAbility.RedAbilityPhase
+  // CharacterData implementation via delegation to computation object
+  val data: CharacterData = new CharacterData:
+    def background: Option[Background] = CharacterModel.this.background.now()
+    def powerSource: Option[PowerSource] = CharacterModel.this.powerSource.now()
+    def archetype: Option[Archetype] = CharacterModel.this.archetype.now()
+    def personality: Option[Personality] = CharacterModel.this.personality.now()
+    def health: Option[Int] = CharacterModel.this.health.now()
+
+    def allQualities: List[(Quality, Die)] = CharacterComputation.computeAllQualities(
+      qualityStaging.now(),
+      background,
+      powerSource,
+      archetype,
+      personality,
+      dieChanges.now(),
+      CharacterModel.this.allDieChanges
+    )
+
+    def allPowers: List[(Power, Die)] = CharacterComputation.computeAllPowers(
+      powerStaging.now(),
+      background,
+      powerSource,
+      archetype,
+      personality,
+      dieChanges.now(),
+      CharacterModel.this.allDieChanges
+    )
+
+    def allStagedAbilities: List[ChosenAbility] = CharacterComputation.computeAllStagedAbilities(
+      abilityStaging.now(),
+      background,
+      powerSource,
+      archetype,
+      personality
+    )
+
+    def allChosenAbilities: List[ChosenAbility] = CharacterComputation.computeAllChosenAbilities(
+      abilityChoice.now(),
+      background,
+      powerSource,
+      archetype,
+      personality
+    )
+
+    def allPrinciples: List[Principle] = CharacterComputation.computeAllPrinciples(
+      abilityStaging.now(),
+      background,
+      archetype
+    )
+
+    def allAbilities: List[Ability[_]] = CharacterComputation.computeAllAbilities(
+      allStagedAbilities,
+      allChosenAbilities,
+      allPrinciples
+    )
+
+    def redZoneHealth: Option[Int] = CharacterComputation.computeRedZoneHealth(personality)
+
+    def powerQualityHealth: Int = CharacterComputation.computePowerQualityHealth(
+      allPowers,
+      allQualities,
+      archetype,
+      personality
+    )
+
 
   val basePersonalityQualities: Map[StagingKey, List[(Quality, Die)]] =
     Personality.personalities
@@ -251,16 +315,7 @@ final class CharacterModel extends CharacterState with CharacterStaging with Cha
       personality.signal,
       dieChanges
     )
-    .map((quals, mbg, mps, mat, mpt, dcs) =>
-      val relDieChanges = allDieChanges(dcs, mps, mat, mpt)
-      val baseQualities = mbg.fold(List())(bg => quals.getOrElse(bg, List())) ++
-        mps.fold(List())(ps => quals.getOrElse(ps, List())) ++
-        mat.fold(List())(at => quals.getOrElse(at, List())) ++
-        mpt.fold(List())(pt => quals.getOrElse(pt, List()))
-      baseQualities.map { case (q, d) =>
-        (q, relDieChanges.get(q).fold(d)(dc => dc.onDie(d)))
-      }
-    )
+    .map((_, _, _, _, _, _) => data.allQualities)
 
   val allPowers: Signal[List[(Power, Die)]] = powerStaging.signal
     .combineWith(
@@ -270,16 +325,7 @@ final class CharacterModel extends CharacterState with CharacterStaging with Cha
       personality.signal,
       dieChanges
     )
-    .map((pows, mbg, mps, mat, mpt, dcs) =>
-      val relDieChanges = allDieChanges(dcs, mps, mat, mpt)
-      val basePowers = mbg.fold(List())(bg => pows.getOrElse(bg, List())) ++
-        mps.fold(List())(ps => pows.getOrElse(ps, List())) ++
-        mat.fold(List())(at => pows.getOrElse(at, List())) ++
-        mpt.fold(List())(pt => pows.getOrElse(pt, List()))
-      basePowers.map { case (p, d) =>
-        (p, relDieChanges.get(p).fold(d)(dc => dc.onDie(d)))
-      }
-    )
+    .map((_, _, _, _, _, _) => data.allPowers)
 
   val allStagedAbilities: Signal[List[ChosenAbility]] = abilityStaging.signal
     .combineWith(
@@ -288,14 +334,7 @@ final class CharacterModel extends CharacterState with CharacterStaging with Cha
       archetype.signal,
       personality.signal
     )
-    .map((abils, mbg, mps, mat, mpt) =>
-      mbg.fold(List())(bg => abils.getOrElse(bg, List())) ++
-        mps.fold(List())(ps => abils.getOrElse(ps, List())) ++
-        mat.fold(List())(at => abils.getOrElse(at, List())) ++
-        mpt.fold(List())(pt => abils.getOrElse(pt, List())) ++
-        abils.getOrElse(RedAbility.redAbilityPhase, List())
-    )
-    .map(_.collect { case ca: ChosenAbility => ca })
+    .map((_, _, _, _, _) => data.allStagedAbilities)
 
   val allChosenAbilities: Signal[List[ChosenAbility]] = abilityChoice.signal
     .combineWith(
@@ -304,65 +343,29 @@ final class CharacterModel extends CharacterState with CharacterStaging with Cha
       archetype.signal,
       personality.signal
     )
-    .map((abils, mbg, mps, mat, mpt) =>
-      mbg.fold(List())(bg => abils.getOrElse(bg, List())) ++
-        mps.fold(List())(ps => abils.getOrElse(ps, List())) ++
-        mat.fold(List())(at => abils.getOrElse(at, List())) ++
-        mpt.fold(List())(pt => abils.getOrElse(pt, List())) ++
-        abils.getOrElse(RedAbility.redAbilityPhase, List())
-    )
-    .map(_.map(_._2).filter(_.descriptionFilledOut).toList)
+    .map((_, _, _, _, _) => data.allChosenAbilities)
 
   val allPrinciples: Signal[List[Principle]] = abilityStaging.signal
     .combineWith(
       background.signal,
       archetype.signal
     )
-    .map((abils, mbg, mat) =>
-      mbg.fold(List())(bg => abils.getOrElse(bg, List())) ++
-        mat.fold(List())(at => abils.getOrElse(at, List()))
-    )
-    .map(_.collect { case p: Principle => p })
+    .map((_, _, _) => data.allPrinciples)
 
   val allAbilities: Signal[List[Ability[_]]] =
     allStagedAbilities
       .combineWith(allChosenAbilities, allPrinciples)
-      .map { (asa, aca, aps) =>
-        val abilityIds = asa.map(_.key).toSet
-        aca.filter(a => abilityIds.contains(a.key)) ++ aps
-      }
+      .map((_, _, _) => data.allAbilities)
 
   val redZoneHealth: Signal[Option[Int]] =
-    personality.signal.map(_.flatMap(p => p.statusDice.get(Status.Red).map(_.n)))
+    personality.signal.map(_ => data.redZoneHealth)
 
   val powerQualityHealth: Signal[Int] =
     allPowers
       .combineWith(allQualities)
       .combineWith(archetype.signal)
       .combineWith(personality.signal)
-      .map { (ps, qs, mat, mpe) =>
-        val acceptableCats: Set[QualityCategory | PowerCategory] =
-          Set(PowerCategory.Athletic, QualityCategory.Mental)
-            .union(mat.fold(Set())(_.extraHealthCategories.toSet))
-            .union(mpe.fold(Set()) { pe =>
-              (PowerCategory.values ++ QualityCategory.values)
-                .filter((cat: QualityCategory | PowerCategory) =>
-                  pe.extraHealthCheck(cat)
-                )
-                .toSet
-            })
-        val powerRolls =
-          ps.filter((pd: (Power, Die)) =>
-            acceptableCats.contains(pd._1.category)
-          ).map(_._2.n)
-        val maxPower = if powerRolls.isEmpty then 4 else powerRolls.max
-        val qualityRolls =
-          qs.filter((qd: (Quality, Die)) =>
-            acceptableCats.contains(qd._1.category)
-          ).map(_._2.n)
-        val maxQuality = if qualityRolls.isEmpty then 4 else qualityRolls.max
-        List(maxPower, maxQuality).max
-      }
+      .map((_, _, _, _) => data.powerQualityHealth)
 
   val calcHealth: Observer[Int] =
     health.updater { (m, n) =>

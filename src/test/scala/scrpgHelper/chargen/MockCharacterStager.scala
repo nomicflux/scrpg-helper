@@ -2,6 +2,7 @@ package scrpgHelper.chargen
 
 import com.raquo.laminar.api.L.{*, given}
 import scrpgHelper.rolls.Die
+import scrpgHelper.chargen.characterModel.*
 
 /** Mock implementation of CharacterStaging for deterministic testing.
   *

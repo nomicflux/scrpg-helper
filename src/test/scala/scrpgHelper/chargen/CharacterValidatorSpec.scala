@@ -2,6 +2,7 @@ package scrpgHelper.chargen
 
 import munit.FunSuite
 import com.raquo.laminar.api.L.{*, given}
+import scrpgHelper.chargen.characterModel.*
 
 class CharacterValidatorSpec extends FunSuite:
 

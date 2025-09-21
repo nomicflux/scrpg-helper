@@ -2,6 +2,7 @@ package scrpgHelper.chargen
 
 import com.raquo.laminar.api.L.{*, given}
 import scrpgHelper.rolls.Die
+import scrpgHelper.chargen.characterModel.*
 
 /** Character validator implementation - validates character state.
   *

@@ -1,7 +1,8 @@
-package scrpgHelper.chargen
+package scrpgHelper.chargen.characterModel
 
 import com.raquo.laminar.api.L.{*, given}
 import scrpgHelper.rolls.Die
+import scrpgHelper.chargen.*
 
 /** Character staging interface - staging operations and state changes.
   *
@@ -10,29 +11,10 @@ import scrpgHelper.rolls.Die
   */
 trait CharacterStaging:
 
-  // Type definitions
-  type StagingKey = Background | PowerSource | Archetype | Personality | RedAbility.RedAbilityPhase
-
-  // Die change enum
-  enum DieChange:
-    case Upgrade, Downgrade
-
-    def onDie(d: Die): Die = this match
-      case Upgrade   => d.upgrade
-      case Downgrade => d.downgrade
-  end DieChange
-
-  object DieChange:
-    def combine(
-        ths: Option[DieChange],
-        that: Option[DieChange]
-    ): Option[DieChange] =
-      (ths, that) match
-        case (None, None)       => None
-        case (Some(x), None)    => Some(x)
-        case (None, Some(y))    => Some(y)
-        case (Some(x), Some(y)) => if x == y then Some(x) else None
-  end DieChange
+  // Import types from computation object
+  type StagingKey = CharacterComputation.StagingKey
+  type DieChange = CharacterComputation.DieChange
+  val DieChange = CharacterComputation.DieChange
 
   // Change observers for core character selections
   val changeBackground: Observer[Background]

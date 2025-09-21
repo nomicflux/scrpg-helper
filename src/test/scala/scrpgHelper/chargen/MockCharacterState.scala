@@ -3,6 +3,7 @@ package scrpgHelper.chargen
 import com.raquo.laminar.api.L.{*, given}
 import scrpgHelper.rolls.Die
 import scrpgHelper.status.Status
+import scrpgHelper.chargen.characterModel.*
 
 /** Mock implementation of CharacterState for deterministic testing.
   *
@@ -24,6 +25,22 @@ class MockCharacterState(
     redZoneHealthValue: Option[Int] = None,
     powerQualityHealthValue: Int = 4
 ) extends CharacterState:
+
+  // Pure data interface implementation
+  val data: CharacterData = new CharacterData:
+    def background: Option[Background] = backgroundValue
+    def powerSource: Option[PowerSource] = powerSourceValue
+    def archetype: Option[Archetype] = archetypeValue
+    def personality: Option[Personality] = personalityValue
+    def health: Option[Int] = healthValue
+    def allQualities: List[(Quality, Die)] = allQualitiesValue
+    def allPowers: List[(Power, Die)] = allPowersValue
+    def allStagedAbilities: List[ChosenAbility] = allStagedAbilitiesValue
+    def allChosenAbilities: List[ChosenAbility] = allChosenAbilitiesValue
+    def allPrinciples: List[Principle] = allPrinciplesValue
+    def allAbilities: List[Ability[_]] = allAbilitiesValue
+    def redZoneHealth: Option[Int] = redZoneHealthValue
+    def powerQualityHealth: Int = powerQualityHealthValue
 
   // Core character selections - only Vars because mandated by trait
   val background: Var[Option[Background]] = Var(backgroundValue)

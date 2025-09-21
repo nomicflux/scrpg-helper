@@ -1,6 +1,7 @@
 package scrpgHelper.chargen
 
 import com.raquo.laminar.api.L.{*, given}
+import scrpgHelper.chargen.characterModel.*
 
 /** Character exporter implementation - exports character state to CharacterModelExport.
   *

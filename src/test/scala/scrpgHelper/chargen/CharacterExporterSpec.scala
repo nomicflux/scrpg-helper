@@ -3,6 +3,7 @@ package scrpgHelper.chargen
 import munit.FunSuite
 import com.raquo.laminar.api.L.{*, given}
 import scrpgHelper.rolls.Die
+import scrpgHelper.chargen.characterModel.*
 
 class CharacterExporterSpec extends FunSuite:
 
