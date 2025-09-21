@@ -12,7 +12,7 @@ import scrpgHelper.rolls.Die
 import scrpgHelper.status.Status
 
 
-final class CharacterModel:
+final class CharacterModel extends CharacterState with CharacterStaging with CharacterExport with CharacterValidation with SignalManager:
   val background: Var[Option[Background]] = Var(None)
   val changeBackground: Observer[Background] = background.updater { (_, b) =>
     Some(b)
@@ -210,25 +210,6 @@ final class CharacterModel:
       }
     }
 
-  enum DieChange:
-    case Upgrade, Downgrade
-
-    def onDie(d: Die): Die = this match
-      case Upgrade   => d.upgrade
-      case Downgrade => d.downgrade
-  end DieChange
-
-  object DieChange:
-    def combine(
-        ths: Option[DieChange],
-        that: Option[DieChange]
-    ): Option[DieChange] =
-      (ths, that) match
-        case (None, None)       => None
-        case (Some(x), None)    => Some(x)
-        case (None, Some(y))    => Some(y)
-        case (Some(x), Some(y)) => if x == y then Some(x) else None
-  end DieChange
 
   val dieChanges: Var[Map[StagingKey, Map[Quality | Power, DieChange]]] = Var(
     Map()
@@ -498,4 +479,29 @@ final class CharacterModel:
 
   val validHealth: Signal[Boolean] = health.signal.map(_.isDefined)
 
+  val forExport: Signal[CharacterModelExport] =
+    background.signal
+      .combineWith(
+        powerSource.signal,
+        archetype.signal,
+        personality.signal,
+        health.signal,
+        allPowers,
+        allQualities,
+        allAbilities
+      )
+      .map { (bg, ps, at, pt, h, pows, quals, abils) =>
+        CharacterModelExport(
+          bg.map(_.name),
+          ps.map(_.name),
+          at.map(_.name),
+          pt.map(_.name),
+          pt.fold(Map())(_.statusDice),
+          h,
+          pows,
+          quals,
+          abils.collect { case ca: ChosenAbility => ca },
+          abils.collect { case p: Principle => p }
+        )
+      }
 end CharacterModel

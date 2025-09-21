@@ -1,171 +1,90 @@
 package scrpgHelper.chargen
 
+import com.raquo.laminar.api.L.{*, given}
 import scrpgHelper.rolls.Die
 
-/** Interface for managing character staging operations with view preservation.
+/** Character staging interface - staging operations and state changes.
   *
-  * This trait provides methods to stage character choices across different
-  * configurations while preserving selections when switching between views.
-  * For example, if abilities are chosen for Archetype A, those choices are
-  * preserved even when the current view switches to Archetype B.
+  * This trait captures all staging operations, change observers, die management,
+  * and ability choice management with view preservation.
   */
 trait CharacterStaging:
 
-  /** Type alias for staging keys that represent different character aspects. */
+  // Type definitions
   type StagingKey = Background | PowerSource | Archetype | Personality | RedAbility.RedAbilityPhase
 
-  /** Change the character's background selection.
-    *
-    * @param background The new background to select
-    */
-  def changeBackground(background: Background): Unit
+  // Die change enum
+  enum DieChange:
+    case Upgrade, Downgrade
 
-  /** Change the character's power source selection.
-    *
-    * @param powerSource The new power source to select
-    */
-  def changePowerSource(powerSource: PowerSource): Unit
+    def onDie(d: Die): Die = this match
+      case Upgrade   => d.upgrade
+      case Downgrade => d.downgrade
+  end DieChange
 
-  /** Change the character's archetype selection.
-    *
-    * @param archetype The new archetype to select
-    */
-  def changeArchetype(archetype: Archetype): Unit
+  object DieChange:
+    def combine(
+        ths: Option[DieChange],
+        that: Option[DieChange]
+    ): Option[DieChange] =
+      (ths, that) match
+        case (None, None)       => None
+        case (Some(x), None)    => Some(x)
+        case (None, Some(y))    => Some(y)
+        case (Some(x), Some(y)) => if x == y then Some(x) else None
+  end DieChange
 
-  /** Change the character's personality selection.
-    *
-    * @param personality The new personality to select
-    */
-  def changePersonality(personality: Personality): Unit
+  // Change observers for core character selections
+  val changeBackground: Observer[Background]
+  val changePowerSource: Observer[PowerSource]
+  val changeArchetype: Observer[Archetype]
+  val changePersonality: Observer[Personality]
 
-  /** Set the character's health value.
-    *
-    * @param health The health value to set
-    */
-  def setHealth(health: Int): Unit
+  // Quality staging system
+  val basePersonalityQualities: Map[StagingKey, List[(Quality, Die)]]
+  val qualityStaging: Var[Map[StagingKey, List[(Quality, Die)]]]
+  def qualitiesSignal(stagingKey: Signal[Option[StagingKey]]): Signal[List[(Quality, Die)]]
+  def addQuality(stagingKey: StagingKey): Observer[(Quality, Die)]
+  def removeQuality(stagingKey: StagingKey): Observer[(Quality, Die)]
 
-  /** Add a power to the staging area for a specific character aspect.
-    *
-    * Powers are preserved per staging key, allowing different power
-    * selections for different character configurations.
-    *
-    * @param stagingKey The character aspect this power belongs to
-    * @param power The power to add
-    * @param die The die value for this power
-    */
-  def addPower(stagingKey: StagingKey, power: Power, die: Die): Unit
+  // Power staging system
+  val powerStaging: Var[Map[StagingKey, List[(Power, Die)]]]
+  def powersSignal(stagingKey: Signal[Option[StagingKey]]): Signal[List[(Power, Die)]]
+  def addPower(stagingKey: StagingKey): Observer[(Power, Die)]
+  def removePower(stagingKey: StagingKey): Observer[(Power, Die)]
 
-  /** Remove a power from the staging area for a specific character aspect.
-    *
-    * @param stagingKey The character aspect to remove the power from
-    * @param power The power to remove
-    */
-  def removePower(stagingKey: StagingKey, power: Power): Unit
+  // Ability staging system
+  val abilityStaging: Var[Map[StagingKey, List[Ability[_]]]]
+  def abilitiesSignal(stagingKey: Signal[Option[StagingKey]]): Signal[List[Ability[_]]]
+  def addAbility(stagingKey: StagingKey): Observer[Ability[_]]
+  def removeAbility(stagingKey: StagingKey): Observer[Ability[_]]
+  def abilitySelected(stagingKey: StagingKey, ability: Signal[Option[ChosenAbility]]): Signal[Boolean]
+  def toggleAbility(stagingKey: StagingKey): Observer[ChosenAbility]
 
-  /** Add a quality to the staging area for a specific character aspect.
-    *
-    * Qualities are preserved per staging key, allowing different quality
-    * selections for different character configurations.
-    *
-    * @param stagingKey The character aspect this quality belongs to
-    * @param quality The quality to add
-    * @param die The die value for this quality
-    */
-  def addQuality(stagingKey: StagingKey, quality: Quality, die: Die): Unit
+  // Ability choice system
+  val powerSourceAbilities: List[(PowerSource, Map[AbilityKey, ChosenAbility])]
+  val archetypeAbilities: List[(Archetype, Map[AbilityKey, ChosenAbility])]
+  val personalityAbilities: List[(Personality, Map[AbilityKey, ChosenAbility])]
+  val redAbilities: List[(RedAbility.RedAbilityPhase, Map[AbilityKey, ChosenAbility])]
+  val baseAbilities: Map[StagingKey, Map[AbilityKey, ChosenAbility]]
+  val abilityChoice: Var[Map[StagingKey, Map[AbilityKey, ChosenAbility]]]
+  def abilityChoicesSignal(stagingKey: StagingKey): Signal[Map[AbilityKey, ChosenAbility]]
+  def addAbilityChoice(stagingKey: StagingKey, ability: AbilityTemplate): Observer[AbilityChoice]
+  def removeAbilityChoice(stagingKey: StagingKey, ability: AbilityTemplate): Observer[AbilityChoice]
 
-  /** Remove a quality from the staging area for a specific character aspect.
-    *
-    * @param stagingKey The character aspect to remove the quality from
-    * @param quality The quality to remove
-    */
-  def removeQuality(stagingKey: StagingKey, quality: Quality): Unit
+  // Die management system
+  val dieChanges: Var[Map[StagingKey, Map[Quality | Power, DieChange]]]
+  def changeDieChanges(key: StagingKey, direction: DieChange): Observer[Quality | Power]
+  def upgrade(key: StagingKey): Observer[Quality | Power]
+  def downgrade(key: StagingKey): Observer[Quality | Power]
+  def allDieChanges(
+      dcs: Map[StagingKey, Map[Quality | Power, DieChange]],
+      mps: Option[PowerSource],
+      mat: Option[Archetype],
+      mpt: Option[Personality]
+  ): Map[Quality | Power, DieChange]
 
-  /** Add an ability to the staging area for a specific character aspect.
-    *
-    * Abilities are preserved per staging key, allowing different ability
-    * selections for different character configurations.
-    *
-    * @param stagingKey The character aspect this ability belongs to
-    * @param ability The ability to add
-    */
-  def addAbility(stagingKey: StagingKey, ability: Ability[_]): Unit
-
-  /** Remove an ability from the staging area for a specific character aspect.
-    *
-    * @param stagingKey The character aspect to remove the ability from
-    * @param ability The ability to remove
-    */
-  def removeAbility(stagingKey: StagingKey, ability: Ability[_]): Unit
-
-  /** Toggle an ability's selection state for a specific character aspect.
-    *
-    * If the ability is currently selected, it will be deselected.
-    * If the ability is not selected, it will be selected.
-    *
-    * @param stagingKey The character aspect this ability belongs to
-    * @param ability The chosen ability to toggle
-    */
-  def toggleAbility(stagingKey: StagingKey, ability: ChosenAbility): Unit
-
-  /** Add an ability choice/customization for a specific character aspect.
-    *
-    * This allows customizing how abilities work while preserving those
-    * customizations per staging key.
-    *
-    * @param stagingKey The character aspect this choice belongs to
-    * @param ability The ability template being customized
-    * @param choice The choice/customization to apply
-    */
-  def addAbilityChoice(stagingKey: StagingKey, ability: AbilityTemplate, choice: AbilityChoice): Unit
-
-  /** Remove an ability choice/customization for a specific character aspect.
-    *
-    * @param stagingKey The character aspect to remove the choice from
-    * @param ability The ability template being customized
-    * @param choice The choice/customization to remove
-    */
-  def removeAbilityChoice(stagingKey: StagingKey, ability: AbilityTemplate, choice: AbilityChoice): Unit
-
-  /** Upgrade a die for a power or quality in a specific character aspect.
-    *
-    * @param stagingKey The character aspect containing the target
-    * @param target The power or quality whose die should be upgraded
-    */
-  def upgradeDie(stagingKey: StagingKey, target: Quality | Power): Unit
-
-  /** Downgrade a die for a power or quality in a specific character aspect.
-    *
-    * @param stagingKey The character aspect containing the target
-    * @param target The power or quality whose die should be downgraded
-    */
-  def downgradeDie(stagingKey: StagingKey, target: Quality | Power): Unit
-
-  /** Get all staged powers for a specific character aspect.
-    *
-    * @param stagingKey The character aspect to query
-    * @return List of powers with their dice for this staging key
-    */
-  def getStagedPowers(stagingKey: StagingKey): List[(Power, Die)]
-
-  /** Get all staged qualities for a specific character aspect.
-    *
-    * @param stagingKey The character aspect to query
-    * @return List of qualities with their dice for this staging key
-    */
-  def getStagedQualities(stagingKey: StagingKey): List[(Quality, Die)]
-
-  /** Get all staged abilities for a specific character aspect.
-    *
-    * @param stagingKey The character aspect to query
-    * @return List of abilities for this staging key
-    */
-  def getStagedAbilities(stagingKey: StagingKey): List[Ability[_]]
-
-  /** Get all ability choices/customizations for a specific character aspect.
-    *
-    * @param stagingKey The character aspect to query
-    * @return Map of ability keys to their chosen configurations
-    */
-  def getAbilityChoices(stagingKey: StagingKey): Map[AbilityKey, ChosenAbility]
+  // Health observer
+  val calcHealth: Observer[Int]
 
 end CharacterStaging
