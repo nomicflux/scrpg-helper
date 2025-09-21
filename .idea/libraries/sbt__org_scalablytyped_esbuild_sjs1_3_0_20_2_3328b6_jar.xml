@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="sbt: org.scalablytyped:esbuild_sjs1_3:0.20.2-3328b6:jar" external-system-id="SBT">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/local/org.scalablytyped/esbuild_sjs1_3/0.20.2-3328b6/jars/esbuild_sjs1_3.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/local/org.scalablytyped/esbuild_sjs1_3/0.20.2-3328b6/srcs/esbuild_sjs1_3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/scrpg-helper/scrpgHelper.iml" filepath="$PROJECT_DIR$/.idea/modules/scrpg-helper/scrpgHelper.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/scrpg-helper/scrpgHelper.main.iml" filepath="$PROJECT_DIR$/.idea/modules/scrpg-helper/scrpgHelper.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/scrpg-helper/scrpgHelper.scrpgHelper-build.iml" filepath="$PROJECT_DIR$/.idea/modules/scrpg-helper/scrpgHelper.scrpgHelper-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/scrpg-helper/scrpgHelper.test.iml" filepath="$PROJECT_DIR$/.idea/modules/scrpg-helper/scrpgHelper.test.iml" />
+    </modules>
+  </component>
+</project>
