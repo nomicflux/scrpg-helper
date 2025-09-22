@@ -1,9 +1,10 @@
-package scrpgHelper.chargen
+package scrpgHelper.chargen.characterModel
 
 import com.raquo.laminar.api.L.{*, given}
+import scrpgHelper.chargen.characterModel.*
+import scrpgHelper.chargen.*
 import scrpgHelper.rolls.Die
 import scrpgHelper.status.Status
-import scrpgHelper.chargen.characterModel.*
 
 /** Signal manager interface - reactive signal infrastructure.
   *

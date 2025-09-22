@@ -1,6 +1,7 @@
-package scrpgHelper.chargen
+package scrpgHelper.chargen.characterModel
 
 import scrpgHelper.chargen.characterModel.*
+import scrpgHelper.chargen.{CharacterModelExport, ChosenAbility, Principle}
 
 /** Character exporter implementation - exports character data to CharacterModelExport.
   *

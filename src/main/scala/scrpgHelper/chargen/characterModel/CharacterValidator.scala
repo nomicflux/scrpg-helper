@@ -1,6 +1,7 @@
-package scrpgHelper.chargen
+package scrpgHelper.chargen.characterModel
 
 import scrpgHelper.chargen.characterModel.*
+import scrpgHelper.chargen.{ChosenAbility, RedAbility}
 
 /** Character validator implementation - validates character data.
   *
