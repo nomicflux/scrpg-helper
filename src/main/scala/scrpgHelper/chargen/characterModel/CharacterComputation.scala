@@ -3,6 +3,8 @@ package scrpgHelper.chargen.characterModel
 import scrpgHelper.rolls.Die
 import scrpgHelper.status.Status
 import scrpgHelper.chargen.*
+import monocle.{Lens, Optional, Traversal}
+import monocle.syntax.all.*
 
 /** Character computation logic - pure functions for computing character data.
   *
@@ -155,5 +157,114 @@ object CharacterComputation:
       ).map(_._2.n)
     val maxQuality = if qualityRolls.isEmpty then 4 else qualityRolls.max
     List(maxPower, maxQuality).max
+
+  // Optics-based utility functions for character data analysis and transformation
+
+  /** Get all qualities of a specific category using optics */
+  def getQualitiesByCategory(data: CharacterData, category: QualityCategory): List[(Quality, Die)] =
+    CharacterData.qualitiesByCategory(category).getAll(data)
+
+  /** Get all powers of a specific category using optics */
+  def getPowersByCategory(data: CharacterData, category: PowerCategory): List[(Power, Die)] =
+    CharacterData.powersByCategory(category).getAll(data)
+
+  /** Get all abilities with a specific status using optics */
+  def getAbilitiesByStatus(data: CharacterData, status: Status): List[Ability[_]] =
+    CharacterData.abilitiesByStatus(status).getAll(data)
+
+  /** Get qualities for a specific staging key using optics */
+  def getQualitiesForStaging(data: CharacterData, key: StagingKey): List[(Quality, Die)] =
+    CharacterData.qualitiesForStaging(key).getAll(data)
+
+  /** Get powers for a specific staging key using optics */
+  def getPowersForStaging(data: CharacterData, key: StagingKey): List[(Power, Die)] =
+    CharacterData.powersForStaging(key).getAll(data)
+
+  /** Get abilities for a specific staging key using optics */
+  def getAbilitiesForStaging(data: CharacterData, key: StagingKey): List[Ability[_]] =
+    CharacterData.abilitiesForStaging(key).getAll(data)
+
+  /** Apply die changes to all qualities using optics */
+  def applyDieChangesToQualities(
+      data: CharacterData,
+      dieChanges: Map[Quality | Power, DieChange]
+  ): List[(Quality, Die)] =
+    CharacterData.allQualities.get(data).map { case (quality, die) =>
+      val modifiedDie = dieChanges.get(quality).fold(die)(_.onDie(die))
+      (quality, modifiedDie)
+    }
+
+  /** Apply die changes to all powers using optics */
+  def applyDieChangesToPowers(
+      data: CharacterData,
+      dieChanges: Map[Quality | Power, DieChange]
+  ): List[(Power, Die)] =
+    CharacterData.allPowers.get(data).map { case (power, die) =>
+      val modifiedDie = dieChanges.get(power).fold(die)(_.onDie(die))
+      (power, modifiedDie)
+    }
+
+  /** Count qualities by category using optics */
+  def countQualitiesByCategory(data: CharacterData): Map[QualityCategory, Int] =
+    QualityCategory.values.map { category =>
+      category -> CharacterData.qualitiesByCategory(category).length(data)
+    }.toMap
+
+  /** Count powers by category using optics */
+  def countPowersByCategory(data: CharacterData): Map[PowerCategory, Int] =
+    PowerCategory.values.map { category =>
+      category -> CharacterData.powersByCategory(category).length(data)
+    }.toMap
+
+  /** Count abilities by status using optics */
+  def countAbilitiesByStatus(data: CharacterData): Map[Status, Int] =
+    Status.values.map { status =>
+      status -> CharacterData.abilitiesByStatus(status).length(data)
+    }.toMap
+
+  /** Get the highest die value for a specific quality category */
+  def getHighestDieForQualityCategory(data: CharacterData, category: QualityCategory): Option[Die] =
+    CharacterData.qualitiesByCategory(category).getAll(data) match {
+      case Nil => None
+      case qualities => Some(qualities.map(_._2).maxBy(_.n))
+    }
+
+  /** Get the highest die value for a specific power category */
+  def getHighestDieForPowerCategory(data: CharacterData, category: PowerCategory): Option[Die] =
+    CharacterData.powersByCategory(category).getAll(data) match {
+      case Nil => None
+      case powers => Some(powers.map(_._2).maxBy(_.n))
+    }
+
+  /** Check if character has any abilities of a specific status */
+  def hasAbilitiesWithStatus(data: CharacterData, status: Status): Boolean =
+    CharacterData.abilitiesByStatus(status).nonEmpty(data)
+
+  /** Validate staging requirements using optics */
+  def validateStagingRequirements(data: CharacterData, key: StagingKey): Boolean =
+    key match {
+      case bg: Background =>
+        val qualities = CharacterData.qualitiesForStaging(key).getAll(data)
+        val abilities = CharacterData.abilitiesForStaging(key).getAll(data)
+        bg.valid(qualities, abilities)
+      case ps: PowerSource =>
+        val powers = CharacterData.powersForStaging(key).getAll(data)
+        val qualities = CharacterData.qualitiesForStaging(key).getAll(data).map(_._1)
+        val abilities = CharacterData.abilitiesForStaging(key).getAll(data).collect { case ca: ChosenAbility => ca }
+        // Get dice from background, not power source
+        val dice = CharacterData.background.getOption(data).toList.flatMap(_.powerSourceDice)
+        ps.valid(dice, powers, qualities, abilities)
+      case at: Archetype =>
+        val powers = CharacterData.powersForStaging(key).getAll(data).map(_._1)
+        val qualities = CharacterData.qualitiesForStaging(key).getAll(data).map(_._1)
+        val abilities = CharacterData.abilitiesForStaging(key).getAll(data).collect { case ca: ChosenAbility => ca }
+        // Note: This is simplified - real validation would need access to other staging data
+        true // Would need more complex validation logic
+      case pt: Personality =>
+        val qualities = CharacterData.qualitiesForStaging(key).getAll(data).map(_._1)
+        val abilities = CharacterData.abilitiesForStaging(key).getAll(data).collect { case ca: ChosenAbility => ca }
+        pt.valid(qualities, abilities)
+      case _ => true
+    }
 
 end CharacterComputation

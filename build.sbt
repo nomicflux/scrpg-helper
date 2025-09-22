@@ -18,6 +18,8 @@ lazy val scrpgHelper = project.in(file("."))
       libraryDependencies += "com.raquo" %%% "waypoint" % "8.0.0-M2",
       libraryDependencies += "be.doeraene" %%% "url-dsl" % "0.6.0",
       libraryDependencies += "com.lihaoyi" %%% "upickle" % "2.0.0",
+      libraryDependencies += "dev.optics" %%% "monocle-core" % "3.2.0",
+      libraryDependencies += "dev.optics" %%% "monocle-macro" % "3.2.0",
       libraryDependencies += "org.scalameta" %%% "munit" % "0.7.29" % Test,
       externalNpm := baseDirectory.value,
     )

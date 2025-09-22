@@ -84,8 +84,46 @@ class CharacterSignalManager(
   private val changePersonalityVal = personalityVar.updater { (_, p: Personality) => Some(p) }
   private val calcHealthVal = healthVar.updater { (m, n: Int) => if (m.isDefined) then m else Some(n) }
 
-  // Internal validation trigger
-  private val validationTrigger: Signal[Unit] = backgroundVar.signal
+  // Focused validation triggers - only depend on what each validation actually needs
+  private val backgroundValidationTrigger: Signal[Unit] = backgroundVar.signal
+    .combineWith(qualityStagingVar.signal, abilityStagingVar.signal)
+    .map { _ => () }
+
+  private val powerSourceValidationTrigger: Signal[Unit] = powerSourceVar.signal
+    .combineWith(
+      backgroundVar.signal,
+      powerStagingVar.signal,
+      qualityStagingVar.signal,
+      abilityStagingVar.signal,
+      abilityChoiceVar.signal
+    )
+    .map { _ => () }
+
+  private val archetypeValidationTrigger: Signal[Unit] = archetypeVar.signal
+    .combineWith(
+      powerSourceVar.signal,
+      backgroundVar.signal,
+      powerStagingVar.signal,
+      qualityStagingVar.signal,
+      abilityStagingVar.signal,
+      abilityChoiceVar.signal
+    )
+    .map { _ => () }
+
+  private val personalityValidationTrigger: Signal[Unit] = personalityVar.signal
+    .combineWith(
+      qualityStagingVar.signal,
+      abilityStagingVar.signal,
+      abilityChoiceVar.signal
+    )
+    .map { _ => () }
+
+  private val redAbilitiesValidationTrigger: Signal[Unit] = abilityStagingVar.signal
+    .combineWith(abilityChoiceVar.signal)
+    .map { _ => () }
+
+  // Export trigger needs all data
+  private val exportTrigger: Signal[Unit] = backgroundVar.signal
     .combineWith(
       powerSourceVar.signal,
       archetypeVar.signal,
@@ -104,36 +142,41 @@ class CharacterSignalManager(
     .map { _ => () }
 
   // Internal validation and export signals
-  private val validBackgroundVal: Signal[Boolean] = validationTrigger.map { _ =>
-    val v = CharacterValidator(dataProvider())
-    v.validBackground(dataProvider())
+  private val validBackgroundVal: Signal[Boolean] = backgroundValidationTrigger.map { _ =>
+    val data = dataProvider()
+    val v = CharacterValidator(data)
+    v.validBackground(data)
   }
-  private val validPowerSourceVal: Signal[Boolean] = validationTrigger.map { _ =>
-    val v = CharacterValidator(dataProvider())
-    v.validPowerSource(dataProvider())
+  private val validPowerSourceVal: Signal[Boolean] = powerSourceValidationTrigger.map { _ =>
+    val data = dataProvider()
+    val v = CharacterValidator(data)
+    v.validPowerSource(data)
   }
-  private val validArchetypeVal: Signal[Boolean] = validationTrigger.map { _ =>
-    val v = CharacterValidator(dataProvider())
-    v.validArchetype(dataProvider())
+  private val validArchetypeVal: Signal[Boolean] = archetypeValidationTrigger.map { _ =>
+    val data = dataProvider()
+    val v = CharacterValidator(data)
+    v.validArchetype(data)
   }
-  private val validPersonalityVal: Signal[Boolean] = validationTrigger.map { _ =>
-    val v = CharacterValidator(dataProvider())
-    v.validPersonality(dataProvider())
+  private val validPersonalityVal: Signal[Boolean] = personalityValidationTrigger.map { _ =>
+    val data = dataProvider()
+    val v = CharacterValidator(data)
+    v.validPersonality(data)
   }
-  private val validRedAbilitiesVal: Signal[Boolean] = validationTrigger.map { _ =>
-    val v = CharacterValidator(dataProvider())
-    v.validRedAbilities(dataProvider())
+  private val validRedAbilitiesVal: Signal[Boolean] = redAbilitiesValidationTrigger.map { _ =>
+    val data = dataProvider()
+    val v = CharacterValidator(data)
+    v.validRedAbilities(data)
   }
   private val validHealthVal: Signal[Boolean] = healthVar.signal.map { _ =>
-    val v = CharacterValidator(dataProvider())
-    v.validHealth(dataProvider())
+    val data = dataProvider()
+    val v = CharacterValidator(data)
+    v.validHealth(data)
   }
-  private val forExportVal: Signal[CharacterModelExport] = validationTrigger
-    .combineWith(qualityStagingVar.signal, powerStagingVar.signal, abilityStagingVar.signal)
-    .map { _ =>
-      val e = CharacterExporter(dataProvider())
-      e.exportData(dataProvider())
-    }
+  private val forExportVal: Signal[CharacterModelExport] = exportTrigger.map { _ =>
+    val data = dataProvider()
+    val e = CharacterExporter(data)
+    e.exportData(data)
+  }
 
   // SignalManager interface implementation - core character selections
   val background: Var[Option[Background]] = backgroundVar

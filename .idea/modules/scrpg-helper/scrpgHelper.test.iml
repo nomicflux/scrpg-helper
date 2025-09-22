@@ -24,6 +24,8 @@
     <orderEntry type="library" name="sbt: com.raquo:waypoint_sjs1_3:8.0.0-M2:jar" level="project" />
     <orderEntry type="library" name="sbt: be.doeraene:url-dsl_sjs1_3:0.6.0:jar" level="project" />
     <orderEntry type="library" name="sbt: com.lihaoyi:upickle_sjs1_3:2.0.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: dev.optics:monocle-core_sjs1_3:3.2.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: dev.optics:monocle-macro_sjs1_3:3.2.0:jar" level="project" />
     <orderEntry type="library" name="sbt: org.scalameta:munit_sjs1_3:0.7.29:jar" level="project" />
     <orderEntry type="library" name="sbt: com.sourcegraph:semanticdb-javac:0.10.4:jar" level="project" />
     <orderEntry type="library" name="sbt: org.scalablytyped:chart_dot_js_sjs1_3:2.9.41-cfb432:jar" level="project" />
@@ -40,8 +42,11 @@
     <orderEntry type="library" name="sbt: com.lihaoyi:ujson_sjs1_3:2.0.0:jar" level="project" />
     <orderEntry type="library" name="sbt: com.lihaoyi:upack_sjs1_3:2.0.0:jar" level="project" />
     <orderEntry type="library" name="sbt: com.lihaoyi:upickle-implicits_sjs1_3:2.0.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.typelevel:cats-core_sjs1_3:2.9.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.typelevel:cats-free_sjs1_3:2.9.0:jar" level="project" />
     <orderEntry type="library" name="sbt: org.scala-js:scalajs-junit-test-runtime_2.13:1.6.0:jar" level="project" />
     <orderEntry type="library" name="sbt: com.lihaoyi:upickle-core_sjs1_3:2.0.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.typelevel:cats-kernel_sjs1_3:2.9.0:jar" level="project" />
     <orderEntry type="library" name="sbt: com.lihaoyi:geny_sjs1_3:0.7.1:jar" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="scrpgHelper.main" />
