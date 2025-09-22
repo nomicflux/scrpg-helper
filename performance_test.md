@@ -40,4 +40,42 @@
 - All tests pass - no regressions introduced
 - Export functionality unchanged
 
+## Phase 2: Fix Cascading dataProvider() Calls in Ability Signals
+
+### Problem: Double Computation in Signal Dependencies
+**Major bottleneck discovered:** Signals that depend on other signals were calling `dataProvider()` multiple times for the same data.
+
+**Example - `allAbilitiesSignal` was doing:**
+1. `allStagedAbilitiesSignal` → calls `dataProvider().allStagedAbilities` → runs `computeAllStagedAbilities`
+2. `allChosenAbilitiesSignal` → calls `dataProvider().allChosenAbilities` → runs `computeAllChosenAbilities`
+3. `allPrinciplesSignal` → calls `dataProvider().allPrinciples` → runs `computeAllPrinciples`
+4. `allAbilitiesSignal` → calls `dataProvider().allAbilities` → **runs all three computations AGAIN!**
+
+### Solution: Use Signal Values Instead of Recomputing
+**Before:**
+```scala
+val allAbilitiesSignal: Signal[List[Ability[_]]] =
+  allStagedAbilitiesSignal
+    .combineWith(allChosenAbilitiesSignal, allPrinciplesSignal)
+    .map((_, _, _) => dataProvider().allAbilities)  // BAD: recomputes everything
+```
+
+**After:**
+```scala
+val allAbilitiesSignal: Signal[List[Ability[_]]] =
+  allStagedAbilitiesSignal
+    .combineWith(allChosenAbilitiesSignal, allPrinciplesSignal)
+    .map((staged, chosen, principles) =>
+      CharacterComputation.computeAllAbilities(staged, chosen, principles))  // GOOD: use computed values
+```
+
+### Changes Made:
+1. **Fixed `allAbilitiesSignal`** - eliminated double computation of ability data
+2. **Fixed `powerQualityHealthSignal`** - eliminated double computation of powers/qualities data
+
+### Expected Performance Impact:
+- **50% reduction** in ability computation calls during ability selection
+- **Immediate responsiveness** improvement for ability/choice operations
+- **Same correctness** - just eliminated redundant computation
+
 This optimization focuses on **signal efficiency** without caching or memoization, exactly as requested.

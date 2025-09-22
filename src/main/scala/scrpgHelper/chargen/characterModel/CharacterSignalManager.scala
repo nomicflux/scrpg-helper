@@ -402,7 +402,8 @@ class CharacterSignalManager(
   val allAbilitiesSignal: Signal[List[Ability[_]]] =
     allStagedAbilitiesSignal
       .combineWith(allChosenAbilitiesSignal, allPrinciplesSignal)
-      .map((_, _, _) => dataProvider().allAbilities)
+      .map((staged, chosen, principles) =>
+        CharacterComputation.computeAllAbilities(staged, chosen, principles))
 
   val redZoneHealthSignal: Signal[Option[Int]] =
     personalityVar.signal.map(_ => dataProvider().redZoneHealth)
@@ -412,7 +413,8 @@ class CharacterSignalManager(
       .combineWith(allQualitiesSignal)
       .combineWith(archetypeVar.signal)
       .combineWith(personalityVar.signal)
-      .map((_, _, _, _) => dataProvider().powerQualityHealth)
+      .map((powers, qualities, archetype, personality) =>
+        CharacterComputation.computePowerQualityHealth(powers, qualities, archetype, personality))
 
   // Backward compatibility - provide signals without "Signal" suffix for existing code
   val allQualities: Signal[List[(Quality, Die)]] = allQualitiesSignal
