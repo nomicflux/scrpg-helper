@@ -56,17 +56,17 @@ class CharacterModelTest extends munit.FunSuite:
     assertEquals(model.personality.now(), Some(Personality.loneWolf))
     
     // Verify base quality is added
-    val loneWolfQualities = model.qualityStaging.now()(Personality.loneWolf)
+    val loneWolfQualities = model.data.qualityStaging.getOrElse(Personality.loneWolf, List())
     assertEquals(loneWolfQualities.length, 1)
     assertEquals(loneWolfQualities.head._1, Personality.loneWolf.baseQuality)
     assertEquals(loneWolfQualities.head._2, Die.d(8))
-    
+
     // Test changing to a different personality
     model.changePersonality.onNext(Personality.naturalLeader)
     assertEquals(model.personality.now(), Some(Personality.naturalLeader))
-    
+
     // Verify the new personality's qualities
-    val leaderQualities = model.qualityStaging.now()(Personality.naturalLeader)
+    val leaderQualities = model.data.qualityStaging.getOrElse(Personality.naturalLeader, List())
     assertEquals(leaderQualities.length, 1)
     assertEquals(leaderQualities.head._1, Personality.naturalLeader.baseQuality)
     assertEquals(leaderQualities.head._2, Die.d(8))  
@@ -78,18 +78,18 @@ class CharacterModelTest extends munit.FunSuite:
     
     // Add quality
     model.addQuality(created).onNext((Quality.alertness, Die.d(6)))
-    val qualities = model.qualityStaging.now()(created)
+    val qualities = model.data.qualityStaging.getOrElse(created, List())
     assertEquals(qualities.length, 1)
     assertEquals(qualities.head, (Quality.alertness, Die.d(6)))
     
     // Remove quality
     model.removeQuality(created).onNext((Quality.alertness, Die.d(6)))
-    assertEquals(model.qualityStaging.now()(created).length, 0)
+    assertEquals(model.data.qualityStaging.getOrElse(created, List()).length, 0)
     
     // Prevent duplicate qualities
     model.addQuality(created).onNext((Quality.alertness, Die.d(6)))
     model.addQuality(created).onNext((Quality.alertness, Die.d(8)))
-    assertEquals(model.qualityStaging.now()(created).length, 2)
+    assertEquals(model.data.qualityStaging.getOrElse(created, List()).length, 2)
   }
 
   test("CharacterModel power staging") {
@@ -99,13 +99,13 @@ class CharacterModelTest extends munit.FunSuite:
     // Add power
     val testPower = Accident.accident.powerList.head
     model.addPower(Accident.accident).onNext((testPower, Die.d(6)))
-    val powers = model.powerStaging.now()(Accident.accident)
+    val powers = model.data.powerStaging.getOrElse(Accident.accident, List())
     assertEquals(powers.length, 1)
     assertEquals(powers.head._1, testPower)
     
     // Remove power
     model.removePower(Accident.accident).onNext((testPower, Die.d(6)))
-    assertEquals(model.powerStaging.now()(Accident.accident).length, 0)
+    assertEquals(model.data.powerStaging.getOrElse(Accident.accident, List()).length, 0)
   }
 
   test("CharacterModel ability staging and validation") {
@@ -125,17 +125,17 @@ class CharacterModelTest extends munit.FunSuite:
     
     // Toggle ability on
     model.toggleAbility(created).onNext(testAbility)
-    val abilities = model.abilityStaging.now()(created)
+    val abilities = model.data.abilityStaging.getOrElse(created, List())
     assertEquals(abilities.length, 1)
     assertEquals(abilities.head.key, testAbility.key)
     
     // Toggle ability off
     model.toggleAbility(created).onNext(testAbility)
-    assertEquals(model.abilityStaging.now()(created).length, 0)
+    assertEquals(model.data.abilityStaging.getOrElse(created, List()).length, 0)
     
     // Test ability selected signal
     model.toggleAbility(created).onNext(testAbility)
-    val selected = model.abilityStaging.now()(created).exists(_.key == testAbility.key)
+    val selected = model.data.abilityStaging.getOrElse(created, List()).exists(_.key == testAbility.key)
     assertEquals(selected, true)
   }
 
@@ -150,7 +150,7 @@ class CharacterModelTest extends munit.FunSuite:
     assertEquals(model.personality.now(), Some(Personality.naturalLeader))
     
     // Get qualities from personality
-    val leaderQualities = model.qualityStaging.now()(Personality.naturalLeader)
+    val leaderQualities = model.data.qualityStaging.getOrElse(Personality.naturalLeader, List())
     assertEquals(leaderQualities.length, 1)
     assertEquals(leaderQualities.head._1, Personality.naturalLeader.baseQuality)
     assertEquals(leaderQualities.head._2, Die.d(8))  // naturalLeader has List(d(6), d(8), d(10))
@@ -167,18 +167,18 @@ class CharacterModelTest extends munit.FunSuite:
     
     // Add quality
     model.addQuality(created).onNext((Quality.alertness, Die.d(6)))
-    val qualities = model.qualityStaging.now()(created)
+    val qualities = model.data.qualityStaging.getOrElse(created, List())
     assertEquals(qualities.length, 1)
     assertEquals(qualities.head, (Quality.alertness, Die.d(6)))
     
     // Remove quality
     model.removeQuality(created).onNext((Quality.alertness, Die.d(6)))
-    assertEquals(model.qualityStaging.now()(created).length, 0)
+    assertEquals(model.data.qualityStaging.getOrElse(created, List()).length, 0)
     
     // Prevent duplicate qualities
     model.addQuality(created).onNext((Quality.alertness, Die.d(6)))
     model.addQuality(created).onNext((Quality.alertness, Die.d(8)))
-    assertEquals(model.qualityStaging.now()(created).length, 2)
+    assertEquals(model.data.qualityStaging.getOrElse(created, List()).length, 2)
   }
 
   test("CharacterModel power staging") {
@@ -188,13 +188,13 @@ class CharacterModelTest extends munit.FunSuite:
     // Add power
     val testPower = Accident.accident.powerList.head
     model.addPower(Accident.accident).onNext((testPower, Die.d(6)))
-    val powers = model.powerStaging.now()(Accident.accident)
+    val powers = model.data.powerStaging.getOrElse(Accident.accident, List())
     assertEquals(powers.length, 1)
     assertEquals(powers.head._1, testPower)
     
     // Remove power
     model.removePower(Accident.accident).onNext((testPower, Die.d(6)))
-    assertEquals(model.powerStaging.now()(Accident.accident).length, 0)
+    assertEquals(model.data.powerStaging.getOrElse(Accident.accident, List()).length, 0)
   }
 
   test("CharacterModel ability staging and validation") {
@@ -214,16 +214,16 @@ class CharacterModelTest extends munit.FunSuite:
     
     // Toggle ability on
     model.toggleAbility(created).onNext(testAbility)
-    val abilities = model.abilityStaging.now()(created)
+    val abilities = model.data.abilityStaging.getOrElse(created, List())
     assertEquals(abilities.length, 1)
     assertEquals(abilities.head.key, testAbility.key)
     
     // Toggle ability off
     model.toggleAbility(created).onNext(testAbility)
-    assertEquals(model.abilityStaging.now()(created).length, 0)
+    assertEquals(model.data.abilityStaging.getOrElse(created, List()).length, 0)
     
     // Test ability selected signal
     model.toggleAbility(created).onNext(testAbility)
-    val selected = model.abilityStaging.now()(created).exists(_.key == testAbility.key)
+    val selected = model.data.abilityStaging.getOrElse(created, List()).exists(_.key == testAbility.key)
     assertEquals(selected, true)
   }

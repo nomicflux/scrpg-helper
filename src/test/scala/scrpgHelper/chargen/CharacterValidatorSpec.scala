@@ -6,25 +6,22 @@ import scrpgHelper.chargen.characterModel.*
 
 class CharacterValidatorSpec extends FunSuite:
 
-  test("CharacterValidator implements CharacterValidation interface"):
+  test("CharacterValidator can be created with CharacterData"):
     val mockState = MockCharacterState.minimal
     val validator = CharacterValidator(mockState.data)
+    assert(validator != null, "CharacterValidator should be created successfully")
 
-    // Verify it implements the interface
-    val validationInterface: CharacterValidation = validator
-    assert(validationInterface.validBackground != null, "CharacterValidation interface should be implemented")
-
-  test("CharacterValidator combines signals from CharacterState and CharacterStaging"):
+  test("CharacterValidator provides pure validation functions"):
     val mockState = MockCharacterState.basicSelections
     val validator = CharacterValidator(mockState.data)
 
-    // Verify all validation signals exist
-    assert(validator.validBackground != null, "validBackground signal should exist")
-    assert(validator.validPowerSource != null, "validPowerSource signal should exist")
-    assert(validator.validArchetype != null, "validArchetype signal should exist")
-    assert(validator.validPersonality != null, "validPersonality signal should exist")
-    assert(validator.validRedAbilities != null, "validRedAbilities signal should exist")
-    assert(validator.validHealth != null, "validHealth signal should exist")
+    // Verify all validation functions exist and return boolean values
+    assert(validator.validBackground(mockState.data).isInstanceOf[Boolean], "validBackground should return Boolean")
+    assert(validator.validPowerSource(mockState.data).isInstanceOf[Boolean], "validPowerSource should return Boolean")
+    assert(validator.validArchetype(mockState.data).isInstanceOf[Boolean], "validArchetype should return Boolean")
+    assert(validator.validPersonality(mockState.data).isInstanceOf[Boolean], "validPersonality should return Boolean")
+    assert(validator.validRedAbilities(mockState.data).isInstanceOf[Boolean], "validRedAbilities should return Boolean")
+    assert(validator.validHealth(mockState.data).isInstanceOf[Boolean], "validHealth should return Boolean")
 
   test("CharacterValidator works with different mock configurations"):
     val minimal = MockCharacterState.minimal
@@ -35,14 +32,9 @@ class CharacterValidatorSpec extends FunSuite:
     val validatorBasic = CharacterValidator(basic.data)
     val validatorWithPowers = CharacterValidator(withPowers.data)
 
-    // All should create valid validators
-    assert(validatorMinimal.validBackground != null, "minimal validator should work")
-    assert(validatorBasic.validPowerSource != null, "basic validator should work")
-    assert(validatorWithPowers.validHealth != null, "powers validator should work")
-
-    // All should implement CharacterValidation
-    assert(validatorMinimal.isInstanceOf[CharacterValidation], "minimal should implement CharacterValidation")
-    assert(validatorBasic.isInstanceOf[CharacterValidation], "basic should implement CharacterValidation")
-    assert(validatorWithPowers.isInstanceOf[CharacterValidation], "powers should implement CharacterValidation")
+    // All should create valid validators and return boolean results
+    assert(validatorMinimal.validBackground(minimal.data).isInstanceOf[Boolean], "minimal validator should work")
+    assert(validatorBasic.validPowerSource(basic.data).isInstanceOf[Boolean], "basic validator should work")
+    assert(validatorWithPowers.validHealth(withPowers.data).isInstanceOf[Boolean], "powers validator should work")
 
 end CharacterValidatorSpec

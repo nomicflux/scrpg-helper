@@ -1,20 +1,26 @@
 package scrpgHelper.chargen
 
-import com.raquo.laminar.api.L.{*, given}
 import scrpgHelper.chargen.characterModel.*
 
 /** Character exporter implementation - exports character data to CharacterModelExport.
   *
-  * Takes CharacterData and implements both CharacterExportData (pure) and
-  * CharacterExport (reactive) by delegating to pure computation logic.
+  * Takes CharacterData and provides pure export functions.
+  * No more signals - just pure export logic.
   */
-class CharacterExporter(characterData: CharacterData) extends CharacterExportData with CharacterExport:
+class CharacterExporter(characterData: CharacterData):
 
-  // Pure data implementation
   def exportData(data: CharacterData): CharacterModelExport =
-    CharacterExportComputation.computeExport(data)
-
-  // Reactive implementation - deterministic view disguised as signal (temporary for API compatibility)
-  val forExport: Signal[CharacterModelExport] = Signal.fromValue(exportData(characterData))
+    CharacterModelExport(
+      background = data.background.map(_.name),
+      powerSource = data.powerSource.map(_.name),
+      archetype = data.archetype.map(_.name),
+      personality = data.personality.map(_.name),
+      statuses = data.personality.fold(Map())(_.statusDice),
+      health = data.health,
+      powers = data.allPowers,
+      qualities = data.allQualities,
+      abilities = data.allAbilities.collect { case ca: ChosenAbility => ca },
+      principles = data.allAbilities.collect { case p: Principle => p }
+    )
 
 end CharacterExporter
