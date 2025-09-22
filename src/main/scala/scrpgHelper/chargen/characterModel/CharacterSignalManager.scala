@@ -356,7 +356,9 @@ class CharacterSignalManager(
   def abilityChoicesSignal(
       stagingKey: CharacterComputation.StagingKey
   ): Signal[Map[AbilityKey, ChosenAbility]] =
-    abilityChoiceVar.signal.map(acs => acs.getOrElse(stagingKey, Map()))
+    abilityChoiceVar.signal
+      .distinctBy(_.getOrElse(stagingKey, Map()))
+      .map(acs => acs.getOrElse(stagingKey, Map()))
 
   // SignalManager implementation - reactive signals that call pure CharacterData methods
   val allQualitiesSignal: Signal[List[(Quality, Die)]] = qualityStagingVar.signal
