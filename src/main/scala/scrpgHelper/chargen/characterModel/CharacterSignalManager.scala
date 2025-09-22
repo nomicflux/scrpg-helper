@@ -337,13 +337,16 @@ class CharacterSignalManager(
   ): Signal[List[Ability[_]]] =
     abilityStagingVar.signal
       .combineWith(stagingKey)
+      .distinctBy { case (m, mb) => mb.flatMap(b => m.get(b)) }
       .map((m, mb) => mb.flatMap(b => m.get(b)).getOrElse(List()))
 
   def abilitySelected(
       stagingKey: CharacterComputation.StagingKey,
       ability: Signal[Option[ChosenAbility]]
   ): Signal[Boolean] =
-    abilityStagingVar.signal.combineWith(ability).map { (as, ma) =>
+    abilityStagingVar.signal
+      .distinctBy(_.getOrElse(stagingKey, List()))
+      .combineWith(ability).map { (as, ma) =>
       val currListKeys = as.getOrElse(stagingKey, List()).map(_.key).toSet
       ma.fold(false)(a => currListKeys.contains(a.key))
     }

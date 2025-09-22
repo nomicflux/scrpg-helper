@@ -78,4 +78,48 @@ val allAbilitiesSignal: Signal[List[Ability[_]]] =
 - **Immediate responsiveness** improvement for ability/choice operations
 - **Same correctness** - just eliminated redundant computation
 
-This optimization focuses on **signal efficiency** without caching or memoization, exactly as requested.
+## Phase 3: Use distinctBy to Prevent Useless Calculations
+
+### Problem: Signals Triggering on Too Much Data
+**Core issue:** Pure data model calculations were slower because signals were triggering on broad changes when they only needed narrow data changes.
+
+**Example - `abilitiesSignal` problem:**
+- **Triggers on:** `abilityStagingVar` changes (entire staging map for ALL keys)
+- **Only needs:** Changes to the specific staging key it's watching
+- **Result:** Background ability components calculate when powerSource abilities change (useless work)
+
+### Solution: Use distinctBy to Filter Signal Triggers
+**Applied `distinctBy` to filter signals down to only relevant changes:**
+
+**Fixed `abilitiesSignal`:**
+```scala
+// Before: Triggered on any staging key change
+abilityStagingVar.signal
+  .combineWith(stagingKey)
+  .map((m, mb) => mb.flatMap(b => m.get(b)).getOrElse(List()))
+
+// After: Only trigger when THIS staging key's data changes
+abilityStagingVar.signal
+  .combineWith(stagingKey)
+  .distinctBy { case (m, mb) => mb.flatMap(b => m.get(b)) }  // Filter to relevant data only
+  .map((m, mb) => mb.flatMap(b => m.get(b)).getOrElse(List()))
+```
+
+**Fixed `abilitySelected`:**
+```scala
+// Before: Triggered on any staging change
+abilityStagingVar.signal.combineWith(ability).map { ... }
+
+// After: Only trigger when specific staging key changes
+abilityStagingVar.signal
+  .distinctBy(_.getOrElse(stagingKey, List()))  // Filter to specific staging key
+  .combineWith(ability).map { ... }
+```
+
+### Expected Performance Impact:
+- **Eliminates useless calculations** when unrelated staging data changes
+- **Background ability components** won't recalculate when powerSource abilities change
+- **Focused signal firing** - only relevant components update
+- **Same correctness** - components still update when their data actually changes
+
+This optimization focuses on **preventing useless calculations in the pure data model** without caching or memoization, exactly as requested.
