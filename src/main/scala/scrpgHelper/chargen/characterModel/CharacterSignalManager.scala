@@ -323,6 +323,7 @@ class CharacterSignalManager(
   ): Signal[List[(Quality, Die)]] =
     qualityStagingVar.signal
       .combineWith(stagingKey)
+      .distinctBy { case (m, mb) => mb.flatMap(b => m.get(b)) }
       .map((m, mb) => mb.flatMap(b => m.get(b)).getOrElse(List()))
 
   def powersSignal(
@@ -330,6 +331,7 @@ class CharacterSignalManager(
   ): Signal[List[(Power, Die)]] =
     powerStagingVar.signal
       .combineWith(stagingKey)
+      .distinctBy { case (m, mps) => mps.flatMap(ps => m.get(ps)) }
       .map((m, mps) => mps.flatMap(ps => m.get(ps)).getOrElse(List()))
 
   def abilitiesSignal(

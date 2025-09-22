@@ -116,10 +116,21 @@ abilityStagingVar.signal
   .combineWith(ability).map { ... }
 ```
 
+**Also Fixed `qualitiesSignal` and `powersSignal`:**
+Applied the same `distinctBy` pattern to prevent cross-contamination between quality and power staging areas.
+
 ### Expected Performance Impact:
 - **Eliminates useless calculations** when unrelated staging data changes
 - **Background ability components** won't recalculate when powerSource abilities change
+- **Background quality components** won't recalculate when powerSource qualities change
+- **PowerSource components** won't recalculate when background/archetype/personality data changes
 - **Focused signal firing** - only relevant components update
 - **Same correctness** - components still update when their data actually changes
+
+### Summary of All distinctBy Optimizations:
+1. **`abilitiesSignal`** - only triggers when specific staging key's abilities change
+2. **`abilitySelected`** - only triggers when specific staging key's ability list changes
+3. **`qualitiesSignal`** - only triggers when specific staging key's qualities change
+4. **`powersSignal`** - only triggers when specific staging key's powers change
 
 This optimization focuses on **preventing useless calculations in the pure data model** without caching or memoization, exactly as requested.
