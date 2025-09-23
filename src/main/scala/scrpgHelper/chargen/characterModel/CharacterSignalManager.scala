@@ -360,7 +360,7 @@ class CharacterSignalManager(
       .distinctBy(_.getOrElse(stagingKey, Map()))
       .map(acs => acs.getOrElse(stagingKey, Map()))
 
-  // SignalManager implementation - reactive signals that call pure CharacterData methods
+  // SignalManager implementation - using focused optics for efficient data access
   val allQualitiesSignal: Signal[List[(Quality, Die)]] = qualityStagingVar.signal
     .combineWith(
       backgroundVar.signal,
@@ -369,7 +369,16 @@ class CharacterSignalManager(
       personalityVar.signal,
       dieChangesVar.signal
     )
-    .map((_, _, _, _, _, _) => dataProvider().allQualities)
+    .map((qualityStaging, background, powerSource, archetype, personality, dieChanges) => {
+      val relDieChanges = allDieChanges(dieChanges, powerSource, archetype, personality)
+
+      val bgQualities = background.map(bg => CharacterData.qualitiesFromStaging(bg, relDieChanges).get(qualityStaging)).getOrElse(List())
+      val psQualities = powerSource.map(ps => CharacterData.qualitiesFromStaging(ps, relDieChanges).get(qualityStaging)).getOrElse(List())
+      val atQualities = archetype.map(at => CharacterData.qualitiesFromStaging(at, relDieChanges).get(qualityStaging)).getOrElse(List())
+      val ptQualities = personality.map(pt => CharacterData.qualitiesFromStaging(pt, relDieChanges).get(qualityStaging)).getOrElse(List())
+
+      bgQualities ++ psQualities ++ atQualities ++ ptQualities
+    })
 
   val allPowersSignal: Signal[List[(Power, Die)]] = powerStagingVar.signal
     .combineWith(
@@ -379,7 +388,16 @@ class CharacterSignalManager(
       personalityVar.signal,
       dieChangesVar.signal
     )
-    .map((_, _, _, _, _, _) => dataProvider().allPowers)
+    .map((powerStaging, background, powerSource, archetype, personality, dieChanges) => {
+      val relDieChanges = allDieChanges(dieChanges, powerSource, archetype, personality)
+
+      val bgPowers = background.map(bg => CharacterData.powersFromStaging(bg, relDieChanges).get(powerStaging)).getOrElse(List())
+      val psPowers = powerSource.map(ps => CharacterData.powersFromStaging(ps, relDieChanges).get(powerStaging)).getOrElse(List())
+      val atPowers = archetype.map(at => CharacterData.powersFromStaging(at, relDieChanges).get(powerStaging)).getOrElse(List())
+      val ptPowers = personality.map(pt => CharacterData.powersFromStaging(pt, relDieChanges).get(powerStaging)).getOrElse(List())
+
+      bgPowers ++ psPowers ++ atPowers ++ ptPowers
+    })
 
   val allStagedAbilitiesSignal: Signal[List[ChosenAbility]] = abilityStagingVar.signal
     .combineWith(

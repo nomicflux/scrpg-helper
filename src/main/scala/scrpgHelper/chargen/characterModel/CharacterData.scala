@@ -232,4 +232,61 @@ object CharacterData:
   def abilitiesByStatus(status: Status): Traversal[CharacterData, Ability[_]] =
     allAbilities.andThen(Traversal.fromTraverse[List, Ability[_]].filter(_.status == status))
 
+  // Efficient focused optics for signal composition
+
+  /** Lens to extract qualities from a specific staging key with die changes applied */
+  def qualitiesFromStaging(stagingKey: CharacterComputation.StagingKey, dieChanges: Map[Quality | Power, CharacterComputation.DieChange]): Lens[Map[CharacterComputation.StagingKey, List[(Quality, Die)]], List[(Quality, Die)]] =
+    Lens[Map[CharacterComputation.StagingKey, List[(Quality, Die)]], List[(Quality, Die)]](
+      _.getOrElse(stagingKey, List())
+    )(modifiedQualities => map => map + (stagingKey -> modifiedQualities))
+      .andThen(Lens[List[(Quality, Die)], List[(Quality, Die)]](
+        _.map { case (q, d) => (q, dieChanges.get(q).fold(d)(dc => dc.onDie(d))) }
+      )(newQualities => _ => newQualities))
+
+  /** Lens to extract powers from a specific staging key with die changes applied */
+  def powersFromStaging(stagingKey: CharacterComputation.StagingKey, dieChanges: Map[Quality | Power, CharacterComputation.DieChange]): Lens[Map[CharacterComputation.StagingKey, List[(Power, Die)]], List[(Power, Die)]] =
+    Lens[Map[CharacterComputation.StagingKey, List[(Power, Die)]], List[(Power, Die)]](
+      _.getOrElse(stagingKey, List())
+    )(modifiedPowers => map => map + (stagingKey -> modifiedPowers))
+      .andThen(Lens[List[(Power, Die)], List[(Power, Die)]](
+        _.map { case (p, d) => (p, dieChanges.get(p).fold(d)(dc => dc.onDie(d))) }
+      )(newPowers => _ => newPowers))
+
+  /** Lens to extract chosen abilities from a specific staging key */
+  def chosenAbilitiesFromStaging(stagingKey: CharacterComputation.StagingKey): Lens[Map[CharacterComputation.StagingKey, List[Ability[_]]], List[ChosenAbility]] =
+    Lens[Map[CharacterComputation.StagingKey, List[Ability[_]]], List[ChosenAbility]](
+      _.getOrElse(stagingKey, List()).collect { case ca: ChosenAbility => ca }
+    )(abilities => map => map + (stagingKey -> abilities))
+
+  /** Lens to extract principles from a specific staging key */
+  def principlesFromStaging(stagingKey: CharacterComputation.StagingKey): Lens[Map[CharacterComputation.StagingKey, List[Ability[_]]], List[Principle]] =
+    Lens[Map[CharacterComputation.StagingKey, List[Ability[_]]], List[Principle]](
+      _.getOrElse(stagingKey, List()).collect { case p: Principle => p }
+    )(principles => map => map + (stagingKey -> principles))
+
+  /** Lens to extract chosen abilities from ability choice map */
+  def chosenAbilitiesFromChoices(stagingKey: CharacterComputation.StagingKey): Lens[Map[CharacterComputation.StagingKey, Map[AbilityKey, ChosenAbility]], List[ChosenAbility]] =
+    Lens[Map[CharacterComputation.StagingKey, Map[AbilityKey, ChosenAbility]], List[ChosenAbility]](
+      _.getOrElse(stagingKey, Map()).values.filter(_.descriptionFilledOut).toList
+    )(abilities => map => {
+      val abilityMap = abilities.map(a => a.key -> a).toMap
+      map + (stagingKey -> abilityMap)
+    })
+
+  /** Focused lens for background validation data */
+  def backgroundValidationData: Lens[CharacterData, (Option[Background], Map[CharacterComputation.StagingKey, List[(Quality, Die)]], Map[CharacterComputation.StagingKey, List[Ability[_]]])] =
+    Lens[CharacterData, (Option[Background], Map[CharacterComputation.StagingKey, List[(Quality, Die)]], Map[CharacterComputation.StagingKey, List[Ability[_]]])](
+      data => (data.background, data.qualityStaging, data.abilityStaging)
+    )(tuple => _ => throw new UnsupportedOperationException("Read-only lens"))
+
+  /** Focused lens for power source validation data */
+  def powerSourceValidationData: Lens[CharacterData, (Option[Background], Option[PowerSource], Map[CharacterComputation.StagingKey, List[(Power, Die)]], Map[CharacterComputation.StagingKey, List[(Quality, Die)]], Map[CharacterComputation.StagingKey, List[Ability[_]]], Map[CharacterComputation.StagingKey, Map[AbilityKey, ChosenAbility]])] =
+    Lens[CharacterData, (Option[Background], Option[PowerSource], Map[CharacterComputation.StagingKey, List[(Power, Die)]], Map[CharacterComputation.StagingKey, List[(Quality, Die)]], Map[CharacterComputation.StagingKey, List[Ability[_]]], Map[CharacterComputation.StagingKey, Map[AbilityKey, ChosenAbility]])](
+      data => (data.background, data.powerSource, data.powerStaging, data.qualityStaging, data.abilityStaging, data.abilityChoice)
+    )(tuple => _ => throw new UnsupportedOperationException("Read-only lens"))
+
+  /** Focused lens for health validation data */
+  def healthValidationData: Lens[CharacterData, Option[Int]] =
+    Lens[CharacterData, Option[Int]](_.health)(_ => identity)
+
 end CharacterData
