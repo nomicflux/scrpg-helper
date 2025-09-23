@@ -1354,6 +1354,37 @@ select.selector-with-prev-choice option:selected {
   border: 2px ridge red;
 }
 
+/* Status dice in personality table */
+.status-dice {
+  font-size: 0.9em;
+  margin-top: 0.2em;
+}
+
+/* Status die size variations based on die value */
+.status-die-size-6 {
+  font-size: 0.8em;
+}
+.status-die-size-8 {
+  font-size: 1em;
+}
+.status-die-size-10 {
+  font-size: 1.2em;
+}
+.status-die-size-12 {
+  font-size: 1.4em;
+}
+
+/* Status die text colors */
+.green-status-die-text {
+  color: green;
+}
+.yellow-status-die-text {
+  color: yellow;
+}
+.red-status-die-text {
+  color: red;
+}
+
 .description-section {
   display: inline-block;
 }

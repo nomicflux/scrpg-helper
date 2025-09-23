@@ -87,7 +87,10 @@ object RenderPersonality:
         if mp.fold(false)(_ == personality) then "picked" else "unpicked"
       ),
       td(personality.number.toString),
-      td(personality.name),
+      td(
+        div(personality.name),
+        renderStatusDice(personality)
+      ),
       td(renderPersonalityQuality(character, personality)),
       td(personality.outAbilityPool.abilities.headOption.map { template =>
         RenderAbility.renderAbility(
@@ -172,6 +175,31 @@ object RenderPersonality:
       )
     )
   end renderPersonalityQuality
+
+  def renderStatusDice(personality: Personality): Element =
+    import scrpgHelper.status.Status
+    def renderStatusDie(status: Status, className: String): Element =
+      personality.statusDice.get(status) match
+        case Some(die) =>
+          span(
+            cls := s"$className status-die-size-${die.n}",
+            die.toString
+          )
+        case None =>
+          span(
+            cls := className,
+            "d?"
+          )
+
+    div(
+      className := "status-dice",
+      renderStatusDie(Status.Green, "green-status-die-text"),
+      " ",
+      renderStatusDie(Status.Yellow, "yellow-status-die-text"),
+      " ",
+      renderStatusDie(Status.Red, "red-status-die-text")
+    )
+
 end RenderPersonality
 
 final class PersonalityModel:
