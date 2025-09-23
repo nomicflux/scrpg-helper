@@ -81,7 +81,22 @@ class CharacterSignalManager(
   private val changeBackgroundVal = backgroundVar.updater { (_, b: Background) => Some(b) }
   private val changePowerSourceVal = powerSourceVar.updater { (_, ps: PowerSource) => Some(ps) }
   private val changeArchetypeVal = archetypeVar.updater { (_, at: Archetype) => Some(at) }
-  private val changePersonalityVal = personalityVar.updater { (_, p: Personality) => Some(p) }
+  private val changePersonalityVal = personalityVar.updater { (prevPersonality, p: Personality) =>
+    // Remove previous personality's out ability from staging
+    prevPersonality.foreach { prev =>
+      abilityStagingVar.update(staging =>
+        staging - prev
+      )
+    }
+
+    // Add new personality's out ability to staging
+    val outAbility = p.outAbilityPool.abilities.head.toChosenAbility(p.outAbilityPool)
+    abilityStagingVar.update(staging =>
+      staging + (p -> List(outAbility))
+    )
+
+    Some(p)
+  }
   private val calcHealthVal = healthVar.updater { (m, n: Int) => if (m.isDefined) then m else Some(n) }
 
   // Focused validation triggers - only depend on what each validation actually needs
